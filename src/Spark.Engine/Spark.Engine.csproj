@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net6.0</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+        <PackageId>Spark.Engine.R4.Clone</PackageId>
+        <Version>1.5.7-beta2</Version>
+        <Copyright>Copyright © Firely 2014, © Kufu 2018, © Reimers.dk 2021</Copyright>
+        <Company>Firely and Kufu</Company>
+        <Authors>Firely, Kufu and contributors</Authors>
+        <Product>Spark.Engine.R4</Product>
+        <Description>FHIR Server Engine - handling REST calls and service layer</Description>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <LangVersion>9.0</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Fhir.Metrics" Version="1.2.1" />
+        <PackageReference Include="Hl7.Fhir.R4" Version="3.8.0" />
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+        <PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Model\Patch\" />
+    </ItemGroup>
+
+</Project>
