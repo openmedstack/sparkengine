@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+	    <PackageId>openmedstack.sparkengine.web</PackageId>
+	    <RootNamespace>OpenMedStack.SparkEngine.Web</RootNamespace>
+	    <Description>FHIR Server Engine Web Engine</Description>
+    </PropertyGroup>
+	<Import Project="../../shared.projinfo"/>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Resources\Resources.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Resources.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Resources\Resources.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
+</Project>

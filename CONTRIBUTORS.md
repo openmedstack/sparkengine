@@ -1,4 +1,4 @@
-Spark contributors 
+Original Spark contributors 
 ==================
 * [Ewout Kramer](https://github.com/ewoutkramer) - [Furore](https://github.com/firelyteam)
 	

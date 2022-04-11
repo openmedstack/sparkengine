@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<PackageId>openmedstack.sparkengine</PackageId>
+		<Description>FHIR Server Engine</Description>
+		<RootNamespace>OpenMedStack.SparkEngine</RootNamespace>
+	</PropertyGroup>
+	<Import Project="../../shared.projinfo" />
+
+	<ItemGroup>
+		<PackageReference Include="System.Linq.Async" Version="6.0.1" />
+		<PackageReference Include="Fhir.Metrics" Version="1.2.1" />
+		<PackageReference Include="Hl7.Fhir.R4" Version="3.8.2" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+		<!--<PackageReference Include="System.Security.Cryptography.Xml" Version="6.0.0" />-->
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Model\Patch\" />
+	</ItemGroup>
+
+</Project>

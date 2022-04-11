@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+      <PackageId>openmedstack.sparkengine.postgres</PackageId>
+	  <RootNamespace>OpenMedStack.SparkEngine.Postgres</RootNamespace>
+	  <Description>FHIR Server Engine Postgres Storage</Description>
+  </PropertyGroup>
+	<Import Project="../../shared.projinfo" />
+
+  <ItemGroup>
+    <PackageReference Include="Marten" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />
+  </ItemGroup>
+
+</Project>
