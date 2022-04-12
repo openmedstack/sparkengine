@@ -105,7 +105,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 
         public async Task<FhirResponse?> HandleOperation(ResourceManipulationOperation operation, IInteractionHandler interactionHandler, Mapper<string, IKey>? mapper = null)
         {
-            IList<Entry> interactions = operation.GetEntries().ToList();
+            var interactions = operation.GetEntries();
 
             FhirResponse? response = null;
             await foreach (var interaction in _transfer.Internalize(interactions, mapper))
@@ -119,7 +119,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                 interaction.Resource = response.Resource;
             }
 
-            _transfer.Externalize(interactions);
+            //_transfer.Externalize(interactions);
 
             return response;
         }
