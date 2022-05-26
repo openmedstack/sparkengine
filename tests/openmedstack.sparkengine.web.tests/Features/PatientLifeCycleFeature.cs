@@ -72,7 +72,7 @@
                 async () =>
                 {
                     var p = await _client.SearchByIdAsync<Patient>(patient.Id).ConfigureAwait(false);
-                    Assert.NotEmpty(p.GetResources());
+                    Assert.NotEmpty(p.Children);
                 });
 
             "When patient can be deleted".x(

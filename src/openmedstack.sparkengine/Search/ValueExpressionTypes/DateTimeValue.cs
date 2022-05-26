@@ -41,6 +41,6 @@ namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
 
         public DateTimeOffset Value { get; }
 
-        public override string ToString() => new FhirDateTime(Value).ToString();
+        public override string? ToString() => new FhirDateTime(Value).ToString();
     }
 }

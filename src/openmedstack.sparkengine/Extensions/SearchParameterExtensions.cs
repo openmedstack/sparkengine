@@ -40,7 +40,7 @@ namespace OpenMedStack.SparkEngine.Extensions
                 //A searchparameter always has a Resource as focus, so we don't need the name of the resource to be at the start of the Path.
                 //See also: https://github.com/ewoutkramer/fhirpath/blob/master/fhirpath.md
                 workingPaths = paths.Select(
-                        pp => StripResourceNameFromStart(pp, searchParameter.Base.FirstOrDefault().GetLiteral()))
+                        pp => StripResourceNameFromStart(pp, searchParameter.Base.First()!.GetLiteral()))
                     .ToArray();
                 var xpaths = workingPaths.Select(
                     pp => "//" + PathPattern.ReplaceGroup(pp, "separator", XPATH_SEPARATOR));

@@ -126,7 +126,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             var resource = new CapabilityStatement.ResourceComponent
             {
                 Type = EnumUtility.ParseLiteral<ResourceType>(resourcetype),
-                Profile = profile,
+                Profile = profile ?? new Canonical(),
                 ReadHistory = readhistory,
                 UpdateCreate = updatecreate,
                 Versioning = versioning
@@ -170,7 +170,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         public static CapabilityStatement.ResourceComponent AddCoreSearchParamsResource(
             CapabilityStatement.ResourceComponent resourcecomp)
         {
-            var parameters = ModelInfo.SearchParameters.Where(sp => sp.Resource == resourcecomp.Type.GetLiteral())
+            var parameters = ModelInfo.SearchParameters.Where(sp => sp.Resource == resourcecomp.Type!.GetLiteral())
                 .Select(
                     sp => new CapabilityStatement.SearchParamComponent
                     {

@@ -460,7 +460,7 @@ namespace OpenMedStack.SparkEngine.Search
         private List<Expression> ToExpressions(IEnumerable<Element> elements) => elements.SelectMany(Map).ToList();
 
         private List<Expression> ToExpressions<T>(Code<T> element)
-            where T : struct
+            where T : struct, Enum
         {
             if (element.Value is Enum e)
             {
