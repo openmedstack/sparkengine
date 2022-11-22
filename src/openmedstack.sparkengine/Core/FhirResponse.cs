@@ -13,9 +13,9 @@ namespace OpenMedStack.SparkEngine.Core
 
     public class FhirResponse
     {
-        public IKey? Key;
-        public Resource? Resource;
-        public HttpStatusCode StatusCode;
+        public IKey? Key { get; }
+        public Resource? Resource { get; }
+        public HttpStatusCode StatusCode { get; }
 
         public FhirResponse(HttpStatusCode code, IKey? key = null, Resource? resource = null)
         {
@@ -23,12 +23,12 @@ namespace OpenMedStack.SparkEngine.Core
             Key = key;
             Resource = resource;
         }
-        
+
         public bool IsValid
         {
             get
             {
-                var code = (int) StatusCode;
+                var code = (int)StatusCode;
                 return code <= 300;
             }
         }
@@ -39,7 +39,7 @@ namespace OpenMedStack.SparkEngine.Core
         {
             var details = Resource != null ? $"({Resource.TypeName})" : null;
             var location = Key?.ToString();
-            return $"{(int) StatusCode}: {StatusCode} {details} ({location})";
+            return $"{(int)StatusCode}: {StatusCode} {details} ({location})";
         }
     }
 }
