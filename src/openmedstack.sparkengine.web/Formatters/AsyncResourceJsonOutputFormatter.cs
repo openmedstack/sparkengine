@@ -39,8 +39,8 @@ namespace OpenMedStack.SparkEngine.Web.Formatters
         /// <inheritdoc />
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
-            var contentTypes = context.ContentType.Value.Split(';', StringSplitOptions.TrimEntries);
-            return SupportedMediaTypes.Intersect(contentTypes).Any() && CanWriteType(context.ObjectType);
+            var contentTypes = context.ContentType.Value?.Split(';', StringSplitOptions.TrimEntries);
+            return SupportedMediaTypes.Intersect(contentTypes ?? Array.Empty<string>()).Any() && CanWriteType(context.ObjectType);
         }
 
         protected override bool CanWriteType(Type? type)
@@ -69,7 +69,7 @@ namespace OpenMedStack.SparkEngine.Web.Formatters
                 throw new ArgumentNullException(nameof(selectedEncoding));
             }
 
-            if (selectedEncoding != Encoding.UTF8)
+            if (!selectedEncoding.Equals(Encoding.UTF8))
             {
                 throw Error.BadRequest($"FHIR supports UTF-8 encoding exclusively, not {selectedEncoding.WebName}");
             }
@@ -95,7 +95,7 @@ namespace OpenMedStack.SparkEngine.Web.Formatters
                     writeBodyString = await _serializer.SerializeToStringAsync(context.Object as Resource, summaryType);
                 }
             }
-            else if (context.Object is ValidationProblemDetails validationProblems)
+            else if (context.Object is ValidationProblemDetails)
             {
                 var outcome = new OperationOutcome();
                 //outcome.AddValidationProblems(context.HttpContext.GetResourceType(), (HttpStatusCode)context.HttpContext.Response.StatusCode, validationProblems);

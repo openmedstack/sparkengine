@@ -42,16 +42,7 @@ namespace OpenMedStack.SparkEngine.Web
             var writerFactory = context.RequestServices.GetRequiredService<IHttpResponseStreamWriterFactory>();
             return new OutputFormatterWriteContext(context, writerFactory.CreateWriter, type, model);
         }
-
-        public static void AllowSynchronousIo(this HttpContext context)
-        {
-            var bodyControlFeature = context.Features.Get<IHttpBodyControlFeature>();
-            if (bodyControlFeature != null)
-            {
-                bodyControlFeature.AllowSynchronousIO = true;
-            }
-        }
-
+        
         public static void AddResourceType(this HttpContext context, Type resourceType)
         {
             if (context.Items.ContainsKey(ResourceTypeKey))
@@ -61,8 +52,5 @@ namespace OpenMedStack.SparkEngine.Web
 
             context.Items.Add(ResourceTypeKey, resourceType);
         }
-
-        public static Type? GetResourceType(this HttpContext context) =>
-            context.Items.TryGetValue(ResourceTypeKey, out var resourceType) ? resourceType as Type : null;
     }
 }

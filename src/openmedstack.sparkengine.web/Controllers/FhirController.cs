@@ -17,6 +17,7 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
     using Extensions;
     using Hl7.Fhir.Model;
     using Hl7.Fhir.Rest;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Cors;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,7 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
     using SparkEngine.Extensions;
     using Utility;
 
+    [Authorize]
     [Route("fhir")]
     [ApiController]
     [EnableCors]
@@ -38,6 +40,7 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
         [HttpGet("{type}/{id}")]
         public async Task<ActionResult<FhirResponse>> Read(string type, string id)
         {
+            var principal = User;
             var ifModifiedSince = Request.Headers[HeaderNames.IfModifiedSince]
                 .Aggregate(
                     default(DateTimeOffset?),

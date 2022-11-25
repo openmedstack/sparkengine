@@ -25,8 +25,8 @@ namespace OpenMedStack.SparkEngine.Web.Formatters
         /// <inheritdoc />
         public override bool CanWriteResult(OutputFormatterCanWriteContext context)
         {
-            var contentTypes = context.ContentType.Value.Split(';', StringSplitOptions.TrimEntries);
-            return SupportedMediaTypes.Intersect(contentTypes).Any() && base.CanWriteResult(context);
+            var contentTypes = context.ContentType.Value?.Split(';', StringSplitOptions.TrimEntries);
+            return SupportedMediaTypes.Intersect(contentTypes ?? Array.Empty<string>()).Any() && base.CanWriteResult(context);
         }
 
         /// <inheritdoc />

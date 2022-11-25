@@ -8,8 +8,8 @@
 	<Import Project="../../shared.projinfo" />
 
   <ItemGroup>
-    <PackageReference Include="Marten" Version="5.5.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
+    <PackageReference Include="Marten" Version="5.11.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

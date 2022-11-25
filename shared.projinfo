@@ -1,14 +1,15 @@
 <Project>
     <PropertyGroup>
-	    <TargetFramework>net6.0</TargetFramework>
-	    <Version>1.0.1</Version>
-	    <Copyright>Copyright © Firely 2014, © Kufu 2018, © Reimers.dk 2021</Copyright>
+	    <TargetFramework>net7.0</TargetFramework>
+	    <Version>1.1.0</Version>
+	    <Copyright>Copyright © Firely 2014, © Kufu 2018, © Reimers.dk 2021-2022</Copyright>
 	    <Authors>Firely, Kufu and contributors, OpenMedStack</Authors>
 	    <Product>OpenMedStack Spark Engine</Product>
         <Company>OpenMedStack</Company>
         <RepositoryType>git</RepositoryType>
+	    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Nullable>enable</Nullable>
 	    <LangVersion>latest</LangVersion>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

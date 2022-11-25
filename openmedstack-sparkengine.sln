@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.sparkengine.we
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.linq2fhir", "src\openmedstack.linq2fhir\openmedstack.linq2fhir.csproj", "{79B9A63E-700D-4DEB-98E4-48E26340737F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openmedstack.linq2fhir.tests", "tests\openmedstack.linq2fhir.tests\openmedstack.linq2fhir.tests.csproj", "{2F45C2D4-E30E-4B9B-BDDA-EAB6C23898FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.linq2fhir.tests", "tests\openmedstack.linq2fhir.tests\openmedstack.linq2fhir.tests.csproj", "{2F45C2D4-E30E-4B9B-BDDA-EAB6C23898FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

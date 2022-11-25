@@ -14,6 +14,7 @@ namespace OpenMedStack.SparkEngine.Web.Extensions
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Linq;
     using Core;
     using Hl7.Fhir.Model;
@@ -90,15 +91,12 @@ namespace OpenMedStack.SparkEngine.Web.Extensions
                 || (type == typeof(FhirResponse)) && ((FhirResponse)context.Object!).Resource is Binary)
             {
                 var request = context.HttpContext.Request;
-                var isFhirMediaType = false;
-                if (request.Method == "GET")
+                var isFhirMediaType = request.Method switch
                 {
-                    isFhirMediaType = request.IsAcceptHeaderFhirMediaType();
-                }
-                else if (request.Method is "POST" or "PUT")
-                {
-                    isFhirMediaType = request.ContentType.IsContentTypeHeaderFhirMediaType();
-                }
+                    "GET" => request.IsAcceptHeaderFhirMediaType(),
+                    "POST" or "PUT" => request.ContentType.IsContentTypeHeaderFhirMediaType(),
+                    _ => false
+                };
 
                 var ub = new UriBuilder(request.GetRequestUri());
                 // TODO: KM: Path matching is not optimal should be replaced by a more solid solution.
@@ -110,28 +108,24 @@ namespace OpenMedStack.SparkEngine.Web.Extensions
             }
         }
 
-        internal static bool IsRawBinaryRequest(this HttpRequest request)
-        {
-            var ub = new UriBuilder(request.GetRequestUri());
-            return ub.Path.Contains("Binary") && !ub.Path.EndsWith("_search");
-        }
-
         internal static void AcquireHeaders(this HttpResponse response, FhirResponse fhirResponse)
         {
-            if (fhirResponse.Key != null)
+            if (fhirResponse.Key == null)
             {
-                response.Headers.Add(HttpHeaderName.ETAG, ETag.Create(fhirResponse.Key?.VersionId)?.ToString());
+                return;
+            }
 
-                var location = fhirResponse.Key!.ToUri();
-                response.Headers.Add(HttpHeaderName.LOCATION, location.OriginalString);
+            response.Headers.Add(HttpHeaderName.ETAG, ETag.Create(fhirResponse.Key?.VersionId).ToString());
 
-                response.Headers.Add(HttpHeaderName.CONTENT_LOCATION, location.OriginalString);
-                if (fhirResponse.Resource is { Meta.LastUpdated: { } })
-                {
-                    response.Headers.Add(
-                        HttpHeaderName.LAST_MODIFIED,
-                        fhirResponse.Resource.Meta.LastUpdated.Value.ToString("R"));
-                }
+            var location = fhirResponse.Key!.ToUri();
+            response.Headers.Add(HttpHeaderName.LOCATION, location.OriginalString);
+
+            response.Headers.Add(HttpHeaderName.CONTENT_LOCATION, location.OriginalString);
+            if (fhirResponse.Resource is { Meta.LastUpdated: { } })
+            {
+                response.Headers.Add(
+                    HttpHeaderName.LAST_MODIFIED,
+                    fhirResponse.Resource.Meta.LastUpdated.Value.ToString("R"));
             }
         }
 
@@ -146,7 +140,7 @@ namespace OpenMedStack.SparkEngine.Web.Extensions
                 request.GetParameter("_since")?.ParseDateParameter(),
                 request.GetParameter("_sort"));
 
-        public static ConditionalHeaderParameters? ToConditionalHeaderParameters(this HttpRequest request) =>
+        public static ConditionalHeaderParameters ToConditionalHeaderParameters(this HttpRequest request) =>
             new(request.IfNoneMatch(), request.IfModifiedSince());
 
         internal static string GetRequestUri(this HttpRequest request)
@@ -173,7 +167,7 @@ namespace OpenMedStack.SparkEngine.Web.Extensions
                 return Array.Empty<string>();
             }
 
-            return values.ToArray();
+            return values.ToImmutableArray();
         }
 
         internal static SummaryType RequestSummary(this HttpRequest request)

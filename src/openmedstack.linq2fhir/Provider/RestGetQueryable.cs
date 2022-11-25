@@ -22,14 +22,12 @@ namespace OpenMedStack.Linq2Fhir.Provider
             : base(client)
         {
             Provider = new RestGetQueryProvider<T>(client);
-            Expression = Expression.Constant(this);
         }
 
         public RestGetQueryable(FhirClient client, Expression expression)
-            : base(client)
+            : base(client, expression)
         {
             Provider = new RestGetQueryProvider<T>(client);
-            Expression = expression;
         }
 
         protected override void Dispose(bool disposing)

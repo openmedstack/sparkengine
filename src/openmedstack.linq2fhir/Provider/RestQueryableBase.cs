@@ -13,19 +13,20 @@
 namespace OpenMedStack.Linq2Fhir.Provider
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Linq.Expressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Hl7.Fhir.Model;
     using Hl7.Fhir.Rest;
+    using Expression = System.Linq.Expressions.Expression;
 
-    internal class RestQueryableBase<T> : IOrderedAsyncQueryable<T>, IDisposable
+    internal abstract class RestQueryableBase<T> : IFhirQueryable<T> where T : Resource
     {
-        protected RestQueryableBase(FhirClient client)
+        protected RestQueryableBase(FhirClient client, Expression? expression = null)
         {
             Client = client;
+            Expression = expression ?? Expression.Constant(this);
         }
 
         /// <summary>
@@ -39,7 +40,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
         /// <summary>
         /// 	The expression tree.
         /// </summary>
-        public Expression Expression { get; protected init; }
+        public Expression Expression { get; }
 
         /// <summary>
         /// 	IQueryProvider part of RestQueryable.
@@ -48,26 +49,19 @@ namespace OpenMedStack.Linq2Fhir.Provider
 
         internal FhirClient Client { get; }
 
-        public void Dispose()
+        public ValueTask DisposeAsync()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+            return ValueTask.CompletedTask;
         }
 
         /// <inheritdoc />
-        public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = new CancellationToken())
+        public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             var enumerable = await Provider.ExecuteAsync<T>(Expression, cancellationToken);
-            //foreach (var item in enumerable)
-            //{
-                yield return enumerable;
-            //}
+            yield return enumerable;
         }
-        
-        //IAsyncEnumerator IAsyncEnumerable.GetAsyncEnumerator()
-        //{
-        //    return Provider.ExecuteAsync<IEnumerable>(Expression).GetAsyncEnumerator();
-        //}
 
         protected virtual void Dispose(bool disposing)
         {

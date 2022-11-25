@@ -77,7 +77,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             }
         }
 
-        private async IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(IList<Entry> interactions, IInteractionHandler interactionHandler, Mapper<string, IKey>? mapper)
+        private async IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(IEnumerable<Entry> interactions, IInteractionHandler interactionHandler, Mapper<string, IKey>? mapper)
         {
             await foreach (var interaction in _transfer.Internalize(interactions, mapper))
             {
@@ -87,7 +87,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                     throw new Exception($"Unsuccessful response to interaction {interaction}: {response}");
                 }
                 interaction.Resource = response.Resource;
-                response.Resource = null;
+                //response.Resource = null;
 
                 //_transfer.Externalize(interactions);
                 yield return Tuple.Create(_transfer.Externalize(interaction), response);

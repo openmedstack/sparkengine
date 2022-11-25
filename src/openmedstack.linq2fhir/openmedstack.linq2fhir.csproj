@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
         <langVersion>latest</langVersion>
         <DocumentationFile>bin\$(Configuration)\Linq2Rest.xml</DocumentationFile>
         <AssemblyName>openmedstack.linq2fhir</AssemblyName>
@@ -18,6 +17,7 @@
         <PackageTags>linq rest</PackageTags>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+	<Import Project="../../shared.projinfo" />
 
     <ItemGroup>
       <PackageReference Include="Hl7.Fhir.R5" Version="4.3.0" />

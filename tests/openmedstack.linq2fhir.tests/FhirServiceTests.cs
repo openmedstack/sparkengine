@@ -23,11 +23,23 @@ public class FhirServiceTests
         Assert.NotNull(bundle);
     }
 
+    [Fact]
+    public async System.Threading.Tasks.Task CanQueryResourcesToBundle()
+    {
+        var asyncQueryable = GetQueryable();
+        var bundle = await asyncQueryable.GetBundle();
+
+        Assert.NotNull(bundle);
+    }
+
     private static IOrderedAsyncQueryable<Encounter> GetQueryable()
     {
         var service = new FhirService(
             new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), new TestMessageHandler()));
-        var asyncQueryable = service.Query<Encounter>().Where(e => e.PlannedEndDate == "a").OrderBy(x => x.PlannedEndDate);
+        
+        var asyncQueryable = service.Query<Encounter>()
+            .Where(e => e.PlannedEndDate == "a")
+            .UpdatedSince(DateTimeOffset.UnixEpoch).OrderBy(x => x.PlannedEndDate);
         return asyncQueryable;
     }
 }

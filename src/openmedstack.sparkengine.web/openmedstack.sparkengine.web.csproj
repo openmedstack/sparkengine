@@ -4,6 +4,7 @@
 	    <PackageId>openmedstack.sparkengine.web</PackageId>
 	    <RootNamespace>OpenMedStack.SparkEngine.Web</RootNamespace>
 	    <Description>FHIR Server Engine Web Engine</Description>
+        <TieredPGO>true</TieredPGO>
     </PropertyGroup>
 	<Import Project="../../shared.projinfo"/>
 

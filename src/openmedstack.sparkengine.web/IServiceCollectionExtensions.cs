@@ -64,19 +64,10 @@ namespace OpenMedStack.SparkEngine.Web
             services.TryAddTransient(provider => new[] { provider.GetRequiredService<IServiceListener>() });
             services.TryAddTransient<ISearchService, SearchService>(); // search
             services.TryAddTransient<ITransactionService, AsyncTransactionService>(); // transaction
-            //services.TryAddTransient<HistoryService>();                    // history
             services.TryAddTransient<IPagingService, PagingService>(); // paging
             services.TryAddTransient<IResourceStorageService, ResourceStorageService>(); // storage
             services.TryAddTransient<ICapabilityStatementService, CapabilityStatementService>(); // conformance
             services.TryAddTransient<ICompositeServiceListener, ServiceListener>();
-            //services.TryAddTransient<AsyncResourceJsonInputFormatter>();
-            //services.TryAddTransient<AsyncResourceJsonOutputFormatter>();
-            //services.TryAddTransient<AsyncResourceXmlInputFormatter>();
-            //services.TryAddTransient<AsyncResourceXmlOutputFormatter>();
-            //services.TryAddSingleton(_ => new TestFhirJsonParser(settings.ParserSettings));
-            //services.TryAddSingleton(_ => new FhirXmlParser(settings.ParserSettings));
-            //services.TryAddSingleton(_ => new FhirJsonSerializer(settings.SerializerSettings));
-            //services.TryAddSingleton(_ => new FhirXmlSerializer(settings.SerializerSettings));
 
             services.TryAddSingleton<IAsyncFhirService, AsyncFhirService>();
 

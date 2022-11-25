@@ -40,16 +40,21 @@ namespace OpenMedStack.Linq2Fhir.Provider
             visitor.Visit(expression);
             var p = visitor.GetParams();
             var bundle = await GetResults(p);
-            var enumerable = bundle.GetResources().OfType<T>();
-            object o = typeof(TResult) switch
+            if (typeof(TResult) == typeof(Bundle))
             {
-                Type when typeof(TResult) == typeof(T) => enumerable.First(),
+                return (TResult)(bundle as object);
+            }
+            var enumerable = bundle.GetResources().OfType<T>();
+            object? o = typeof(TResult) switch
+            {
+                Type when typeof(TResult) == typeof(T) && Nullable.GetUnderlyingType(typeof(TResult)) != null => enumerable.FirstOrDefault(),
+                Type when typeof(TResult) == typeof(T) && Nullable.GetUnderlyingType(typeof(TResult)) == null => enumerable.First(),
                 Type when typeof(TResult).IsAssignableTo(typeof(List<T>)) => enumerable.ToList(),
                 Type when typeof(TResult).IsAssignableTo(typeof(T[])) => enumerable.ToArray(),
                 Type when typeof(TResult).IsAssignableTo(typeof(IEnumerable<T>)) => enumerable.AsEnumerable(),
                 _ => throw new Exception($"Unexpected type {nameof(TResult)}")
             };
-            return (TResult)o;
+            return (TResult)o!;
         }
 
         protected abstract void Dispose(bool disposing);

@@ -44,12 +44,7 @@ namespace OpenMedStack.SparkEngine.Web.Extensions
 
         public static SearchParams GetSearchParamsFromBody(this HttpRequest request)
         {
-            var list = new List<Tuple<string, string>>();
-
-            foreach (var parameter in request.Form)
-            {
-                list.Add(new Tuple<string, string>(parameter.Key, parameter.Value));
-            }
+            var list = request.Form.Select(parameter => new Tuple<string, string>(parameter.Key, parameter.Value.ToString())).ToList();
 
             return request.GetSearchParams().AddAll(list);
         }

@@ -25,8 +25,8 @@ namespace OpenMedStack.SparkEngine.Core
         public static readonly string FormUrlEncodedMimeType = "application/x-www-form-urlencoded";
         public static readonly string AnyMimeType = "*/*";
 
-        public static IEnumerable<string> JsonMimeTypes => ContentType.JSON_CONTENT_HEADERS;
-        public static IEnumerable<string> XmlMimeTypes => ContentType.XML_CONTENT_HEADERS;
+        public static IEnumerable<string> JsonMimeTypes => ContentType.JSON_CONTENT_HEADERS.Concat(new[] { AnyMimeType });
+        public static IEnumerable<string> XmlMimeTypes => ContentType.XML_CONTENT_HEADERS.Concat(new[] { AnyMimeType });
         public static IEnumerable<string> SupportedMimeTypes => JsonMimeTypes
             .Concat(XmlMimeTypes)
             .Concat(new[] { OctetStreamMimeType, FormUrlEncodedMimeType, AnyMimeType });
@@ -110,7 +110,7 @@ namespace OpenMedStack.SparkEngine.Core
         public static MediaTypeHeaderValue GetMediaTypeHeaderValue(Type type, ResourceFormat format)
         {
             var mediatype = GetContentType(type, format);
-            var header = new MediaTypeHeaderValue(mediatype) {CharSet = Encoding.UTF8.WebName};
+            var header = new MediaTypeHeaderValue(mediatype) { CharSet = Encoding.UTF8.WebName };
             return header;
         }
     }

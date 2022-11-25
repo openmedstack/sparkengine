@@ -3,7 +3,6 @@ namespace OpenMedStack.Linq2Fhir;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Reflection.Metadata;
 using System.Text;
 using Hl7.Fhir.Rest;
 using Expression = System.Linq.Expressions.Expression;
@@ -112,13 +111,5 @@ internal class CriteriaVisitor : ExpressionVisitor
             ExpressionType.LessThanOrEqual => "le",
             _ => throw new Exception($"Unhandled type: {nodeType}")
         };
-    }
-}
-
-public static class QueryExtensions
-{
-    public static bool IsMissing(this object? value, bool isMissing)
-    {
-        return (value == null) == isMissing;
     }
 }

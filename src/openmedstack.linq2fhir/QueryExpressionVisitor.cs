@@ -1,14 +1,21 @@
 namespace OpenMedStack.Linq2Fhir;
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
+using Hl7.Fhir.Support;
+using ConstantExpression = System.Linq.Expressions.ConstantExpression;
 using Expression = System.Linq.Expressions.Expression;
+using UnaryExpression = System.Linq.Expressions.UnaryExpression;
 
 internal class QueryExpressionVisitor : ExpressionVisitor
 {
     private readonly CriteriaVisitor _criteriaVisitor = new();
     private readonly List<(string, SortOrder)> _sortOrders = new();
+    private DateTimeOffset? _updatedSince;
 
     public SearchParams GetParams()
     {
@@ -22,6 +29,11 @@ internal class QueryExpressionVisitor : ExpressionVisitor
         {
             p.Sort.Add(sortOrder);
         }
+
+        if (_updatedSince != null)
+        {
+            p.Add("_lastUpdated", $"gt{_updatedSince.ToFhirDateTime()}");
+        }
         return p;
     }
 
@@ -31,21 +43,31 @@ internal class QueryExpressionVisitor : ExpressionVisitor
         var nodeArgument = node.Arguments[1];
         switch (node.Method.Name)
         {
-            case "Where":
+            case nameof(AsyncQueryable.Where) when node.Method.DeclaringType == typeof(AsyncQueryable):
                 _criteriaVisitor.Visit(nodeArgument);
                 break;
-            case "Order":
-                _sortOrders.Add(("_id", SortOrder.Ascending));
-                break;
-            case "OrderBy":
-                var member = (((nodeArgument as UnaryExpression).Operand as LambdaExpression).Body as MemberExpression).Member.Name;
+            case nameof(AsyncQueryable.OrderBy) when node.Method.DeclaringType == typeof(AsyncQueryable):
+                var member = GetMemberName(nodeArgument);
                 _sortOrders.Add((member, SortOrder.Ascending));
                 break;
-            case "OrderDescending":
-                _sortOrders.Add(("_id", SortOrder.Descending));
+            case nameof(AsyncQueryable.OrderByDescending) when node.Method.DeclaringType == typeof(AsyncQueryable):
+                var memberName = GetMemberName(nodeArgument);
+                _sortOrders.Add((memberName, SortOrder.Descending));
+                break;
+            case nameof(FhirQueryableExtensions.UpdatedSince) when node.Method.DeclaringType == typeof(FhirQueryableExtensions):
+                _updatedSince = (DateTimeOffset?)(nodeArgument as ConstantExpression)?.Value;
                 break;
         }
 
         return Visit(node.Arguments[0]);
+    }
+
+    private static string GetMemberName(Expression nodeArgument)
+    {
+        var unaryExpression = nodeArgument as UnaryExpression;
+        var unaryExpressionOperand = unaryExpression!.Operand as LambdaExpression;
+        var memberExpression = unaryExpressionOperand!.Body as MemberExpression;
+        var member = memberExpression!.Member.Name.ToLowerInvariant();
+        return member;
     }
 }
