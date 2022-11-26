@@ -6,6 +6,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Hl7.Fhir.Rest;
+using Provider;
 using Fhir = Hl7.Fhir.Model;
 
 /// <summary>
@@ -13,6 +15,18 @@ using Fhir = Hl7.Fhir.Model;
 /// </summary>
 public static class FhirQueryableExtensions
 {
+    /// <summary>
+    /// Creates an <see cref="IAsyncQueryable{T}"/> to generate searches using the <see cref="FhirClient"/>.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="Type"/> of <see cref="Fhir.Resource"/> being queried.</typeparam>
+    /// <param name="client">The <see cref="FhirClient"/> to use to execute the query.</param>
+    /// <returns></returns>
+    public static IAsyncQueryable<T> Query<T>(this FhirClient client)
+        where T : Fhir.Resource, new()
+    {
+        return new RestGetQueryable<T>(client);
+    }
+
     /// <summary>
     /// Gets the requested resources as a <see cref="Fhir.Bundle"/>.
     /// </summary>

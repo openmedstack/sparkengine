@@ -34,10 +34,9 @@ public class FhirServiceTests
 
     private static IOrderedAsyncQueryable<Encounter> GetQueryable()
     {
-        var service = new FhirService(
-            new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), new TestMessageHandler()));
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), new TestMessageHandler());
         
-        var asyncQueryable = service.Query<Encounter>()
+        var asyncQueryable = client.Query<Encounter>()
             .Where(e => e.PlannedEndDate == "a")
             .UpdatedSince(DateTimeOffset.UnixEpoch).OrderBy(x => x.PlannedEndDate);
         return asyncQueryable;
