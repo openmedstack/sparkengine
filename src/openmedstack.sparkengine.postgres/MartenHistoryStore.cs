@@ -96,7 +96,7 @@ namespace OpenMedStack.SparkEngine.Postgres
                 .ToListAsync()
                 .ConfigureAwait(false);
             return CreateSnapshot(
-                result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList(),
+                result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToArray(),
                 result.Count);
         }
 

@@ -14,11 +14,13 @@ namespace OpenMedStack.SparkEngine.Postgres
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Logging;
+    using Service;
+    using Service.FhirServiceExtensions;
     using Store.Interfaces;
 
     public static class ServiceCollectionExtensions
     {
-        public static void AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
+        public static IServiceCollection AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
         {
             var store = DocumentStore.For(
                 o =>
@@ -52,6 +54,7 @@ namespace OpenMedStack.SparkEngine.Postgres
                 sp => new MartenFhirIndex(
                     sp.GetRequiredService<ILogger<MartenFhirIndex>>(),
                     sp.GetRequiredService<Func<IDocumentSession>>()));
+            return services;
         }
     }
 }

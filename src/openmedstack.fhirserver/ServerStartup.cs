@@ -1,23 +1,22 @@
 ﻿namespace OpenMedStack.FhirServer
 {
     using System;
+    using System.Text.Json;
     using Hl7.Fhir.Serialization;
     using Hl7.Fhir.Specification;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
-    using Microsoft.AspNetCore.Authorization.Infrastructure;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
     using Microsoft.IdentityModel.Tokens;
     using OpenMedStack.SparkEngine.Interfaces;
     using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
-    using OpenMedStack.SparkEngine.Store.Interfaces;
     using SparkEngine;
     using SparkEngine.Postgres;
     using SparkEngine.Web;
     using SparkEngine.Web.Controllers;
-    using SparkEngine.Web.Persistence;
 
     public class ServerStartup
     {
@@ -31,25 +30,33 @@
         public void ConfigureServices(IServiceCollection services)
         {
             const string authority = "https://identity.reimers.dk";
-            services.AddCors();
-            services.AddControllers();
-            services.AddTransient<FhirController>();
-            services.AddTransient<ControllerBase, FhirController>();
-            services.AddFhir(
-                new SparkSettings
-                {
-                    UseAsynchronousIO = true,
-                    Endpoint = new Uri("https://fhir.reimers.dk/fhir"),
-                    FhirRelease = FhirRelease.R4.ToString(),
-                    ParserSettings = ParserSettings.CreateDefault(),
-                    SerializerSettings = SerializerSettings.CreateDefault()
-                });
-            var s = _configuration["CONNECTIONSTRING"]!;
-            services.AddPostgresFhirStore(new StoreSettings(s));
+            services.AddCors()
+                .AddLogging(
+                    l => l.AddJsonConsole(
+                        o =>
+                        {
+                            o.IncludeScopes = true;
+                            o.UseUtcTimestamp = true;
+                            o.JsonWriterOptions = new JsonWriterOptions { Indented = false };
+                        }))
+                .AddControllers()
+                .Services.AddTransient<FhirController>()
+                .AddTransient<ControllerBase, FhirController>()
+                .AddFhir(
+                    new SparkSettings
+                    {
+                        UseAsynchronousIO = true,
+                        Endpoint = new Uri("https://fhir.reimers.dk/fhir"),
+                        FhirRelease = FhirRelease.R4.ToString(),
+                        ParserSettings = ParserSettings.CreateDefault(),
+                        SerializerSettings = SerializerSettings.CreateDefault()
+                    });
             //services.AddInMemoryPersistence();
-            services.AddSingleton<IGenerator, GuidGenerator>();
-            services.AddSingleton<IPatchService, PatchService>();
-            services.AddAuthentication(
+            var s = _configuration["CONNECTIONSTRING"]!;
+            services.AddPostgresFhirStore(new StoreSettings(s))
+                .AddSingleton<IGenerator, GuidGenerator>()
+                .AddSingleton<IPatchService, PatchService>()
+                .AddAuthentication(
                     options =>
                     {
                         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;

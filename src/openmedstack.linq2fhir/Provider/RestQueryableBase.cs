@@ -21,7 +21,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
     using Hl7.Fhir.Rest;
     using Expression = System.Linq.Expressions.Expression;
 
-    internal abstract class RestQueryableBase<T> : IFhirQueryable<T> where T : Resource
+    internal abstract class RestQueryableBase<T> : IOrderedAsyncQueryable<T>, IAsyncDisposable where T : Resource
     {
         protected RestQueryableBase(FhirClient client, Expression? expression = null)
         {

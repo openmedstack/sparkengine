@@ -6,13 +6,13 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
+namespace OpenMedStack.SparkEngine.Service.ServiceListeners
 {
     using System;
     using System.Threading.Tasks;
     using Core;
+    using Extensions;
     using Microsoft.Extensions.Logging;
-    using Service;
 
     public class LogListener : IServiceListener
     {
@@ -24,7 +24,13 @@ namespace OpenMedStack.SparkEngine.Postgres
         public Task Inform(Uri location, Entry interaction)
         {
             _logger.LogDebug(
-                $"{interaction.When} - {location} -> {interaction.Key}, {interaction.Method}, Is Delete: {interaction.IsDelete}, Is Present: {interaction.IsPresent}");
+                "{when} - {location} -> {key}, {method}, Is Delete: {isDelete}, Is Present: {isPresent}",
+                interaction.When,
+                location,
+                interaction.Key?.ToStorageKey(),
+                interaction.Method,
+                interaction.IsDelete,
+                interaction.IsPresent);
 
             return Task.CompletedTask;
         }

@@ -76,16 +76,17 @@
         {
             var hc = new HttpClient
             {
-                DefaultRequestHeaders =
-                {
-                    {
-                        HeaderNames.Authorization,
-                        "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ.eyJzY29wZSI6Im9wZW5pZCBwcm9maWxlIHVtYV9wcm90ZWN0aW9uIiwiYXpwIjoiZGF0YXN0dWRpbyIsInJvbGUiOiIiLCJzdWIiOiIyQzdBQUE1QzgyN0I3RjcxRkQwMjBBRTlCRDk2RjQ5ODgyQ0FFRDcxQTg2QTBFRTA4NTQ3RURDNjI0MTQ1MDIwIiwibmJmIjoxNjY4MTg5MTIwLCJleHAiOjE2NjgxOTA5MjAsImlhdCI6MTY2ODE4OTEyMCwiaXNzIjoiaHR0cHM6Ly9pZGVudGl0eS5yZWltZXJzLmRrIiwiYXVkIjoiZGF0YXN0dWRpbyJ9.jgB-TZXAaT3B9-clt-K5lGpR-LWJx5uyHzchWxIdJNAPvXTC2HYzN2hJO-_AtOjKUdJ2MIv8UIEwTLOq3UZ9uvSErEC5b8O35nAK1YB035jcLkbUem3292X1hfaAyCCP5sU3q6-PhgfjAEAepqqT1SKTwXBwoRu3izoUiqyDHnP_EjdBz-0jNUGNbh3lPb7Z6i56ynBsnB_F0vZ6A3i_4DHq6Is23rTEg2cwAHcsSrYRGePiWpJpvhdyvXF0gZ-cOiNf7JFpfVzYAJ5yKPLthyu9EePHIEC0ms60YW7Fiu1Ajumb3QA_h64GPmNscnYEGpbiqFKcAB5plFg3Hmlvww"
-                    }
-                }
+                //DefaultRequestHeaders =
+                //{
+                //    {
+                //        HeaderNames.Authorization,
+                //        "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ.eyJzY29wZSI6Im9wZW5pZCBwcm9maWxlIHVtYV9wcm90ZWN0aW9uIiwiYXpwIjoiZGF0YXN0dWRpbyIsInJvbGUiOiIiLCJzdWIiOiIyQzdBQUE1QzgyN0I3RjcxRkQwMjBBRTlCRDk2RjQ5ODgyQ0FFRDcxQTg2QTBFRTA4NTQ3RURDNjI0MTQ1MDIwIiwibmJmIjoxNjY4MTg5MTIwLCJleHAiOjE2NjgxOTA5MjAsImlhdCI6MTY2ODE4OTEyMCwiaXNzIjoiaHR0cHM6Ly9pZGVudGl0eS5yZWltZXJzLmRrIiwiYXVkIjoiZGF0YXN0dWRpbyJ9.jgB-TZXAaT3B9-clt-K5lGpR-LWJx5uyHzchWxIdJNAPvXTC2HYzN2hJO-_AtOjKUdJ2MIv8UIEwTLOq3UZ9uvSErEC5b8O35nAK1YB035jcLkbUem3292X1hfaAyCCP5sU3q6-PhgfjAEAepqqT1SKTwXBwoRu3izoUiqyDHnP_EjdBz-0jNUGNbh3lPb7Z6i56ynBsnB_F0vZ6A3i_4DHq6Is23rTEg2cwAHcsSrYRGePiWpJpvhdyvXF0gZ-cOiNf7JFpfVzYAJ5yKPLthyu9EePHIEC0ms60YW7Fiu1Ajumb3QA_h64GPmNscnYEGpbiqFKcAB5plFg3Hmlvww"
+                //    }
+                //}
             };
             var client = new FhirClient(
-                "https://localhost:7266/fhir",
+                "https://spark.incendi.no/fhir",
+                //"https://localhost:7266/fhir",
                 //"https://fhir.reimers.dk/fhir",
                 //"https://localhost:60001/fhir",
                 hc,

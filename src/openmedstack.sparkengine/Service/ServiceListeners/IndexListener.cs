@@ -6,12 +6,11 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
+namespace OpenMedStack.SparkEngine.Service.ServiceListeners
 {
     using System;
     using System.Threading.Tasks;
     using Core;
-    using Service;
 
     public class IndexListener : IServiceListener
     {

@@ -28,6 +28,7 @@ namespace OpenMedStack.SparkEngine.Postgres
             For<IndexEntry>()
                 .Identity(x => x.Id)
                 .Index(x => x.Id)
+                .Duplicate(x => x.CanonicalId)
                 .Duplicate(x => x.ResourceType)
                 .GinIndexJsonData();
         }

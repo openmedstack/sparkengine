@@ -20,7 +20,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
     using Interfaces;
     using Task = System.Threading.Tasks.Task;
 
-    public class SearchService : ISearchService, IServiceListener
+    public class SearchService : ISearchService
     {
         private readonly IFhirIndex _fhirIndex;
         private readonly IFhirModel _fhirModel;
@@ -91,9 +91,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 
             return results.HasErrors ? throw new SparkException(HttpStatusCode.BadRequest, results.Outcome!) : results;
         }
-
-        public Task Inform(Uri location, Entry interaction) => _indexService.Process(interaction);
-
+        
         private static Snapshot CreateSnapshot(Uri selflink, IList<string> keys, SearchParams searchCommand)
         {
             var sort = GetFirstSort(searchCommand);

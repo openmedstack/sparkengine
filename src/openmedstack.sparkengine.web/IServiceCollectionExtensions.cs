@@ -25,6 +25,7 @@ namespace OpenMedStack.SparkEngine.Web
     using Search;
     using Service;
     using Service.FhirServiceExtensions;
+    using Service.ServiceListeners;
 
     public static class ServiceCollectionExtensions
     {
@@ -62,8 +63,9 @@ namespace OpenMedStack.SparkEngine.Web
             services.TryAddTransient<IIndexRebuildService, IndexRebuildService>();
             services.TryAddTransient<ISnapshotPaginationProvider, SnapshotPaginationProvider>();
             services.TryAddTransient<ISnapshotPaginationCalculator, SnapshotPaginationCalculator>();
-            services.TryAddTransient<IServiceListener, SearchService>(); // searchListener
-            services.TryAddTransient(provider => new[] { provider.GetRequiredService<IServiceListener>() });
+            services.TryAddTransient<IServiceListener, IndexListener>();
+            services.TryAddTransient<IServiceListener, LogListener>();
+            services.TryAddTransient(provider => provider.GetServices<IServiceListener>().ToArray());
             services.TryAddTransient<ISearchService, SearchService>(); // search
             services.TryAddTransient<ITransactionService, AsyncTransactionService>(); // transaction
             services.TryAddTransient<IPagingService, PagingService>(); // paging
@@ -104,7 +106,7 @@ namespace OpenMedStack.SparkEngine.Web
                         setupAction?.Invoke(options);
                     });
         }
-        
+
         public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)
         {
             return services.AddSingleton<InMemoryFhirIndex>()

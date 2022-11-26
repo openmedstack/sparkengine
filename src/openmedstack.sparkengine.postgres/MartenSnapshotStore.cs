@@ -38,10 +38,10 @@ namespace OpenMedStack.SparkEngine.Postgres
         /// <inheritdoc />
         public async Task<Snapshot?> GetSnapshot(string snapshotId)
         {
-            _logger.LogDebug("Returned snapshot " + snapshotId);
             await using var session = _sessionFunc();
             var snapshot = await session.LoadAsync<Snapshot>(snapshotId).ConfigureAwait(false);
 
+            _logger.LogDebug("Returned snapshot {snapshot}", snapshotId);
             return snapshot;
         }
     }
