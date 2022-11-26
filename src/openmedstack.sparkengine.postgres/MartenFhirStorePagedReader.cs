@@ -41,7 +41,7 @@ namespace OpenMedStack.SparkEngine.Postgres
 
                 foreach (var envelope in data)
                 {
-                    yield return Entry.Create(envelope.Method, envelope.Key, envelope.Resource);
+                    yield return Entry.Create(envelope.Method, Key.Create(envelope.ResourceType, envelope.ResourceId, envelope.VersionId), envelope.Resource);
                 }
 
                 if (data.IsLastPage)

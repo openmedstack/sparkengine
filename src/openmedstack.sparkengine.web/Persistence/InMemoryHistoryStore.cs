@@ -1,4 +1,4 @@
-﻿namespace OpenMedStack.FhirServer.Persistence
+﻿namespace OpenMedStack.SparkEngine.Web.Persistence
 {
     using System;
     using System.Threading.Tasks;

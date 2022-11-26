@@ -20,6 +20,8 @@ namespace OpenMedStack.SparkEngine.Web
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
+    using OpenMedStack.SparkEngine.Store.Interfaces;
+    using OpenMedStack.SparkEngine.Web.Persistence;
     using Search;
     using Service;
     using Service.FhirServiceExtensions;
@@ -101,6 +103,16 @@ namespace OpenMedStack.SparkEngine.Web
 
                         setupAction?.Invoke(options);
                     });
+        }
+        
+        public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)
+        {
+            return services.AddSingleton<InMemoryFhirIndex>()
+                .AddSingleton<IFhirIndex>(sp => sp.GetRequiredService<InMemoryFhirIndex>())
+                .AddSingleton<ISnapshotStore, InMemorySnapshotStore>()
+                .AddSingleton<IHistoryStore, InMemoryHistoryStore>()
+                .AddSingleton<IFhirStore, InMemoryFhirStore>()
+                .AddSingleton<IIndexStore>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
         }
 
         public static void AddCustomSearchParameters(

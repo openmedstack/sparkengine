@@ -11,6 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\openmedstack.sparkengine.postgres\openmedstack.sparkengine.postgres.csproj" />
 		<ProjectReference Include="..\openmedstack.sparkengine.web\openmedstack.sparkengine.web.csproj" />
 	</ItemGroup>
 
