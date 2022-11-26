@@ -95,7 +95,8 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
                 return await _fhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues));
             }
 
-            return await _fhirService.Create(key, resource);
+            var response = await _fhirService.Create(key, resource);
+            return response;
         }
 
         [HttpDelete("{type}/{id}")]

@@ -42,10 +42,10 @@ namespace OpenMedStack.SparkEngine.Postgres
                 query = query.Take(parameters.Count.Value);
             }
 
-            var result = await query.Select(x => new { x.Key.TypeName, x.Key.Base, x.Key.ResourceId, x.Key.VersionId })
+            var result = await query.Select(x => new { x.ResourceType, x.ResourceId, x.VersionId })
                 .ToListAsync()
                 .ConfigureAwait(false);
-            var keys = result.Select(x => new Key(x.Base, x.TypeName, x.ResourceId, x.VersionId).ToString()).ToList();
+            var keys = result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList();
             return CreateSnapshot(keys, result.Count);
         }
 
@@ -67,11 +67,11 @@ namespace OpenMedStack.SparkEngine.Postgres
                 query = query.Take(parameters.Count.Value);
             }
 
-            var result = await query.Select(x => new { x.Key.TypeName, x.Key.Base, x.Key.ResourceId, x.Key.VersionId })
+            var result = await query.Select(x => new { x.ResourceType, x.ResourceId, x.VersionId })
                 .ToListAsync()
                 .ConfigureAwait(false);
             return CreateSnapshot(
-                result.Select(x => new Key(x.Base, x.TypeName, x.ResourceId, x.VersionId).ToString()).ToList(),
+                result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList(),
                 result.Count);
         }
 
@@ -92,11 +92,11 @@ namespace OpenMedStack.SparkEngine.Postgres
                 query = query.Take(parameters.Count.Value);
             }
 
-            var result = await query.Select(x => new { x.Key.TypeName, x.Key.Base, x.Key.ResourceId, x.Key.VersionId })
+            var result = await query.Select(x => new { x.ResourceType, x.ResourceId, x.VersionId })
                 .ToListAsync()
                 .ConfigureAwait(false);
             return CreateSnapshot(
-                result.Select(x => new Key(x.Base, x.TypeName, x.ResourceId, x.VersionId).ToString()).ToList(),
+                result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList(),
                 result.Count);
         }
 

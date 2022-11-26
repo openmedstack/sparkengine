@@ -23,13 +23,13 @@ namespace OpenMedStack.SparkEngine.Postgres
             var store = DocumentStore.For(
                 o =>
                 {
+                    o.Serializer<CustomSerializer>();
                     o.Connection(settings.ConnectionString);
                     //o.PLV8Enabled = false;
                     o.Schema.Include<FhirRegistry>();
                 });
             services.AddSingleton<IDocumentStore>(store);
             services.TryAddSingleton(settings);
-            services.AddSingleton<IGenerator>(new GuidGenerator());
             services.AddTransient<Func<IDocumentSession>>(
                 sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
             services.TryAddTransient<IFhirStore>(

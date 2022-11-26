@@ -50,10 +50,12 @@ namespace OpenMedStack.SparkEngine.Postgres
                 new EntryEnvelope
                 {
                     Id = entry.Key.ToStorageKey(),
+                    ResourceId = entry.Resource.Id,
+                    VersionId = entry.Resource.VersionId,
                     ResourceType = entry.Resource.TypeName,
                     ResourceKey = entry.Key.WithoutVersion().ToStorageKey(),
                     State = entry.State,
-                    Key = entry.Key,
+                    //Key = entry.Key,
                     Method = entry.Method,
                     When = entry.When ?? DateTimeOffset.MinValue,
                     Resource = entry.Resource,
@@ -84,7 +86,7 @@ namespace OpenMedStack.SparkEngine.Postgres
                     .FirstOrDefaultAsync()
                     .ConfigureAwait(false);
 
-            return result == null ? null : Entry.Create(result.Method, result.Key, result.Resource);
+            return result == null ? null : Entry.Create(result.Method, Key.Create(result.ResourceType, result.ResourceId, result.VersionId), result.Resource);
         }
 
         /// <inheritdoc />
@@ -95,7 +97,7 @@ namespace OpenMedStack.SparkEngine.Postgres
             var results = session.Query<EntryEnvelope>().Where(e => e.Id.IsOneOf(localKeys)).ToAsyncEnumerable();
             await foreach (var result in results)
             {
-                yield return Entry.Create(result.Method, result.Key, result.Resource);
+                yield return Entry.Create(result.Method, Key.Create(result.ResourceType, result.ResourceId, result.VersionId), result.Resource);
             }
         }
 
@@ -110,9 +112,9 @@ namespace OpenMedStack.SparkEngine.Postgres
             await using var session = _sessionFunc();
             var count = await session.Query<EntryEnvelope>()
                 .CountAsync(
-                    x => x.Key.TypeName == key.TypeName
-                         && x.Key.ResourceId == key.ResourceId
-                         && x.Key.VersionId == key.VersionId)
+                    x => x.ResourceType == key.TypeName
+                         && x.ResourceId == key.ResourceId
+                         && x.VersionId == key.VersionId)
                 .ConfigureAwait(false);
             return count > 0;
         }

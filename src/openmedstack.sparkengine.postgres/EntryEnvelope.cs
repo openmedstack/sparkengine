@@ -16,11 +16,15 @@ namespace OpenMedStack.SparkEngine.Postgres
     {
         public string Id { get; init; } = null!;
 
+        public string? ResourceId { get; init; }
+
+        public string? VersionId { get; init; }
+
         public string ResourceType { get; init; } = null!;
 
         public EntryState State { get; init; }
 
-        public IKey Key { get; init; } = null!;
+        //public IKey Key { get; init; } = null!;
 
         public string ResourceKey { get; init; } = null!;
 

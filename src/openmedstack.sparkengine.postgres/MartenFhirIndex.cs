@@ -44,7 +44,7 @@ namespace OpenMedStack.SparkEngine.Postgres
         /// <inheritdoc />
         public async Task<SearchResults> Search(string resource, SearchParams searchCommand)
         {
-            _logger.LogDebug($"{resource} search requested with {searchCommand.ToUriParamList().ToQueryString()}");
+            _logger.LogDebug("{resource} search requested with {searchCommand}", resource, searchCommand.ToUriParamList().ToQueryString());
             var resources = await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
 
             var count = resources.Count;
@@ -86,7 +86,7 @@ namespace OpenMedStack.SparkEngine.Postgres
             var values = indexValue.IndexValues().ToArray();
             var id = (StringValue)values.First(x => x.Name == "internal_forResource").Values[0];
             var resource = (StringValue)values.First(x => x.Name == "internal_resource").Values[0];
-            var canonicalId = (StringValue)values.First(x => x.Name == "internal_Id").Values[0];
+            var canonicalId = (StringValue)values.First(x => x.Name == "internal_id").Values[0];
             var entry = new IndexEntry(id.Value, canonicalId.Value, resource.Value, new Dictionary<string, object>());
             foreach (var value in values)
             {
@@ -114,8 +114,8 @@ namespace OpenMedStack.SparkEngine.Postgres
 
                             entry.Values[value.Name] = l;
                             break;
-                        case { } x:
-                            entry.Values[value.Name] = new HashSet<object> { x, o };
+                        case { }:
+                            entry.Values[value.Name] = new HashSet<object> { existing, o };
                             break;
                     }
                 }
@@ -143,17 +143,19 @@ namespace OpenMedStack.SparkEngine.Postgres
         }
 
         /// <inheritdoc />
-        Task IIndexStore.Clean()
+        async Task IIndexStore.Clean()
         {
             _logger.LogDebug("Clean requested");
-            return Task.CompletedTask;
+            await using var session = _sessionFunc();
+            session.DeleteWhere<IndexEntry>(e => e.Id != "");
+            await session.SaveChangesAsync().ConfigureAwait(false);
         }
 
         private static object GetValue(Expression expression)
         {
             return expression switch
             {
-                StringValue stringValue => stringValue.Value!,
+                StringValue stringValue => stringValue.Value,
                 IndexValue indexValue => indexValue.Values.Count == 1
                     ? GetValue(indexValue.Values[0])
                     : indexValue.Values.Select(GetValue).ToArray(),

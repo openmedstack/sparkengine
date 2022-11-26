@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		CONTRIBUTORS.md = CONTRIBUTORS.md
+		fhirserver.dockerfile = fhirserver.dockerfile
 		LICENSE = LICENSE
 		README.md = README.md
 		shared.projinfo = shared.projinfo
@@ -25,6 +26,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.linq2fhir", "src\openmedstack.linq2fhir\openmedstack.linq2fhir.csproj", "{79B9A63E-700D-4DEB-98E4-48E26340737F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.linq2fhir.tests", "tests\openmedstack.linq2fhir.tests\openmedstack.linq2fhir.tests.csproj", "{2F45C2D4-E30E-4B9B-BDDA-EAB6C23898FB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.fhirserver", "src\openmedstack.fhirserver\openmedstack.fhirserver.csproj", "{C226170C-847C-4EDA-901A-5E362424D51B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openmedstack.sparkengine.postgres.tests", "tests\openmedstack.sparkengine.postgres.tests\openmedstack.sparkengine.postgres.tests.csproj", "{6955BD0B-20BF-4ED0-95BB-5A9544E91F9F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +65,14 @@ Global
 		{2F45C2D4-E30E-4B9B-BDDA-EAB6C23898FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F45C2D4-E30E-4B9B-BDDA-EAB6C23898FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F45C2D4-E30E-4B9B-BDDA-EAB6C23898FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C226170C-847C-4EDA-901A-5E362424D51B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C226170C-847C-4EDA-901A-5E362424D51B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C226170C-847C-4EDA-901A-5E362424D51B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C226170C-847C-4EDA-901A-5E362424D51B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6955BD0B-20BF-4ED0-95BB-5A9544E91F9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6955BD0B-20BF-4ED0-95BB-5A9544E91F9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6955BD0B-20BF-4ED0-95BB-5A9544E91F9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6955BD0B-20BF-4ED0-95BB-5A9544E91F9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
