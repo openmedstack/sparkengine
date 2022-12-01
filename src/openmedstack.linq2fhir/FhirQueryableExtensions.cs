@@ -61,6 +61,90 @@ public static class FhirQueryableExtensions
             Expression.Call(
                 GetUpdatedSinceMethod(typeof(T)),
                 queryable.Expression,
-                Expression.Constant(time, typeof(DateTimeOffset))));
+                Expression.Constant(time, typeof(DateTimeOffset)),
+                Expression.Constant(cancellationToken, typeof(CancellationToken))));
+    }
+
+    private static MethodInfo? _reverseIncludeMethod;
+
+    private static MethodInfo GetReverseIncludeMethod(Type source, Type include) =>
+        (_reverseIncludeMethod ??= new Func<IAsyncQueryable<object>, Expression<Func<object, object>>, IncludeModifier, CancellationToken, IAsyncQueryable<object>>(ReverseInclude).GetMethodInfo().GetGenericMethodDefinition()).MakeGenericMethod(source, include);
+
+    /// <summary>
+    /// Includes resources which reference the queried results.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="Type"/> of <see cref="Fhir.Resource"/> being queried.</typeparam>
+    /// <typeparam name="TRevInclude">The <see cref="Type"/> of <see cref="Fhir.Resource"/> to reverse include.</typeparam>
+    /// <param name="source">The source <see cref="IAsyncQueryable{T}"/>.</param>
+    /// <param name="selector">The selection of what to reverse include.</param>
+    /// <param name="modifier">Whether to include references recursively or iteratively.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> for the request.</param>
+    /// <returns>An <see cref="IAsyncQueryable{T}"/> instance.</returns>
+    public static IAsyncQueryable<T> ReverseInclude<T, TRevInclude>(this IAsyncQueryable<T> source, Expression<Func<TRevInclude, object>> selector, IncludeModifier modifier = IncludeModifier.None, CancellationToken cancellationToken = default)
+    {
+        return source.Provider.CreateQuery<T>(
+            Expression.Call(
+                GetReverseIncludeMethod(typeof(T), typeof(TRevInclude)),
+                source.Expression,
+                selector,
+                Expression.Constant(modifier, typeof(IncludeModifier)),
+                Expression.Constant(cancellationToken, typeof(CancellationToken))));
+    }
+
+    private static MethodInfo? _includeMethod;
+
+    private static MethodInfo GetIncludeMethod(Type source) =>
+        (_includeMethod ??= new Func<IAsyncQueryable<object>, Expression<Func<object, object>>, CancellationToken, IAsyncQueryable<object>>(Include).GetMethodInfo().GetGenericMethodDefinition()).MakeGenericMethod(source);
+
+    /// <summary>
+    /// Includes resources which reference the queried results.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="Type"/> of <see cref="Fhir.Resource"/> being queried.</typeparam>
+    /// <param name="source">The source <see cref="IAsyncQueryable{T}"/>.</param>
+    /// <param name="selector">The selection of what to reverse include.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> for the request.</param>
+    /// <returns>An <see cref="IAsyncQueryable{T}"/> instance.</returns>
+    public static IAsyncQueryable<T> Include<T>(this IAsyncQueryable<T> source, Expression<Func<T, object>> selector, CancellationToken cancellationToken = default)
+    {
+        return source.Provider.CreateQuery<T>(
+            Expression.Call(
+                GetIncludeMethod(typeof(T)),
+                source.Expression,
+                selector,
+                Expression.Constant(cancellationToken, typeof(CancellationToken))));
+    }
+
+    private static MethodInfo? _elementMethod;
+
+    private static MethodInfo GetElementsMethod(Type source) =>
+        (_elementMethod ??= new Func<IAsyncQueryable<object>, Expression<Func<object, object>>, CancellationToken, IAsyncQueryable<object>>(Elements).GetMethodInfo().GetGenericMethodDefinition()).MakeGenericMethod(source);
+
+    /// <summary>
+    /// Selects the elements to include in the response.
+    /// </summary>
+    /// <typeparam name="T">The <see cref="Type"/> of <see cref="Fhir.Resource"/> being queried.</typeparam>
+    /// <param name="source">The source <see cref="IAsyncQueryable{T}"/>.</param>
+    /// <param name="selector">The selection of what elements to include.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> for the request.</param>
+    /// <returns>An <see cref="IAsyncQueryable{T}"/> instance.</returns>
+    public static IAsyncQueryable<T> Elements<T>(this IAsyncQueryable<T> source, Expression<Func<T, object>> selector, CancellationToken cancellationToken = default)
+    {
+        return source.Provider.CreateQuery<T>(
+            Expression.Call(
+                GetElementsMethod(typeof(T)),
+                source.Expression,
+                selector,
+                Expression.Constant(cancellationToken, typeof(CancellationToken))));
+    }
+
+    /// <summary>
+    /// Queries for a reference to a specific resource type.
+    /// </summary>
+    /// <typeparam name="TResource">The <see cref="Type"/> of <see cref="Fhir.Resource"/> to query for.</typeparam>
+    /// <param name="resource">The <see cref="Fhir.ResourceReference"/> being queried.</param>
+    /// <returns>A <see cref="Fhir.Resource"/> specific reference.</returns>
+    public static TResource ReferringResource<TResource>(this Fhir.Resource resource) where TResource : Fhir.Resource
+    {
+        return (resource as TResource)!;
     }
 }

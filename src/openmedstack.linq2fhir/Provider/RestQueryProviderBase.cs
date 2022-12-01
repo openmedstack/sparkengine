@@ -47,11 +47,11 @@ namespace OpenMedStack.Linq2Fhir.Provider
             var enumerable = bundle.GetResources().OfType<T>();
             object? o = typeof(TResult) switch
             {
-                Type when typeof(TResult) == typeof(T) && Nullable.GetUnderlyingType(typeof(TResult)) != null => enumerable.FirstOrDefault(),
-                Type when typeof(TResult) == typeof(T) && Nullable.GetUnderlyingType(typeof(TResult)) == null => enumerable.First(),
-                Type when typeof(TResult).IsAssignableTo(typeof(List<T>)) => enumerable.ToList(),
-                Type when typeof(TResult).IsAssignableTo(typeof(T[])) => enumerable.ToArray(),
-                Type when typeof(TResult).IsAssignableTo(typeof(IEnumerable<T>)) => enumerable.AsEnumerable(),
+                not null when typeof(TResult) == typeof(T) && Nullable.GetUnderlyingType(typeof(TResult)) != null => enumerable.FirstOrDefault(),
+                not null when typeof(TResult) == typeof(T) && Nullable.GetUnderlyingType(typeof(TResult)) == null => enumerable.First(),
+                not null when typeof(TResult).IsAssignableTo(typeof(List<T>)) => enumerable.ToList(),
+                not null when typeof(TResult).IsAssignableTo(typeof(T[])) => enumerable.ToArray(),
+                not null when typeof(TResult).IsAssignableTo(typeof(IEnumerable<T>)) => enumerable.AsEnumerable(),
                 _ => throw new Exception($"Unexpected type {nameof(TResult)}")
             };
             return (TResult)o!;

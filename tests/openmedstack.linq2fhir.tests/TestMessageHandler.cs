@@ -7,9 +7,12 @@ using Hl7.Fhir.Serialization;
 
 internal class TestMessageHandler : HttpMessageHandler
 {
+    public string RequestedPathAndQuery { get; private set; }
+
     /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        RequestedPathAndQuery = request.RequestUri!.PathAndQuery;
         var serializer = new FhirJsonSerializer();
         var value = new Bundle { Type = Bundle.BundleType.Collection, Total = 0, Id = "1" };
         var json = await serializer.SerializeToStringAsync(value);
