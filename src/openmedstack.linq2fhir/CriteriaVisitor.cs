@@ -2,8 +2,9 @@ namespace OpenMedStack.Linq2Fhir;
 
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
+using System.Linq;
 using System.Text;
+using global::System.Linq.Expressions;
 using Hl7.Fhir.Rest;
 using Expression = System.Linq.Expressions.Expression;
 
@@ -36,33 +37,33 @@ internal class CriteriaVisitor : ExpressionVisitor
             case ExpressionType.OrElse:
                 throw new Exception("You should perform a separate query for each condition");
             default:
-            {
-                Visit(node.Left);
-                var op = GetOperation(node.NodeType);
-                if (node.Right is ConstantExpression { Value: null })
                 {
-                    _query.Add($"{_builder}:missing", op == ":not" ? "false" : "true");
-                    _builder.Clear();
-                }
-                else if (node.NodeType == ExpressionType.NotEqual)
-                {
-                    var left = _builder + op;
-                    _builder.Clear();
-                    Visit(node.Right);
-                    _query.Add(left, _builder.ToString());
-                    _builder.Clear();
-                }
-                else
-                {
-                    var left = _builder.ToString();
-                    _builder.Clear();
-                    Visit(node.Right);
-                    _query.Add(left, op + _builder);
-                    _builder.Clear();
-                }
+                    Visit(node.Left);
+                    var op = GetOperation(node.NodeType);
+                    if (node.Right is ConstantExpression { Value: null })
+                    {
+                        _query.Add($"{_builder}:missing", op == ":not" ? "false" : "true");
+                        _builder.Clear();
+                    }
+                    else if (node.NodeType == ExpressionType.NotEqual)
+                    {
+                        var left = _builder + op;
+                        _builder.Clear();
+                        Visit(node.Right);
+                        _query.Add(left, _builder.ToString());
+                        _builder.Clear();
+                    }
+                    else
+                    {
+                        var left = _builder.ToString();
+                        _builder.Clear();
+                        Visit(node.Right);
+                        _query.Add(left, op + _builder);
+                        _builder.Clear();
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
 
         return node;
@@ -71,15 +72,61 @@ internal class CriteriaVisitor : ExpressionVisitor
     /// <inheritdoc />
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
-        if (node.Method.Name == "Contains")
+        switch (node.Method.Name)
         {
-            Visit(node.Object);
-            _builder.Append(":contains");
-            var left = _builder.ToString();
-            _builder.Clear();
-            Visit(node.Arguments[0]);
-            _query.Add(left, _builder.ToString());
-            _builder.Clear();
+            case nameof(string.Contains) when node.Method.DeclaringType == typeof(string):
+                {
+                    Visit(node.Object);
+                    _builder.Append(":contains");
+                    var left = _builder.ToString();
+                    _builder.Clear();
+                    Visit(node.Arguments[0]);
+                    _query.Add(left, _builder.ToString());
+                    _builder.Clear();
+                }
+                break;
+            case nameof(Enumerable.Any) when node.Method.DeclaringType == typeof(Enumerable):
+                {
+                    Visit(node.Arguments[0]);
+                    var lambda = (node.Arguments[1] as LambdaExpression)!;
+                    var body = lambda.Body;
+                    switch (body)
+                    {
+                        case BinaryExpression:
+                            _builder.Append('.');
+                            Visit(body);
+                            break;
+                        case MethodCallExpression methodCall:
+                            Visit(methodCall);
+                            break;
+                    }
+                }
+                break;
+            case nameof(FhirQueryableExtensions.MatchAnyAttribute)
+                when node.Method.DeclaringType == typeof(FhirQueryableExtensions):
+                {
+                    var name = _builder.ToString();
+                    _builder.Clear();
+                    Visit(node.Arguments[1]);
+                    _query.Add(name, _builder.ToString());
+                    _builder.Clear();
+                }
+                break;
+            case nameof(FhirQueryableExtensions.DoNotMatchAnyAttribute)
+                when node.Method.DeclaringType == typeof(FhirQueryableExtensions):
+                {
+                    _builder.Append(":not");
+                    var name = _builder.ToString();
+                    _builder.Clear();
+                    Visit(node.Arguments[1]);
+                    _query.Add(name, _builder.ToString());
+                    _builder.Clear();
+                }
+                break;
+            case nameof(List<object>.Contains) when node.Method.DeclaringType?.IsGenericType == true
+                                                    && node.Method.DeclaringType.GetGenericTypeDefinition()
+                                                        .IsAssignableTo(typeof(IEnumerable<>)):
+                throw new NotSupportedException($"Use {nameof(Enumerable.Any)} to find matches.");
         }
 
         return node;

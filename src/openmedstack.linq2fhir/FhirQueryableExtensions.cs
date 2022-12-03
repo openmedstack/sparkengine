@@ -147,4 +147,26 @@ public static class FhirQueryableExtensions
     {
         return (resource as TResource)!;
     }
+
+    /// <summary>
+    /// Treats the data type as an object to match any value.
+    /// </summary>
+    /// <param name="data">The attribute value to match</param>
+    /// <param name="match">The value to match</param>
+    /// <returns>The attribute value as an <see cref="object"/>.</returns>
+    public static bool MatchAnyAttribute(this Fhir.DataType data, object match)
+    {
+        return data == match;
+    }
+
+    /// <summary>
+    /// Treats the data type as an object to match any value.
+    /// </summary>
+    /// <param name="data">The attribute value to match</param>
+    /// <param name="match">The value to match</param>
+    /// <returns>The attribute value as an <see cref="object"/>.</returns>
+    public static bool DoNotMatchAnyAttribute(this Fhir.DataType data, object match)
+    {
+        return data != match;
+    }
 }

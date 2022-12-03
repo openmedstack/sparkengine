@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
 using Hl7.Fhir.Support;
 using ConstantExpression = System.Linq.Expressions.ConstantExpression;
@@ -52,6 +53,7 @@ internal class QueryExpressionVisitor : ExpressionVisitor
         {
             p.Elements.Add(element);
         }
+
         return p;
     }
 
@@ -87,16 +89,14 @@ internal class QueryExpressionVisitor : ExpressionVisitor
             case nameof(FhirQueryableExtensions.UpdatedSince) when declaringType == typeof(FhirQueryableExtensions):
                 _updatedSince = (DateTimeOffset?)(nodeArgument as ConstantExpression)?.Value;
                 break;
-            case nameof(FhirQueryableExtensions.ReverseInclude)
-                when declaringType == typeof(FhirQueryableExtensions):
+            case nameof(FhirQueryableExtensions.ReverseInclude) when declaringType == typeof(FhirQueryableExtensions):
                 {
                     var modifier = node.Arguments[2] as ConstantExpression;
                     var member = GetMemberName(nodeArgument);
                     _revIncludes.Add((member, (IncludeModifier)(modifier?.Value ?? IncludeModifier.None)));
                 }
                 break;
-            case nameof(FhirQueryableExtensions.Include)
-                when declaringType == typeof(FhirQueryableExtensions):
+            case nameof(FhirQueryableExtensions.Include) when declaringType == typeof(FhirQueryableExtensions):
                 {
                     var member = GetMemberName(nodeArgument, true);
                     _includes.Add((member, IncludeModifier.None));
@@ -138,7 +138,7 @@ internal class QueryExpressionVisitor : ExpressionVisitor
 
         var memberExpression = lambdaExpression.Body as MemberExpression;
         return includeDeclaringType
-            ? $"{memberExpression!.Expression!.Type.Name}:{GetCleanMemberName(memberExpression.Member)}"
+            ? $"{ModelInfo.GetFhirTypeNameForType(memberExpression!.Expression!.Type)}:{GetCleanMemberName(memberExpression.Member)}"
             : GetCleanMemberName(memberExpression!.Member);
     }
 

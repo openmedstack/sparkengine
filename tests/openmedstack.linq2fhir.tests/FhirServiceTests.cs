@@ -33,21 +33,55 @@ public class FhirServiceTests
     }
 
     [Fact]
+    public async System.Threading.Tasks.Task CanQueryListContents()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.Family == "a"));
+        _ = await asyncQueryable.GetBundle();
+
+        Assert.Equal("/Patient?name.family=a", handler.RequestedPathAndQuery);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task CanQueryListContentsByAnyAttribute()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.MatchAnyAttribute("a")));
+        _ = await asyncQueryable.GetBundle();
+
+        Assert.Equal("/Patient?name=a", handler.RequestedPathAndQuery);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task CanQueryListContentsByAnyAttributeNotMatching()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.DoNotMatchAnyAttribute("a")));
+        _ = await asyncQueryable.GetBundle();
+
+        Assert.Equal("/Patient?name%3Anot=a", handler.RequestedPathAndQuery);
+    }
+
+    [Fact]
     public async System.Threading.Tasks.Task CanReverseIncludeBasedOnReferringTypeAttribute()
     {
         var handler = new TestMessageHandler();
         var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
 
         _ = await client.Query<Patient>()
+            .Where(p => p.Name != null)
             .ReverseInclude<Patient, Encounter>(
-                x => x.ReferringResource<Encounter>().Subject,
+                x => x.ReferringResource<Observation>().Subject,
                 IncludeModifier.Iterate,
                 CancellationToken.None)
             .GetBundle()
             .ConfigureAwait(false);
-        
+
         // ReSharper disable StringLiteralTypo
-        Assert.Equal("/Patient?_revinclude%3Aiterate=Encounter%3Asubject", handler.RequestedPathAndQuery);
+        Assert.Equal("/Patient?_revinclude%3Aiterate=Observation%3Asubject&name%3Amissing=false", handler.RequestedPathAndQuery);
         // ReSharper restore StringLiteralTypo
     }
 
