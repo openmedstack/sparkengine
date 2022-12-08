@@ -32,15 +32,14 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
     [EnableCors]
     public class FhirController : ControllerBase
     {
-        private readonly IAsyncFhirService _fhirService;
+        private readonly IFhirService _fhirService;
 
-        public FhirController(IAsyncFhirService fhirService) =>
+        public FhirController(IFhirService fhirService) =>
             _fhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
 
         [HttpGet("{type}/{id}")]
         public async Task<ActionResult<FhirResponse>> Read(string type, string id)
         {
-            var principal = User;
             var ifModifiedSince = Request.Headers[HeaderNames.IfModifiedSince]
                 .Aggregate(
                     default(DateTimeOffset?),

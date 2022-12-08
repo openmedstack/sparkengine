@@ -191,7 +191,7 @@ namespace OpenMedStack.SparkEngine.Service
             }
         }
 
-        public static OperationOutcome AgainstSchema(Resource resource) =>
+        public static OperationOutcome? AgainstSchema(Resource resource) =>
             throw
                 //var result = new OperationOutcome {Issue = new List<OperationOutcome.IssueComponent>()};
                 new NotImplementedException();

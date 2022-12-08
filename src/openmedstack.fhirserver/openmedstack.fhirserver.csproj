@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
+		<PackageReference Include="dotauth.uma.web" Version="1.1.0.2"/>
 	</ItemGroup>
 
 	<ItemGroup>

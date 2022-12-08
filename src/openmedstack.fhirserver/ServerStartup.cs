@@ -1,23 +1,25 @@
 ﻿namespace OpenMedStack.FhirServer
 {
     using System;
+    using System.Net.Http;
+    using System.Text.Json;
+    using DotAuth.Client;
+    using DotAuth.Uma.Web;
     using Hl7.Fhir.Serialization;
     using Hl7.Fhir.Specification;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
-    using Microsoft.AspNetCore.Authorization.Infrastructure;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
     using Microsoft.IdentityModel.Tokens;
     using OpenMedStack.SparkEngine.Interfaces;
     using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
-    using OpenMedStack.SparkEngine.Store.Interfaces;
     using SparkEngine;
     using SparkEngine.Postgres;
     using SparkEngine.Web;
     using SparkEngine.Web.Controllers;
-    using SparkEngine.Web.Persistence;
 
     public class ServerStartup
     {
@@ -31,10 +33,19 @@
         public void ConfigureServices(IServiceCollection services)
         {
             const string authority = "https://identity.reimers.dk";
+            services.AddHttpClient();
+            services.AddLogging(
+                l => l.AddJsonConsole(
+                    o =>
+                    {
+                        o.IncludeScopes = true;
+                        o.UseUtcTimestamp = true;
+                        o.JsonWriterOptions = new JsonWriterOptions { Indented = false };
+                    }));
             services.AddCors();
             services.AddControllers();
-            services.AddTransient<FhirController>();
-            services.AddTransient<ControllerBase, FhirController>();
+            services.AddTransient<UmaFhirController>();
+            services.AddTransient<ControllerBase, UmaFhirController>();
             services.AddFhir(
                 new SparkSettings
                 {
@@ -49,6 +60,35 @@
             //services.AddInMemoryPersistence();
             services.AddSingleton<IGenerator, GuidGenerator>();
             services.AddSingleton<IPatchService, PatchService>();
+            services.AddSingleton<ITokenClient>(
+                sp => new TokenClient(
+                    TokenCredentials.FromClientCredentials("fhir", "fvnfdjvnfsfhrgfhgre"),
+                    () =>
+                    {
+                        var factory = sp.GetRequiredService<IHttpClientFactory>();
+                        return factory.CreateClient();
+                    },
+                    new Uri(authority)));
+            services.AddSingleton(
+                sp =>
+                {
+                    return new UmaClient(
+                        () =>
+                        {
+                            var factory = sp.GetRequiredService<IHttpClientFactory>();
+                            return factory.CreateClient();
+                        },
+                        new Uri(authority));
+                });
+            services.AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>());
+            services.AddSingleton<IResourceMap>(
+                new StaticResourceMap(
+                    new[]
+                    {
+                        System.Collections.Generic.KeyValuePair.Create(
+                            "Patient/123",
+                            "7A38B4029C6ACD4AB1FF1A0D1DD8A1AC")
+                    }));
             services.AddAuthentication(
                     options =>
                     {
