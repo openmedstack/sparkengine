@@ -32,14 +32,81 @@ public class FhirServiceTests
         Assert.NotNull(bundle);
     }
 
-    private static IOrderedAsyncQueryable<Encounter> GetQueryable()
+    [Fact]
+    public async System.Threading.Tasks.Task CanQueryListContents()
     {
-        var service = new FhirService(
-            new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), new TestMessageHandler()));
-        
-        var asyncQueryable = service.Query<Encounter>()
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.Family == "a"));
+        _ = await asyncQueryable.GetBundle();
+
+        Assert.Equal("/Patient?name.family=a", handler.RequestedPathAndQuery);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task CanQueryListContentsByAnyAttribute()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.MatchAnyAttribute("a")));
+        _ = await asyncQueryable.GetBundle();
+
+        Assert.Equal("/Patient?name=a", handler.RequestedPathAndQuery);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task CanQueryListContentsByAnyAttributeNotMatching()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.DoNotMatchAnyAttribute("a")));
+        _ = await asyncQueryable.GetBundle();
+
+        Assert.Equal("/Patient?name%3Anot=a", handler.RequestedPathAndQuery);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task CanReverseIncludeBasedOnReferringTypeAttribute()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+
+        _ = await client.Query<Patient>()
+            .Where(p => p.Name != null)
+            .ReverseInclude<Patient, Encounter>(
+                x => x.ReferringResource<Observation>().Subject,
+                IncludeModifier.Iterate,
+                CancellationToken.None)
+            .GetBundle()
+            .ConfigureAwait(false);
+
+        // ReSharper disable StringLiteralTypo
+        Assert.Equal("/Patient?_revinclude%3Aiterate=Observation%3Asubject&name%3Amissing=false", handler.RequestedPathAndQuery);
+        // ReSharper restore StringLiteralTypo
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task CanIncludeReferencingAttribute()
+    {
+        var handler = new TestMessageHandler();
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
+        _ = await client.Query<Patient>()
+            .Include(x => x.Link)
+            .GetBundle().ConfigureAwait(false);
+
+        // ReSharper disable once StringLiteralTypo
+        Assert.Equal("/Patient?_include=Patient%3Alink", handler.RequestedPathAndQuery);
+    }
+
+    private static IAsyncQueryable<Encounter> GetQueryable()
+    {
+        var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), new TestMessageHandler());
+
+        var asyncQueryable = client.Query<Encounter>()
             .Where(e => e.PlannedEndDate == "a")
-            .UpdatedSince(DateTimeOffset.UnixEpoch).OrderBy(x => x.PlannedEndDate);
+            .UpdatedSince(DateTimeOffset.UnixEpoch)
+            .OrderBy(x => x.PlannedEndDate)
+            .Elements(x => new { s = x.Subject, x.ActualPeriod });
         return asyncQueryable;
     }
 }

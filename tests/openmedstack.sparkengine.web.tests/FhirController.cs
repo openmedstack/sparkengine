@@ -20,9 +20,9 @@
     [ApiController]
     public class FhirController : ControllerBase
     {
-        private readonly IAsyncFhirService _fhirService;
+        private readonly IFhirService _fhirService;
 
-        public FhirController(IAsyncFhirService fhirService)
+        public FhirController(IFhirService fhirService)
         {
             _fhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
         }
