@@ -13,7 +13,7 @@
     using Store.Interfaces;
     using Task = System.Threading.Tasks.Task;
 
-    public class AsyncFhirService : IAsyncFhirService, IInteractionHandler
+    public class FhirService : IFhirService, IInteractionHandler
     {
         private readonly IResourceStorageService _storageService;
         private readonly IPagingService _pagingService;
@@ -25,7 +25,7 @@
         private readonly IPatchService _patchService;
         private readonly ICompositeServiceListener? _serviceListener;
 
-        public AsyncFhirService(
+        public FhirService(
             IResourceStorageService storageService,
             IPagingService pagingService,
             ISearchService searchService,

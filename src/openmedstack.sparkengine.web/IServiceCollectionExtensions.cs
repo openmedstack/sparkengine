@@ -69,7 +69,7 @@ namespace OpenMedStack.SparkEngine.Web
             services.TryAddTransient<ICapabilityStatementService, CapabilityStatementService>(); // conformance
             services.TryAddTransient<ICompositeServiceListener, ServiceListener>();
 
-            services.TryAddSingleton<IAsyncFhirService, AsyncFhirService>();
+            services.TryAddSingleton<IFhirService, FhirService>();
 
             var builder = services.AddFhirFormatters(settings, setupAction);
 

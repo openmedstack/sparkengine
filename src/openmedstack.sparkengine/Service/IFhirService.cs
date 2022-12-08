@@ -15,7 +15,7 @@ namespace OpenMedStack.SparkEngine.Service
     using Hl7.Fhir.Model;
     using Hl7.Fhir.Rest;
 
-    public interface IAsyncFhirService
+    public interface IFhirService
     {
         Task<FhirResponse> AddMeta(IKey key, Parameters parameters);
         Task<FhirResponse?> ConditionalCreate(IKey key, Resource resource, IEnumerable<Tuple<string, string>> parameters);
