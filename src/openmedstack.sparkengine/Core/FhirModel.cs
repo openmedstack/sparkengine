@@ -99,7 +99,7 @@ namespace OpenMedStack.SparkEngine.Core
                 Name = def.Name,
                 Code =
                     def.Name, //CK: SearchParamDefinition has no Code, but in all current SearchParameter resources, name and code are equal.
-                Base = new List<ResourceType?> { GetResourceTypeForResourceName(def.Resource) },
+                Base = new List<AllResourceTypes?> { GetAllResourceTypesValueForResourceName(def.Resource!) },
                 Type = def.Type,
                 Target = def.Target != null ? def.Target.ToList().Cast<ResourceType?>() : new List<ResourceType?>(),
                 Description = def.Description
@@ -125,7 +125,7 @@ namespace OpenMedStack.SparkEngine.Core
             }
 
             //Strip off the [x], for example in Condition.onset[x].
-            result.SetPropertyPath(def.Path.Select(p => p.Replace("[x]", "")).ToArray());
+            result.SetPropertyPath(def.Path!.Select(p => p.Replace("[x]", "")).ToArray());
 
             //Watch out: SearchParameter is not very good yet with Composite parameters.
             //Therefore we include a reference to the original SearchParamDefinition :-)
@@ -142,8 +142,8 @@ namespace OpenMedStack.SparkEngine.Core
                        && string.Equals(Code, other?.Code)
                        && object.Equals(Base, other?.Base)
                        && object.Equals(Type, other.Type)
-                       && string.Equals(Description, other.Description)
-                       && string.Equals(Xpath, other.Xpath);
+                       && string.Equals(Description, other.Description);
+                //&& string.Equals(Xpath, other.Xpath);
             }
 
             public override bool Equals(object? obj)
@@ -168,13 +168,14 @@ namespace OpenMedStack.SparkEngine.Core
 
             public override int GetHashCode()
             {
-                var hashCode = Name != null ? Name.GetHashCode() : 0;
-                hashCode = (hashCode * 397) ^ (Code != null ? Code.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Base != null ? Base.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Description != null ? Description.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Xpath != null ? Xpath.GetHashCode() : 0);
-                return hashCode;
+                return HashCode.Combine(Name, Code, Base, Type, Description);
+                //var hashCode = Name != null ? Name.GetHashCode() : 0;
+                //hashCode = (hashCode * 397) ^ (Code != null ? Code.GetHashCode() : 0);
+                //hashCode = (hashCode * 397) ^ (Base != null ? Base.GetHashCode() : 0);
+                //hashCode = (hashCode * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+                //hashCode = (hashCode * 397) ^ (Description != null ? Description.GetHashCode() : 0);
+                //hashCode = (hashCode * 397) ^ (Xpath != null ? Xpath.GetHashCode() : 0);
+                //return hashCode;
             }
         }
 
@@ -183,15 +184,20 @@ namespace OpenMedStack.SparkEngine.Core
             get { return _searchParameters; }
         }
 
-        public string GetResourceNameForType(Type type)
+        public string? GetResourceNameForType(Type type)
         {
             return GetFhirTypeNameForType(type);
 
         }
 
-        public Type GetTypeForResourceName(string name)
+        public Type? GetTypeForResourceName(string name)
         {
             return GetTypeForFhirType(name);
+        }
+
+        public AllResourceTypes GetAllResourceTypesValueForResourceName(string name)
+        {
+            return (AllResourceTypes)Enum.Parse(typeof(AllResourceTypes), name, true);
         }
 
         public ResourceType GetResourceTypeForResourceName(string name)
@@ -212,12 +218,12 @@ namespace OpenMedStack.SparkEngine.Core
         public IEnumerable<SearchParameter> FindSearchParameters(string? resourceName)
         {
             //DEBUG var resourceTypes = SearchParameters.SelectMany(x => x.Base).Select(x => x.ToString()).ToArray();
-            //return SearchParameters.Where(sp => sp.Base == GetResourceTypeForResourceName(resourceName) || sp.Base == ResourceType.Resource);
+            //return SearchParameters.Where(sp => sp.Base == GetAllResourceTypesValueForResourceName(resourceName) || sp.Base == ResourceType.Resource);
             return resourceName == null
                 ? Enumerable.Empty<SearchParameter>()
                 : SearchParameters.Where(
-                    sp => sp.Base.Contains(GetResourceTypeForResourceName(resourceName))
-                          || sp.Base.Any(b => b == ResourceType.Resource));
+                    sp => sp.Base.Contains(GetAllResourceTypesValueForResourceName(resourceName))
+                          || sp.Base.Any(b => b == AllResourceTypes.Resource));
         }
 
         public IEnumerable<SearchParameter> FindSearchParameters(ResourceType resourceType)
@@ -235,7 +241,7 @@ namespace OpenMedStack.SparkEngine.Core
             return FindSearchParameter(GetResourceNameForType(resourceType), parameterName);
         }
 
-        public SearchParameter? FindSearchParameter(string resourceName, string parameterName)
+        public SearchParameter? FindSearchParameter(string? resourceName, string parameterName)
         {
             return FindSearchParameters(resourceName).FirstOrDefault(sp => sp.Name == parameterName);
         }

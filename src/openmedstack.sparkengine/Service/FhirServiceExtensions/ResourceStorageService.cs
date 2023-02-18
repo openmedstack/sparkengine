@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Store.Interfaces;
@@ -28,11 +29,11 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         }
 
         /// <inheritdoc />
-        public Task<bool> Exists(IKey key) => _fhirStore.Exists(key);
+        public Task<bool> Exists(IKey key, CancellationToken cancellationToken) => _fhirStore.Exists(key);
 
-        public async Task<Entry?> Get(IKey key)
+        public async Task<Entry?> Get(IKey key, CancellationToken cancellationToken)
         {
-            var entry = await _fhirStore.Get(key).ConfigureAwait(false);
+            var entry = await _fhirStore.Get(key, cancellationToken).ConfigureAwait(false);
             if (entry != null)
             {
                 _transfer.Externalize(entry);
@@ -41,15 +42,17 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             return entry;
         }
 
-        public async Task<Entry> Add(Entry entry)
+        public async Task<Entry> Add(Entry entry, CancellationToken cancellationToken)
         {
             if (entry.State != EntryState.Internal)
             {
-                await _transfer.Internalize(entry).ConfigureAwait(false);
+                await _transfer.Internalize(entry, cancellationToken).ConfigureAwait(false);
             }
 
-            await _fhirStore.Add(entry).ConfigureAwait(false);
-            var result = entry.IsDelete ? entry : await _fhirStore.Get(entry.Key).ConfigureAwait(false);
+            await _fhirStore.Add(entry, cancellationToken).ConfigureAwait(false);
+            var result = entry.IsDelete
+                ? entry
+                : await _fhirStore.Get(entry.Key, cancellationToken).ConfigureAwait(false);
 
             if (result != null)
             {
@@ -59,9 +62,13 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             return result ?? entry;
         }
 
-        public IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null)
+        public IAsyncEnumerable<Entry> Get(
+            IEnumerable<string> localIdentifiers,
+            string? sortBy = null,
+            CancellationToken cancellationToken = default)
         {
-            return _transfer.Externalize(_fhirStore.Get(localIdentifiers.Select(k => (IKey)Key.ParseOperationPath(k))));
+            return _transfer.Externalize(
+                _fhirStore.Get(localIdentifiers.Select(k => (IKey)Key.ParseOperationPath(k)), cancellationToken));
         }
     }
 }

@@ -19,12 +19,14 @@
   ],
   "serviceType": [
     {
-      "coding": [
-        {
-          "code": "52",
-          "display": "General Discussion"
-        }
-      ]
+      "concept": {
+        "coding": [
+          {
+            "code": "52",
+            "display": "General Discussion"
+          }
+        ]
+      }
     }
   ],
   "specialty": [
@@ -47,7 +49,7 @@
       }
     ]
   },
-  "priority": 5,
+  "priority": { "text": "5" },
   "description": "Discussion about Peter Chalmers MRI results",
   "supportingInformation": [
     {
@@ -56,14 +58,13 @@
   ],
   "start": "2013-12-09T09:00:00Z",
   "end": "2013-12-09T11:00:00Z",
-  "comment": "Clarify the results of the MRI to ensure context of test was correct",
   "participant": [
     {
       "actor": {
         "reference": "Patient/example",
         "display": "Peter James Chalmers"
       },
-      "required": "information-only",
+      "required": false,
       "status": "accepted"
     },
     {
@@ -71,7 +72,7 @@
         "reference": "Practitioner/example",
         "display": "Dr Adam Careful"
       },
-      "required": "required",
+      "required": true,
       "status": "accepted"
     },
     {
@@ -79,14 +80,14 @@
         "reference": "Practitioner/f202",
         "display": "Luigi Maas"
       },
-      "required": "required",
+      "required": true,
       "status": "accepted"
     },
     {
       "actor": {
         "display": "Phone Call"
       },
-      "required": "information-only",
+      "required": false,
       "status": "accepted"
     }
   ],

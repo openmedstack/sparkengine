@@ -8,6 +8,7 @@
 
 namespace OpenMedStack.SparkEngine.Extensions
 {
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Hl7.Fhir.Model;
@@ -15,19 +16,19 @@ namespace OpenMedStack.SparkEngine.Extensions
 
     public static class GeneratorKeyExtensions
     {
-        public static async Task<Key> NextHistoryKey(this IGenerator generator, IKey key)
+        public static async Task<Key> NextHistoryKey(this IGenerator generator, IKey key, CancellationToken cancellationToken)
         {
-            var historykey = key.Clone();
-            historykey.VersionId = await generator.NextVersionId(key.TypeName!, key.ResourceId!).ConfigureAwait(false);
-            return historykey;
+            var historyKey = key.Clone();
+            historyKey.VersionId = await generator.NextVersionId(key.TypeName!, key.ResourceId!, cancellationToken).ConfigureAwait(false);
+            return historyKey;
         }
 
-        public static async Task<Key> NextKey(this IGenerator generator, Resource resource)
+        public static async Task<Key> NextKey(this IGenerator generator, Resource resource, CancellationToken cancellationToken)
         {
-            var resourceid = await generator.NextResourceId(resource).ConfigureAwait(false);
+            var resourceId = await generator.NextResourceId(resource, cancellationToken).ConfigureAwait(false);
             var key = resource.ExtractKey();
-            var versionid = await generator.NextVersionId(key.TypeName!, resourceid).ConfigureAwait(false);
-            return Key.Create(key.TypeName!, resourceid, versionid);
+            var versionId = await generator.NextVersionId(key.TypeName!, resourceId, cancellationToken).ConfigureAwait(false);
+            return Key.Create(key.TypeName!, resourceId, versionId);
         }
 
         //public static void AddHistoryKeys(this IGenerator generator, List<Entry> entries)

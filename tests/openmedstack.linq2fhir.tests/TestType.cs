@@ -4,7 +4,7 @@ using Hl7.Fhir.Model;
 
 internal class TestType : Resource
 {
-    public string Subject { get; set; }
+    public string Subject { get; set; } = "";
 
     public int Number { get; set; }
 

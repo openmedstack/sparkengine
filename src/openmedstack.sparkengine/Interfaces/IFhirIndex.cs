@@ -10,6 +10,7 @@
 namespace OpenMedStack.SparkEngine.Interfaces
 {
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Hl7.Fhir.Rest;
@@ -18,10 +19,10 @@ namespace OpenMedStack.SparkEngine.Interfaces
     {
         Task Clean();
 
-        Task<SearchResults> Search(string resource, SearchParams searchCommand);
+        Task<SearchResults> Search(string resource, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<Key?> FindSingle(string resource, SearchParams searchCommand);
+        Task<Key?> FindSingle(string resource, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<SearchResults> GetReverseIncludes(IList<IKey> keys, IList<string> revIncludes);
+        Task<SearchResults> GetReverseIncludes(IList<IKey> keys, IList<string> revIncludes, CancellationToken cancellationToken = default);
     }
 }

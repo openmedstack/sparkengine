@@ -161,7 +161,7 @@ namespace OpenMedStack.SparkEngine.Extensions
                 resource,
                 element =>
                 {
-                    if (!(element is ResourceReference resourceReference))
+                    if (element is not ResourceReference resourceReference)
                     {
                         return;
                     }

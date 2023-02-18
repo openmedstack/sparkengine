@@ -8,20 +8,21 @@
  */
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 {
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Hl7.Fhir.Rest;
 
     public interface ISearchService
     {
-        Task<Snapshot> GetSnapshot(string type, SearchParams searchCommand);
+        Task<Snapshot> GetSnapshot(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<Snapshot> GetSnapshotForEverything(IKey key);
+        Task<Snapshot> GetSnapshotForEverything(IKey key, CancellationToken cancellationToken);
 
-        Task<IKey> FindSingle(string type, SearchParams searchCommand);
+        Task<IKey> FindSingle(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<IKey?> FindSingleOrDefault(string type, SearchParams searchCommand);
+        Task<IKey?> FindSingleOrDefault(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<SearchResults> GetSearchResults(string type, SearchParams searchCommand);
+        Task<SearchResults> GetSearchResults(string type, SearchParams searchCommand, CancellationToken cancellationToken);
     }
 }

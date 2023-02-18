@@ -3,6 +3,8 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Persistence
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using SparkEngine.Extensions;
@@ -13,7 +15,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Persistence
         private readonly List<Entry> _entries = new();
 
         /// <inheritdoc />
-        public Task Add(Entry entry)
+        public Task Add(Entry entry, CancellationToken cancellationToken = default)
         {
             lock (_entries)
             {
@@ -31,7 +33,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Persistence
         }
 
         /// <inheritdoc />
-        public Task<Entry?> Get(IKey? key)
+        public Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default)
         {
             if (key == null)
             {
@@ -43,22 +45,22 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Persistence
                 var result = entries
                                  .FirstOrDefault(x => key.ToStorageKey().Equals(x.Key!.ToStorageKey()) && !x.IsDelete)
                              ?? entries.Where(
-                                     x => key.WithoutVersion().ToStorageKey().Equals(x.Key!.WithoutVersion().ToStorageKey())
-                                          && !x.IsDelete)
-                                 .OrderByDescending(x => x.When)
-                                 .FirstOrDefault();
+                                 x => key.WithoutVersion().ToStorageKey().Equals(x.Key!.WithoutVersion().ToStorageKey())
+                                      && !x.IsDelete).MaxBy(x => x.When);
                 return Task.FromResult(result);
             }
         }
 
         /// <inheritdoc />
-        public async IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers)
+        public async IAsyncEnumerable<Entry> Get(
+            IEnumerable<IKey> localIdentifiers,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             await Task.Yield();
             var storageKeys = localIdentifiers.Select(x => x.ToStorageKey()).ToArray();
             lock (_entries)
             {
-                var result = _entries.Where(x => !x.IsDelete && x.Key != null && storageKeys.Contains(x.Key.ToStorageKey()));
+                var result = _entries.Where(x => x is { IsDelete: false, Key: { } } && storageKeys.Contains(x.Key.ToStorageKey()));
                 foreach (var entry in result)
                 {
                     yield return entry;
@@ -67,7 +69,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Persistence
         }
 
         /// <inheritdoc />
-        public Task<bool> Exists(IKey? key)
+        public Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default)
         {
             if (key == null)
             {

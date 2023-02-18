@@ -10,6 +10,8 @@ namespace OpenMedStack.SparkEngine.Service
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Interfaces;
@@ -30,17 +32,17 @@ namespace OpenMedStack.SparkEngine.Service
             _import = new(localhost, generator);
         }
 
-        public Task Internalize(Entry entry)
+        public Task Internalize(Entry entry, CancellationToken cancellationToken)
         {
-            return _import.Internalize(entry);
+            return _import.Internalize(entry, null, cancellationToken);
         }
 
 
-        public async IAsyncEnumerable<Entry> Internalize(IEnumerable<Entry> interactions, Mapper<string, IKey>? mapper)
+        public async IAsyncEnumerable<Entry> Internalize(IEnumerable<Entry> interactions, Mapper<string, IKey>? mapper, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var interaction in interactions)
             {
-                yield return await _import.Internalize(interaction, mapper);
+                yield return await _import.Internalize(interaction, mapper, cancellationToken);
             }
         }
 
@@ -60,7 +62,7 @@ namespace OpenMedStack.SparkEngine.Service
 
         public IEnumerable<Entry> Externalize(IEnumerable<Entry> interactions)
         {
-           return interactions.Select(_export.Externalize);
+            return interactions.Select(_export.Externalize);
         }
     }
 }

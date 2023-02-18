@@ -12,6 +12,7 @@ namespace OpenMedStack.SparkEngine.Postgres
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Hl7.Fhir.Rest;
@@ -42,7 +43,10 @@ namespace OpenMedStack.SparkEngine.Postgres
         }
 
         /// <inheritdoc />
-        public async Task<SearchResults> Search(string resource, SearchParams searchCommand)
+        public async Task<SearchResults> Search(
+            string resource,
+            SearchParams searchCommand,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("{resource} search requested with {searchCommand}", resource, searchCommand.ToUriParamList().ToQueryString());
             var resources = await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
@@ -67,7 +71,10 @@ namespace OpenMedStack.SparkEngine.Postgres
         }
 
         /// <inheritdoc />
-        public async Task<Key?> FindSingle(string resource, SearchParams searchCommand)
+        public async Task<Key?> FindSingle(
+            string resource,
+            SearchParams searchCommand,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Find single {resource} key", resource);
             var entries = await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
@@ -76,7 +83,10 @@ namespace OpenMedStack.SparkEngine.Postgres
         }
 
         /// <inheritdoc />
-        public Task<SearchResults> GetReverseIncludes(IList<IKey> keys, IList<string> revIncludes) =>
+        public Task<SearchResults> GetReverseIncludes(
+            IList<IKey> keys,
+            IList<string> revIncludes,
+            CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
         /// <inheritdoc />
@@ -92,9 +102,8 @@ namespace OpenMedStack.SparkEngine.Postgres
             {
                 var array = value.Values.Select(GetValue).ToHashSet();
                 var o = array.Count == 1 ? array.First() : array;
-                if (value.Name != null && entry.Values.ContainsKey(value.Name))
+                if (value.Name != null && entry.Values.TryGetValue(value.Name, out var existing))
                 {
-                    var existing = entry.Values[value.Name];
                     switch (existing)
                     {
                         case HashSet<object> l:

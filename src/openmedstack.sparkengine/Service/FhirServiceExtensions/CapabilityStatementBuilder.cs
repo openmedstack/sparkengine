@@ -125,7 +125,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         {
             var resource = new CapabilityStatement.ResourceComponent
             {
-                Type = EnumUtility.ParseLiteral<ResourceType>(resourcetype),
+                Type = resourcetype, //EnumUtility.ParseLiteral<ResourceType>(resourcetype),
                 Profile = profile ?? new Canonical(),
                 ReadHistory = readhistory,
                 UpdateCreate = updatecreate,
@@ -170,13 +170,11 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         public static CapabilityStatement.ResourceComponent AddCoreSearchParamsResource(
             CapabilityStatement.ResourceComponent resourcecomp)
         {
-            var parameters = ModelInfo.SearchParameters.Where(sp => sp.Resource == resourcecomp.Type!.GetLiteral())
+            var parameters = ModelInfo.SearchParameters.Where(sp => sp.Resource == resourcecomp.Type!)
                 .Select(
                     sp => new CapabilityStatement.SearchParamComponent
                     {
-                        Name = sp.Name,
-                        Type = sp.Type,
-                        Documentation = sp.Description
+                        Name = sp.Name, Type = sp.Type, Documentation = sp.Description
                     });
 
             resourcecomp.SearchParam.AddRange(parameters);
@@ -235,10 +233,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             CapabilityStatement.SystemRestfulInteraction code)
         {
             var restComponent = capabilityStatement.Rest();
-            if (restComponent != null)
-            {
-                restComponent.Interaction.Add(new CapabilityStatement.SystemInteractionComponent { Code = code });
-            }
+            restComponent?.Interaction.Add(new CapabilityStatement.SystemInteractionComponent { Code = code });
         }
 
         public static void AddOperation(this CapabilityStatement capabilityStatement, string name, string definition)

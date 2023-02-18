@@ -41,7 +41,7 @@ namespace OpenMedStack.SparkEngine.Core
             _fhirTypeInfoList = new List<FhirTypeInfo>();
             foreach (var type in supportedFhirTypes.Select(x => new FhirTypeInfo(x, CreateFhirPropertyInfo)))
             {
-             _fhirTypeInfoList.Add(type);   
+                _fhirTypeInfoList.Add(type);
             }
         }
 
@@ -155,7 +155,7 @@ namespace OpenMedStack.SparkEngine.Core
             target.IsReference = true;
             target.AllowedTypes.AddRange(
                 attReferenceAttribute.Resources.Select(r => _fhirModel.GetTypeForResourceName(r))
-                    .Where(at => at != null));
+                    .Where(at => at != null).Select(t => t!));
         }
 
         private static void ExtractDataChoiceTypes(PropertyInfo prop, FhirPropertyInfo target)

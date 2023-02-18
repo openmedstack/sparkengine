@@ -9,17 +9,18 @@
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 {
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
 
     public interface IResourceStorageService
     {
-        Task<bool> Exists(IKey key);
+        Task<bool> Exists(IKey key, CancellationToken cancellationToken);
 
-        Task<Entry?> Get(IKey key);
+        Task<Entry?> Get(IKey key, CancellationToken cancellationToken);
 
-        Task<Entry> Add(Entry entry);
+        Task<Entry> Add(Entry entry, CancellationToken cancellationToken);
 
-        IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null);
+        IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null, CancellationToken cancellationToken = default);
     }
 }

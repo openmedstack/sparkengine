@@ -22,21 +22,21 @@ namespace OpenMedStack.SparkEngine.Core
         /// </summary>
         /// <param name="name"></param>
         /// <returns>type belonging to the name, if known (otherwise null)</returns>
-        Type GetTypeForResourceName(string name);
+        Type? GetTypeForResourceName(string name);
 
         /// <summary>
         ///     Hl7.Fhir.Model.Patient -> "Patient"
         /// </summary>
         /// <param name="type"></param>
         /// <returns>name of the type as it is used in the REST interface, if known (otherwise null)</returns>
-        string GetResourceNameForType(Type type);
+        string? GetResourceNameForType(Type type);
 
         /// <summary>
         ///     "Patient" -> Hl7.Fhir.Model.ResourceType.Patient
         /// </summary>
         /// <param name="name"></param>
         /// <returns>Enum value of ResourceType matching the name</returns>
-        ResourceType GetResourceTypeForResourceName(string name);
+        AllResourceTypes GetAllResourceTypesValueForResourceName(string name);
 
         /// <summary>
         ///     Hl7.Fhir.Model.ResourceType.Patient -> "Patient"

@@ -23,7 +23,14 @@ internal class ResourceConverter : JsonConverter<Resource>
     /// <inheritdoc />
     public override void WriteJson(JsonWriter writer, Resource? value, JsonSerializer serializer)
     {
-        writer.WriteRawValue(_inner.SerializeToString(value));
+        if (value == null)
+        {
+            writer.WriteNull();
+        }
+        else
+        {
+            writer.WriteRawValue(_inner.SerializeToString(value));
+        }
     }
 
     /// <inheritdoc />

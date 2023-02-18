@@ -33,8 +33,8 @@ namespace OpenMedStack.SparkEngine.Extensions
         public static void SetPropertyPath(this SearchParameter searchParameter, string[] paths)
         {
             string[] workingPaths;
-            if (paths != null)
-            {
+            //if (paths != null)
+            //{
                 // TODO: Added FirstOrDefault to searchParameter.Base.GetLiteral() could possibly generate a bug
 
                 //A searchparameter always has a Resource as focus, so we don't need the name of the resource to be at the start of the Path.
@@ -44,13 +44,13 @@ namespace OpenMedStack.SparkEngine.Extensions
                     .ToArray();
                 var xpaths = workingPaths.Select(
                     pp => "//" + PathPattern.ReplaceGroup(pp, "separator", XPATH_SEPARATOR));
-                searchParameter.Xpath = string.Join(" | ", xpaths);
-            }
-            else
-            {
-                searchParameter.Xpath = string.Empty;
-                //Null is not an error, for example Composite parameters don't have a path.
-            }
+                //searchParameter.Xpath = string.Join(" | ", xpaths);
+            //}
+            //else
+            //{
+            //    searchParameter.Xpath = string.Empty;
+            //    //Null is not an error, for example Composite parameters don't have a path.
+            //}
         }
 
         private static string StripResourceNameFromStart(string path, string resourceName)
@@ -69,20 +69,20 @@ namespace OpenMedStack.SparkEngine.Extensions
             return path;
         }
 
-        public static string[] GetPropertyPath(this SearchParameter searchParameter)
-        {
-            if (searchParameter.Xpath != null)
-            {
-                var xpaths = searchParameter.Xpath.Split(new[] {" | "}, StringSplitOptions.None);
-                return xpaths.Select(
-                        xp => XpathPattern.ReplaceGroups(
-                            xp,
-                            new Dictionary<string, string> {{"separator", PATH_SEPARATOR}, {"root", string.Empty}}))
-                    .ToArray();
-            }
+        //public static string[] GetPropertyPath(this SearchParameter searchParameter)
+        //{
+        //    if (searchParameter.Xpath != null)
+        //    {
+        //        var xpaths = searchParameter.Xpath.Split(new[] {" | "}, StringSplitOptions.None);
+        //        return xpaths.Select(
+        //                xp => XpathPattern.ReplaceGroups(
+        //                    xp,
+        //                    new Dictionary<string, string> {{"separator", PATH_SEPARATOR}, {"root", string.Empty}}))
+        //            .ToArray();
+        //    }
 
-            return Array.Empty<string>();
-        }
+        //    return Array.Empty<string>();
+        //}
 
         public static ModelInfo.SearchParamDefinition GetOriginalDefinition(this SearchParameter searchParameter) =>
             searchParameter.Annotation<ModelInfo.SearchParamDefinition>();

@@ -1,15 +1,15 @@
 ﻿namespace OpenMedStack.FhirServer
 {
     using System;
+    using System.Collections.Generic;
     using System.Net.Http;
     using System.Text.Json;
     using DotAuth.Client;
-    using DotAuth.Uma.Web;
+    using DotAuth.Uma;
     using Hl7.Fhir.Serialization;
     using Hl7.Fhir.Specification;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
@@ -17,9 +17,7 @@
     using OpenMedStack.SparkEngine.Interfaces;
     using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
     using SparkEngine;
-    using SparkEngine.Postgres;
     using SparkEngine.Web;
-    using SparkEngine.Web.Controllers;
 
     public class ServerStartup
     {
@@ -44,9 +42,7 @@
                     }));
             services.AddCors();
             services.AddControllers();
-            services.AddTransient<UmaFhirController>();
-            services.AddTransient<ControllerBase, UmaFhirController>();
-            services.AddFhir(
+            services.AddFhir<UmaFhirController>(
                 new SparkSettings
                 {
                     UseAsynchronousIO = true,
@@ -56,8 +52,8 @@
                     SerializerSettings = SerializerSettings.CreateDefault()
                 });
             var s = _configuration["CONNECTIONSTRING"]!;
-            services.AddPostgresFhirStore(new StoreSettings(s));
-            //services.AddInMemoryPersistence();
+            //services.AddPostgresFhirStore(new StoreSettings(s));
+            services.AddInMemoryPersistence();
             services.AddSingleton<IGenerator, GuidGenerator>();
             services.AddSingleton<IPatchService, PatchService>();
             services.AddSingleton<ITokenClient>(
@@ -83,11 +79,9 @@
             services.AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>());
             services.AddSingleton<IResourceMap>(
                 new StaticResourceMap(
-                    new[]
+                    new HashSet<KeyValuePair<string, string>>
                     {
-                        System.Collections.Generic.KeyValuePair.Create(
-                            "Patient/123",
-                            "7A38B4029C6ACD4AB1FF1A0D1DD8A1AC")
+                        KeyValuePair.Create("Patient/123", "7A38B4029C6ACD4AB1FF1A0D1DD8A1AC")
                     }));
             services.AddAuthentication(
                     options =>

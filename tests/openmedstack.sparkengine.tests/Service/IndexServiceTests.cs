@@ -17,6 +17,7 @@ namespace OpenMedStack.SparkEngine.Tests.Service
     using Microsoft.Extensions.Logging;
     using Model;
     using Moq;
+    using Newtonsoft.Json;
     using SparkEngine.Core;
     using SparkEngine.Search;
     using SparkEngine.Search.ValueExpressionTypes;
@@ -133,6 +134,28 @@ namespace OpenMedStack.SparkEngine.Tests.Service
         }
 
         [Fact]
+        public async Task SerializeGoal()
+        {
+            var g =new CarePlan
+            {
+                Addresses = new List<CodeableReference>{new CodeableReference{ Reference = new ResourceReference("Condition/f204","Roel\u0027s renal insufficiency")}},
+                Activity = new List<CarePlan.ActivityComponent>
+                {
+                    new CarePlan.ActivityComponent
+                    {
+                    }
+                }
+            };
+            var s = new FhirJsonSerializer();
+            await using var stringWriter = new StringWriter();
+            using var jsonTextWriter = new JsonTextWriter(stringWriter);
+            await s.SerializeAsync(g, jsonTextWriter);
+            await jsonTextWriter.FlushAsync();
+            await stringWriter.FlushAsync();
+            var json = stringWriter.GetStringBuilder().ToString();
+        }
+
+        [Fact]
         public async Task TestIndexResourceAppointmentComplete()
         {
             var parser = new FhirJsonParser();
@@ -146,7 +169,7 @@ namespace OpenMedStack.SparkEngine.Tests.Service
         }
 
         [Fact]
-        public async Task TestIndexResourceCareplanWithContainedGoal()
+        public async Task TestIndexResourceCarePlanWithContainedGoal()
         {
             var parser = new FhirJsonParser();
             var cpResource = parser.Parse<Resource>(_carePlanWithContainedGoal);

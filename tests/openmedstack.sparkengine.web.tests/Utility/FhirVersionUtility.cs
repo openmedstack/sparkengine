@@ -29,7 +29,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Utility
             {FhirVersionMoniker.R5, VERSION_R5}
         };
 
-        public static FhirVersionMoniker GetFhirVersionMoniker()
+        public static FhirVersionMoniker GetFhirVersionMoniker(FhirVersionMoniker fallback)
         {
             FhirVersionMoniker? fhirVersion = default;
             if (Version.TryParse(ModelInfo.Version, out var semanticVersion))
@@ -38,7 +38,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Utility
                     EnumUtility.ParseLiteral<FhirVersionMoniker>($"{semanticVersion.Major}.{semanticVersion.Minor}");
             }
 
-            return fhirVersion ?? FhirVersionMoniker.None;
+            return fhirVersion ?? fallback; // FhirVersionMoniker.None;
         }
     }
 }

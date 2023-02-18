@@ -128,8 +128,7 @@ internal class QueryExpressionVisitor : ExpressionVisitor
     private static string GetMemberName(Expression nodeArgument, bool includeDeclaringType = false)
     {
         var lambdaExpression = GetLambdaExpression(nodeArgument);
-        if (lambdaExpression!.Body is MemberExpression { Expression: MethodCallExpression methodCall } memberAccess
-            && methodCall.Method.Name == nameof(FhirQueryableExtensions.ReferringResource)
+        if (lambdaExpression!.Body is MemberExpression { Expression: MethodCallExpression { Method.Name: nameof(FhirQueryableExtensions.ReferringResource) } methodCall } memberAccess 
             && methodCall.Method.DeclaringType == typeof(FhirQueryableExtensions))
         {
             var resourceType = methodCall.Method.ReturnType;

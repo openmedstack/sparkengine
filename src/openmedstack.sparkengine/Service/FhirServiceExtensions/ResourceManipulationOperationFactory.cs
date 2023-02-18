@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Extensions;
@@ -11,11 +12,11 @@
 
     public static partial class ResourceManipulationOperationFactory
     {
-        private static readonly Dictionary<Bundle.HTTPVerb, Func<Resource, IKey, ISearchService, SearchParams?, Task<ResourceManipulationOperation>>> _asyncBuilders;
+        private static readonly Dictionary<Bundle.HTTPVerb, Func<Resource, IKey, ISearchService, SearchParams?, CancellationToken, Task<ResourceManipulationOperation>>> _asyncBuilders;
 
         static ResourceManipulationOperationFactory()
         {
-            _asyncBuilders = new Dictionary<Bundle.HTTPVerb, Func<Resource, IKey, ISearchService, SearchParams?, Task<ResourceManipulationOperation>>>
+            _asyncBuilders = new Dictionary<Bundle.HTTPVerb, Func<Resource, IKey, ISearchService, SearchParams?, CancellationToken, Task<ResourceManipulationOperation>>>
             {
                 { Bundle.HTTPVerb.POST, CreatePost },
                 { Bundle.HTTPVerb.PUT, CreatePut },
@@ -25,54 +26,54 @@
             };
         }
 
-        private static async Task<SearchResults?> GetSearchResult(IKey key, ISearchService searchService, SearchParams? searchParams = null)
+        private static async Task<SearchResults?> GetSearchResult(IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
             if (key.TypeName == null || searchParams == null || searchParams.Parameters.Count == 0)
             {
                 return null;
             }
 
-            return await searchService.GetSearchResults(key.TypeName, searchParams!).ConfigureAwait(false);
+            return await searchService.GetSearchResults(key.TypeName, searchParams, cancellationToken).ConfigureAwait(false);
         }
 
-        public static async Task<ResourceManipulationOperation> CreatePost(this Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null)
+        public static async Task<ResourceManipulationOperation> CreatePost(this Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
-            return new PostManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams).ConfigureAwait(false), searchParams);
+            return new PostManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken).ConfigureAwait(false), searchParams);
         }
 
-        public static async Task<ResourceManipulationOperation> CreatePut(this Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null)
+        public static async Task<ResourceManipulationOperation> CreatePut(this Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
-            return new PutManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams).ConfigureAwait(false), searchParams);
+            return new PutManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken).ConfigureAwait(false), searchParams);
         }
 
-        private static async Task<ResourceManipulationOperation> CreatePatch(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null)
+        private static async Task<ResourceManipulationOperation> CreatePatch(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
-            return new PatchManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams), searchParams);
+            return new PatchManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken), searchParams);
         }
 
-        public static async Task<ResourceManipulationOperation> CreateDelete(IKey key, ISearchService searchService, SearchParams? searchParams = null)
+        public static async Task<ResourceManipulationOperation> CreateDelete(IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
-            return new DeleteManipulationOperation(null, key, await GetSearchResult(key, searchService, searchParams).ConfigureAwait(false), searchParams);
+            return new DeleteManipulationOperation(null, key, await GetSearchResult(key, searchService, searchParams, cancellationToken).ConfigureAwait(false), searchParams);
         }
 
-        private static async Task<ResourceManipulationOperation> CreateDelete(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null)
+        private static async Task<ResourceManipulationOperation> CreateDelete(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
-            return new DeleteManipulationOperation(null, key, await GetSearchResult(key, searchService, searchParams).ConfigureAwait(false), searchParams);
+            return new DeleteManipulationOperation(null, key, await GetSearchResult(key, searchService, searchParams, cancellationToken).ConfigureAwait(false), searchParams);
         }
 
-        private static async Task<ResourceManipulationOperation> CreateGet(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams)
+        private static async Task<ResourceManipulationOperation> CreateGet(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams, CancellationToken cancellationToken = default)
         {
-            return new GetManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams), searchParams);
+            return new GetManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken), searchParams);
         }
 
-        public static async Task<ResourceManipulationOperation> GetManipulationOperation(Bundle.EntryComponent entryComponent, ILocalhost localhost, ISearchService searchService)
+        public static async Task<ResourceManipulationOperation> GetManipulationOperation(Bundle.EntryComponent entryComponent, ILocalhost localhost, ISearchService searchService, CancellationToken cancellationToken = default)
         {
             var method = localhost.ExtrapolateMethod(entryComponent, null);
             var key = localhost.ExtractKey(entryComponent) ?? throw new NullReferenceException("Cannot identify key");
             var searchUri = GetSearchUri(entryComponent, method);
 
             var searchParams = searchUri != null ? ParseQueryString(localhost, searchUri) : null;
-            return await _asyncBuilders[method](entryComponent.Resource, key, searchService, searchParams)
+            return await _asyncBuilders[method](entryComponent.Resource, key, searchService, searchParams, cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -98,7 +99,7 @@
 
         private static IEnumerable<Tuple<string, string>> ParseQueryString(this Uri uri)
         {
-            var query = uri?.Query ?? throw new ArgumentNullException(nameof(uri));
+            var query = uri.Query ?? throw new ArgumentNullException(nameof(uri));
             return query.Trim('?')
                 .Split('&')
                 .Select(x => x.Split('='))

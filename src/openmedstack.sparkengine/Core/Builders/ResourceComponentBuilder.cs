@@ -41,7 +41,9 @@ namespace OpenMedStack.SparkEngine.Core.Builders
                 throw new RequiredAttributeException("Attribute 'Type' of ResourceComponent is required.");
             }
 
-            resource.TypeElement = _type;
+            resource.TypeElement = _type.Value == null
+                ? new Code()
+                : new Code(ModelInfo.ResourceTypeToFhirTypeName((ResourceType)_type.Value));
             if (_profile != null)
             {
                 resource.ProfileElement = _profile;
@@ -52,7 +54,7 @@ namespace OpenMedStack.SparkEngine.Core.Builders
                 resource.SupportedProfileElement = _supportedProfile;
             }
 
-            if (_interaction != null && _interaction.Count() > 0)
+            if (_interaction != null && _interaction.Any())
             {
                 resource.Interaction = _interaction;
             }

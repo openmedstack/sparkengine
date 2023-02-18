@@ -16,17 +16,14 @@ namespace OpenMedStack.SparkEngine.Tests.Core
     using SparkEngine.Core;
     using Xunit;
 
-    public class ResourceVisitorTests : IDisposable
+    public partial class ResourceVisitorTests : IDisposable
     {
-        private readonly IFhirModel _fhirModel;
         //old version, with [x=y] as predicate
         //private Regex headTailRegex = new Regex(@"(?([^\.]*\[.*])(?<head>[^\[]*)\[(?<predicate>.*)](\.(?<tail>.*))?|(?<head>[^\.]*)(\.(?<tail>.*))?)");
 
         //new version, with (x=y) as predicate (so with round brackets instead of square brackets.
-        private readonly Regex _headTailRegex = new(
-            @"(?([^\.]*\(.*\))(?<head>[^\(]*)\((?<predicate>.*)\)(\.(?<tail>.*))?|(?<head>[^\.]*)(\.(?<tail>.*))?)");
+        private readonly Regex _headTailRegex = HeadTailRegex();
 
-        private readonly FhirPropertyIndex _index;
         private readonly Patient _patient;
         private readonly ResourceVisitor _sut;
         private int _actualActionCounter;
@@ -34,9 +31,8 @@ namespace OpenMedStack.SparkEngine.Tests.Core
 
         public ResourceVisitorTests()
         {
-            _fhirModel = new FhirModel();
-            _index = new FhirPropertyIndex(
-                _fhirModel,
+            var index = new FhirPropertyIndex(
+                new FhirModel(),
                 new List<Type>
                 {
                     typeof(Patient),
@@ -45,7 +41,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core
                     typeof(CodeableConcept),
                     typeof(Coding)
                 });
-            _sut = new ResourceVisitor(_index);
+            _sut = new ResourceVisitor(index);
             _patient = new Patient();
             _patient.Name.Add(new HumanName().WithGiven("Sjors").AndFamily("Jansen"));
         }
@@ -146,7 +142,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core
         public void TestVisitDataChoiceProperty()
         {
             _expectedActionCounter = 1;
-            var ci = new ClinicalImpression {Code = new CodeableConcept("test.system", "test.code")};
+            var ci = new ClinicalImpression { StatusReason = new CodeableConcept("test.system", "test.code")};
             _sut.VisitByPath(
                 ci,
                 ob =>
@@ -157,7 +153,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core
                         throw new Exception("Test fail");
                     }
                 },
-                "code.coding.system");
+                "statusReason.coding.system");
         }
 
         [Fact]
@@ -229,5 +225,8 @@ namespace OpenMedStack.SparkEngine.Tests.Core
                 },
                 "name[given=Sjimmie]");
         }
+
+        [GeneratedRegex("(?([^\\.]*\\(.*\\))(?<head>[^\\(]*)\\((?<predicate>.*)\\)(\\.(?<tail>.*))?|(?<head>[^\\.]*)(\\.(?<tail>.*))?)")]
+        private static partial Regex HeadTailRegex();
     }
 }

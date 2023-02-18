@@ -4,23 +4,12 @@
     using Hl7.Fhir.Model;
     using Hl7.Fhir.Rest;
     using Hl7.Fhir.Serialization;
-    using Hl7.Fhir.Specification;
     using Microsoft.Net.Http.Headers;
     using Xunit;
-    using Xunit.Abstractions;
     using Task = System.Threading.Tasks.Task;
 
     public class FhirClientTests
     {
-        private readonly ITestOutputHelper _outputHelper;
-        //private readonly TestFhirServer _server;
-
-        public FhirClientTests(ITestOutputHelper outputHelper)
-        {
-            _outputHelper = outputHelper;
-            // _server = new TestFhirServer(outputHelper, "https://fhir.reimers.dk");
-        }
-
         [Theory]
         [InlineData(ResourceFormat.Json)]
         //[InlineData(ResourceFormat.Xml)]
@@ -43,14 +32,12 @@
                 hc,
                 new FhirClientSettings
                 {
-                    CompressRequestBody = true,
                     ParserSettings = ParserSettings.CreateDefault(),
                     PreferCompressedResponses = true,
                     PreferredFormat = format,
                     UseFormatParameter = false,
                     VerifyFhirVersion = false
-                },
-                new PocoStructureDefinitionSummaryProvider());
+                });
             //messageHandler: _server.Server.CreateHandler());
             var patient = new Patient
             {
@@ -91,14 +78,12 @@
                 hc,
                 new FhirClientSettings
                 {
-                    CompressRequestBody = true,
                     ParserSettings = ParserSettings.CreateDefault(),
                     PreferCompressedResponses = true,
                     PreferredFormat = format,
                     UseFormatParameter = false,
                     VerifyFhirVersion = false
-                },
-                new PocoStructureDefinitionSummaryProvider());
+                });
             //messageHandler: _server.Server.CreateHandler());
            
 

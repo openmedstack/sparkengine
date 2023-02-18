@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Hl7.Fhir.Rest;
@@ -62,7 +63,10 @@
         }
 
         /// <inheritdoc />
-        public Task<SearchResults> Search(string resource, SearchParams searchCommand)
+        public Task<SearchResults> Search(
+            string resource,
+            SearchParams searchCommand,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogDebug(
                 "{resource} search requested with {searchCommand}",
@@ -91,7 +95,10 @@
         }
 
         /// <inheritdoc />
-        public Task<Key> FindSingle(string resource, SearchParams searchCommand)
+        public Task<Key> FindSingle(
+            string resource,
+            SearchParams searchCommand,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogDebug($"Find single {resource} key");
             var indexValue = GetIndexValues(resource, searchCommand).FirstOrDefault();
@@ -101,7 +108,10 @@
         }
 
         /// <inheritdoc />
-        public Task<SearchResults> GetReverseIncludes(IList<IKey> keys, IList<string> revIncludes)
+        public Task<SearchResults> GetReverseIncludes(
+            IList<IKey> keys,
+            IList<string> revIncludes,
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

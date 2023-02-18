@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Extensions;
@@ -47,13 +48,13 @@
             _serviceListener = serviceListener;
         }
 
-        public async Task<FhirResponse> AddMeta(IKey key, Parameters parameters)
+        public async Task<FhirResponse> AddMeta(IKey key, Parameters parameters, CancellationToken cancellationToken)
         {
-            var entry = await _storageService.Get(key).ConfigureAwait(false);
+            var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
             if (entry != null && !entry.IsDeleted() && entry.Resource != null)
             {
                 entry.Resource.AffixTags(parameters);
-                await _storageService.Add(entry).ConfigureAwait(false);
+                await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
             }
 
             return _responseFactory.GetMetadataResponse(entry, key);
@@ -62,34 +63,46 @@
         public Task<FhirResponse?> ConditionalCreate(
             IKey key,
             Resource resource,
-            IEnumerable<Tuple<string, string>> parameters)
+            IEnumerable<Tuple<string, string>> parameters,
+            CancellationToken cancellationToken)
         {
-            return ConditionalCreate(key, resource, SearchParams.FromUriParamList(parameters));
+            return ConditionalCreate(key, resource, SearchParams.FromUriParamList(parameters), cancellationToken);
         }
 
-        public async Task<FhirResponse?> ConditionalCreate(IKey key, Resource resource, SearchParams parameters)
+        public async Task<FhirResponse?> ConditionalCreate(
+            IKey key,
+            Resource resource,
+            SearchParams parameters,
+            CancellationToken cancellationToken)
         {
             var operation = await resource
-                .CreatePost(key, _searchService, parameters)
+                .CreatePost(key, _searchService, parameters, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
-            return await _transactionService.HandleTransaction(operation, this).ConfigureAwait(false);
+            return await _transactionService.HandleTransaction(operation, this, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> ConditionalDelete(IKey key, IEnumerable<Tuple<string, string>> parameters)
+        public async Task<FhirResponse> ConditionalDelete(
+            IKey key,
+            IEnumerable<Tuple<string, string>> parameters,
+            CancellationToken cancellationToken)
         {
             var operation = await ResourceManipulationOperationFactory
-                .CreateDelete(key, _searchService, SearchParams.FromUriParamList(parameters))
+                .CreateDelete(key, _searchService, SearchParams.FromUriParamList(parameters), cancellationToken)
                 .ConfigureAwait(false);
-            return await _transactionService.HandleTransaction(operation, this).ConfigureAwait(false)
+            return await _transactionService.HandleTransaction(operation, this, cancellationToken).ConfigureAwait(false)
                    ?? Respond.WithCode(HttpStatusCode.NotFound);
         }
 
-        public async Task<FhirResponse?> ConditionalUpdate(IKey key, Resource resource, SearchParams parameters)
+        public async Task<FhirResponse?> ConditionalUpdate(
+            IKey key,
+            Resource resource,
+            SearchParams parameters,
+            CancellationToken cancellationToken)
         {
             // FIXME: if update receives a key with no version how do we handle concurrency?
 
-            var operation = await resource.CreatePut(key, _searchService, parameters).ConfigureAwait(false);
-            return await _transactionService.HandleTransaction(operation, this).ConfigureAwait(false);
+            var operation = await resource.CreatePut(key, _searchService, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await _transactionService.HandleTransaction(operation, this, cancellationToken).ConfigureAwait(false);
         }
 
         public Task<FhirResponse> CapabilityStatement(string sparkVersion)
@@ -98,32 +111,32 @@
             return Task.FromResult(response);
         }
 
-        public async Task<FhirResponse> Create(IKey key, Resource resource)
+        public async Task<FhirResponse> Create(IKey key, Resource resource, CancellationToken cancellationToken)
         {
             Validate.Key(key);
             Validate.HasTypeName(key);
             Validate.ResourceType(key, resource);
 
             key = key.CleanupForCreate();
-            var result = await Store(Entry.Post(key, resource)).ConfigureAwait(false);
+            var result = await Store(Entry.Post(key, resource), cancellationToken).ConfigureAwait(false);
             return Respond.WithResource(HttpStatusCode.Created, result);
         }
 
-        public async Task<FhirResponse> Delete(IKey key)
+        public async Task<FhirResponse> Delete(IKey key, CancellationToken cancellationToken)
         {
             Validate.Key(key);
             Validate.HasNoVersion(key);
 
-            var current = await _storageService.Get(key).ConfigureAwait(false);
+            var current = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
             return current is { IsPresent: true }
-                ? await Delete(Entry.Delete(key, DateTimeOffset.UtcNow)).ConfigureAwait(false)
+                ? await Delete(Entry.Delete(key, DateTimeOffset.UtcNow), cancellationToken).ConfigureAwait(false)
                 : Respond.WithCode(HttpStatusCode.NotFound);
         }
 
-        public async Task<FhirResponse> Delete(Entry entry)
+        public async Task<FhirResponse> Delete(Entry entry, CancellationToken cancellationToken)
         {
             Validate.Key(entry.Key);
-            await Store(entry).ConfigureAwait(false);
+            await Store(entry, cancellationToken).ConfigureAwait(false);
             return Respond.WithCode(HttpStatusCode.NoContent);
         }
 
@@ -146,9 +159,12 @@
             return await CreateSnapshotResponse(snapshot).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> History(IKey key, HistoryParameters parameters)
+        public async Task<FhirResponse> History(
+            IKey key,
+            HistoryParameters parameters,
+            CancellationToken cancellationToken)
         {
-            if (await _storageService.Get(key).ConfigureAwait(false) == null)
+            if (await _storageService.Get(key, cancellationToken).ConfigureAwait(false) == null)
             {
                 return Respond.NotFound(key);
             }
@@ -159,14 +175,14 @@
 
         public Task<FhirResponse> Mailbox(Bundle bundle, Binary body) => throw new NotImplementedException();
 
-        public Task<FhirResponse> Put(IKey key, Resource resource)
+        public Task<FhirResponse> Put(IKey key, Resource resource, CancellationToken cancellationToken)
         {
             Validate.HasResourceId(resource);
             Validate.IsResourceIdEqual(key, resource);
-            return Put(Entry.Put(key, resource));
+            return Put(Entry.Put(key, resource), cancellationToken);
         }
 
-        public async Task<FhirResponse> Put(Entry entry)
+        public async Task<FhirResponse> Put(Entry entry, CancellationToken cancellationToken)
         {
             Validate.Key(entry.Key);
             var entryKey = entry.Key!;
@@ -175,65 +191,67 @@
             Validate.HasResourceId(entryKey);
 
             //return Transaction(entry);
-            var result = await Store(Entry.Put(entryKey, entry.Resource)).ConfigureAwait(false);
+            var result = await Store(Entry.Put(entryKey, entry.Resource), cancellationToken).ConfigureAwait(false);
             return Respond.WithResource(HttpStatusCode.Created, result);
         }
 
-        public async Task<FhirResponse> Read(IKey key, ConditionalHeaderParameters? parameters = null)
+        public async Task<FhirResponse> Read(
+            IKey key,
+            ConditionalHeaderParameters? parameters = null,
+            CancellationToken cancellationToken = default)
         {
             Validate.ValidateKey(key);
-            var entry = await _storageService.Get(key).ConfigureAwait(false);
+            var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
             return parameters == null
                 ? _responseFactory.GetFhirResponse(entry, key)
                 : _responseFactory.GetFhirResponse(entry, key, parameters);
         }
 
-        public async Task<FhirResponse> ReadMeta(IKey key)
+        public async Task<FhirResponse> ReadMeta(IKey key, CancellationToken cancellationToken)
         {
             Validate.ValidateKey(key);
-            var entry = await _storageService.Get(key).ConfigureAwait(false);
+            var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
             return _responseFactory.GetMetadataResponse(entry, key);
         }
 
-        public async Task<FhirResponse> Search(string type, SearchParams searchCommand, int pageIndex = 0)
+        public async Task<FhirResponse> Search(
+            string type,
+            SearchParams searchCommand,
+            int pageIndex = 0,
+            CancellationToken cancellationToken = default)
         {
-            var snapshot = await _searchService.GetSnapshot(type, searchCommand).ConfigureAwait(false);
+            var snapshot = await _searchService.GetSnapshot(type, searchCommand, cancellationToken).ConfigureAwait(false);
             return await CreateSnapshotResponse(snapshot, pageIndex).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> Transaction(IList<Entry> interactions)
+        public async Task<FhirResponse> Transaction(IList<Entry> interactions, CancellationToken cancellationToken)
         {
-            var responses = _transactionService.HandleTransaction(interactions, this);
+            var responses = _transactionService.HandleTransaction(interactions, this, cancellationToken);
             return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse);
         }
 
-        public async Task<FhirResponse> Transaction(Bundle bundle)
+        public async Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken)
         {
-            var responses = _transactionService.HandleTransaction(bundle, this);
+            var responses = _transactionService.HandleTransaction(bundle, this, cancellationToken);
             return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse);
         }
 
-        public async Task<FhirResponse> Update(IKey key, Resource resource)
+        public async Task<FhirResponse> Update(IKey key, Resource resource, CancellationToken cancellationToken)
         {
             return key.HasVersionId()
-                ? await VersionSpecificUpdate(key, resource).ConfigureAwait(false)
-                : await Put(key, resource).ConfigureAwait(false);
+                ? await VersionSpecificUpdate(key, resource, cancellationToken).ConfigureAwait(false)
+                : await Put(key, resource, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> Patch(IKey key, Parameters? parameters)
+        public async Task<FhirResponse> Patch(IKey key, Parameters parameters, CancellationToken cancellationToken)
         {
-            if (parameters == null)
-            {
-                return new FhirResponse(HttpStatusCode.BadRequest);
-            }
-
-            var current = await _storageService.Get(key.WithoutVersion()).ConfigureAwait(false);
+            var current = await _storageService.Get(key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
             if (current is { IsPresent: true })
             {
                 try
                 {
                     var resource = _patchService.Apply(current.Resource!, parameters);
-                    return await Patch(Entry.Patch(current.Key!.WithoutVersion(), resource)).ConfigureAwait(false);
+                    return await Patch(Entry.Patch(current.Key!.WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -244,7 +262,7 @@
             return Respond.WithCode(HttpStatusCode.NotFound);
         }
 
-        public async Task<FhirResponse> Patch(Entry entry)
+        public async Task<FhirResponse> Patch(Entry entry, CancellationToken cancellationToken)
         {
             Validate.Key(entry.Key);
             var entryKey = entry.Key!;
@@ -252,12 +270,12 @@
             Validate.HasTypeName(entryKey);
             Validate.HasResourceId(entryKey);
 
-            var result = await Store(entry).ConfigureAwait(false);
+            var result = await Store(entry, cancellationToken).ConfigureAwait(false);
 
             return Respond.WithResource(HttpStatusCode.OK, result);
         }
 
-        public Task<FhirResponse> ValidateOperation(IKey key, Resource resource)
+        public Task<FhirResponse> ValidateOperation(IKey key, Resource resource, CancellationToken cancellationToken)
         {
             if (resource == null)
             {
@@ -271,30 +289,33 @@
                 outcome == null ? Respond.WithCode(HttpStatusCode.OK) : Respond.WithResource(422, outcome));
         }
 
-        public async Task<FhirResponse> VersionRead(IKey key)
+        public async Task<FhirResponse> VersionRead(IKey key, CancellationToken cancellationToken)
         {
             Validate.ValidateKey(key, true);
-            var entry = await _storageService.Get(key).ConfigureAwait(false);
+            var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
             return _responseFactory.GetFhirResponse(entry, key);
         }
 
-        public async Task<FhirResponse> VersionSpecificUpdate(IKey versionedKey, Resource resource)
+        public async Task<FhirResponse> VersionSpecificUpdate(
+            IKey versionedKey,
+            Resource resource,
+            CancellationToken cancellationToken)
         {
             Validate.HasTypeName(versionedKey);
             Validate.HasVersion(versionedKey);
             var key = versionedKey.WithoutVersion();
-            var current = await _storageService.Get(key).ConfigureAwait(false);
+            var current = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
             Validate.IsSameVersion(current?.Key, versionedKey);
-            return await Put(key, resource).ConfigureAwait(false);
+            return await Put(key, resource, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> Everything(IKey key)
+        public async Task<FhirResponse> Everything(IKey key, CancellationToken cancellationToken)
         {
-            var snapshot = await _searchService.GetSnapshotForEverything(key).ConfigureAwait(false);
+            var snapshot = await _searchService.GetSnapshotForEverything(key, cancellationToken).ConfigureAwait(false);
             return await CreateSnapshotResponse(snapshot).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> Document(IKey key)
+        public async Task<FhirResponse> Document(IKey key, CancellationToken cancellationToken)
         {
             Validate.HasResourceType(key, ResourceType.Composition);
 
@@ -317,41 +338,41 @@
                 searchCommand.Include.Add((inc, IncludeModifier.None));
             }
 
-            return await Search(key.TypeName ?? "", searchCommand).ConfigureAwait(false);
+            return await Search(key.TypeName ?? "", searchCommand, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<FhirResponse> HandleInteraction(Entry interaction)
+        public async Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken)
         {
             switch (interaction.Method)
             {
                 case Bundle.HTTPVerb.PUT:
-                    return await Put(interaction).ConfigureAwait(false);
+                    return await Put(interaction, cancellationToken).ConfigureAwait(false);
                 case Bundle.HTTPVerb.POST:
-                    return await Create(interaction).ConfigureAwait(false);
+                    return await Create(interaction, cancellationToken).ConfigureAwait(false);
                 case Bundle.HTTPVerb.DELETE:
                     {
-                        var current = await _storageService.Get(interaction.Key!.WithoutVersion()).ConfigureAwait(false);
+                        var current = await _storageService.Get(interaction.Key!.WithoutVersion(), cancellationToken).ConfigureAwait(false);
                         return current is { IsPresent: true }
-                            ? await Delete(interaction).ConfigureAwait(false)
+                            ? await Delete(interaction, cancellationToken).ConfigureAwait(false)
                             : Respond.WithCode(HttpStatusCode.NotFound);
                     }
                 case Bundle.HTTPVerb.GET:
                     if (interaction.Key.HasVersionId())
                     {
-                        return await VersionRead(interaction.Key!).ConfigureAwait(false);
+                        return await VersionRead(interaction.Key!, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        return await Read(interaction.Key!).ConfigureAwait(false);
+                        return await Read(interaction.Key!, null, cancellationToken).ConfigureAwait(false);
                     }
                 case Bundle.HTTPVerb.PATCH:
-                    return await Patch(interaction.Key!, interaction.Resource as Parameters).ConfigureAwait(false);
+                    return await Patch(interaction.Key!, (interaction.Resource as Parameters)!, cancellationToken).ConfigureAwait(false);
                 default:
                     return Respond.Success;
             }
         }
 
-        private async Task<FhirResponse> Create(Entry entry)
+        private async Task<FhirResponse> Create(Entry entry, CancellationToken cancellationToken)
         {
             Validate.Key(entry.Key);
             var entryKey = entry.Key!;
@@ -364,33 +385,17 @@
                 Validate.HasNoVersion(entryKey);
             }
 
-            var result = await _storageService.Add(entry).ConfigureAwait(false);
+            var result = await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
             if (_serviceListener != null)
             {
                 await _serviceListener.Inform(entry).ConfigureAwait(false);
             }
             return Respond.WithResource(HttpStatusCode.Created, result);
         }
-
-        private static void ValidateKey(IKey key, bool withVersion = false)
+        
+        private async Task<Entry> Store(Entry entry, CancellationToken cancellationToken)
         {
-            Validate.HasTypeName(key);
-            Validate.HasResourceId(key);
-            if (withVersion)
-            {
-                Validate.HasVersion(key);
-            }
-            else
-            {
-                Validate.HasNoVersion(key);
-            }
-
-            Validate.Key(key);
-        }
-
-        private async Task<Entry> Store(Entry entry)
-        {
-            var result = await _storageService.Add(entry).ConfigureAwait(false);
+            var result = await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
             if (_serviceListener != null)
             {
                 await _serviceListener.Inform(entry).ConfigureAwait(false);

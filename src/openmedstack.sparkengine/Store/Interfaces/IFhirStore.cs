@@ -10,17 +10,18 @@
 namespace OpenMedStack.SparkEngine.Store.Interfaces
 {
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
 
     public interface IFhirStore
     {
-        Task Add(Entry entry);
+        Task Add(Entry entry, CancellationToken cancellationToken = default);
 
-        Task<Entry?> Get(IKey? key);
+        Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers);
+        IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers, CancellationToken cancellationToken = default);
 
-        Task<bool> Exists(IKey? key);
+        Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default);
     }
 }

@@ -23,13 +23,13 @@ namespace OpenMedStack.SparkEngine.Core
         public static readonly string DefaultXmlMimeType = ContentType.XML_CONTENT_HEADER;
         public static readonly string OctetStreamMimeType = "application/octet-stream";
         public static readonly string FormUrlEncodedMimeType = "application/x-www-form-urlencoded";
-        public static readonly string AnyMimeType = "*/*";
+        //public static readonly string AnyMimeType = "*/*";
 
-        public static IEnumerable<string> JsonMimeTypes => ContentType.JSON_CONTENT_HEADERS.Concat(new[] { AnyMimeType });
-        public static IEnumerable<string> XmlMimeTypes => ContentType.XML_CONTENT_HEADERS.Concat(new[] { AnyMimeType });
+        public static IEnumerable<string> JsonMimeTypes => ContentType.JSON_CONTENT_HEADERS;//.Concat(new[] { AnyMimeType });
+        public static IEnumerable<string> XmlMimeTypes => ContentType.XML_CONTENT_HEADERS;//.Concat(new[] { AnyMimeType });
         public static IEnumerable<string> SupportedMimeTypes => JsonMimeTypes
             .Concat(XmlMimeTypes)
-            .Concat(new[] { OctetStreamMimeType, FormUrlEncodedMimeType, AnyMimeType });
+            .Concat(new[] { OctetStreamMimeType, FormUrlEncodedMimeType/*, AnyMimeType*/ });
 
         /// <summary>
         /// Transforms loose formats to their strict variant

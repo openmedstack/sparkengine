@@ -93,7 +93,7 @@ namespace OpenMedStack.SparkEngine.Web.Formatters
             {
                 if (context.Object != null)
                 {
-                    writeBodyString = await _serializer.SerializeToStringAsync(context.Object as Resource, summaryType);
+                    writeBodyString = await _serializer.SerializeToStringAsync((context.Object as Resource)!, summaryType);
                 }
             }
             else if (context.Object is ValidationProblemDetails)

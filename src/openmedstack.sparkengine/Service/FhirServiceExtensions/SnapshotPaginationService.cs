@@ -70,7 +70,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                     .Select(e => e.Entry)
                     .ToList();
             }
-            
+
             foreach (var entry in entries)
             {
                 bundle.Append(_transfer.Externalize(entry));
@@ -168,14 +168,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             var resource = split.FirstOrDefault();
             var paramName = split.Skip(1).FirstOrDefault();
             var param = ModelInfo.SearchParameters.FirstOrDefault(p => p.Resource == resource && p.Name == paramName);
-            if (param != null)
-            {
-                return param.Path;
-            }
-            else
-            {
-                return Enumerable.Empty<string>();
-            }
+            return param is { Path: { } } ? param.Path : Enumerable.Empty<string>();
         }
     }
 }

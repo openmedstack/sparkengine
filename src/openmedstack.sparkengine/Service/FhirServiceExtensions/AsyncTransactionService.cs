@@ -11,6 +11,8 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Extensions;
@@ -46,12 +48,15 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                 throw new Exception("Incompatible responses");
             }
 
-            if (response.Key != null && previousResponse.Key != null && response.Key.Equals(previousResponse.Key) == false)
+            if (response.Key != null
+                && previousResponse.Key != null
+                && response.Key.Equals(previousResponse.Key) == false)
             {
                 throw new Exception("Incompatible responses");
             }
 
-            if (response.Key != null && previousResponse.Key == null || response.Key == null && previousResponse.Key != null)
+            if (response.Key != null && previousResponse.Key == null
+                || response.Key == null && previousResponse.Key != null)
             {
                 throw new Exception("Incompatible responses");
             }
@@ -59,7 +64,10 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             return response;
         }
 
-        private void AddMappingsForOperation(Mapper<string, IKey>? mapper, ResourceManipulationOperation operation, IList<Entry> interactions)
+        private void AddMappingsForOperation(
+            Mapper<string, IKey>? mapper,
+            ResourceManipulationOperation operation,
+            IList<Entry> interactions)
         {
             if (mapper == null || interactions.Count != 1)
             {
@@ -77,15 +85,21 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             }
         }
 
-        private async IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(IEnumerable<Entry> interactions, IInteractionHandler interactionHandler, Mapper<string, IKey>? mapper)
+        private async IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(
+            IEnumerable<Entry> interactions,
+            IInteractionHandler interactionHandler,
+            Mapper<string, IKey>? mapper,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            await foreach (var interaction in _transfer.Internalize(interactions, mapper))
+            await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken))
             {
-                var response = await interactionHandler.HandleInteraction(interaction).ConfigureAwait(false);
+                var response = await interactionHandler.HandleInteraction(interaction, cancellationToken)
+                    .ConfigureAwait(false);
                 if (!response.IsValid)
                 {
                     throw new Exception($"Unsuccessful response to interaction {interaction}: {response}");
                 }
+
                 interaction.Resource = response.Resource;
                 //response.Resource = null;
 
@@ -98,19 +112,28 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             //return responses;
         }
 
-        public Task<FhirResponse?> HandleTransaction(ResourceManipulationOperation operation, IInteractionHandler interactionHandler)
+        public Task<FhirResponse?> HandleTransaction(
+            ResourceManipulationOperation operation,
+            IInteractionHandler interactionHandler,
+            CancellationToken cancellationToken)
         {
-            return HandleOperation(operation, interactionHandler);
+            return HandleOperation(operation, interactionHandler, cancellationToken: cancellationToken);
         }
 
-        public async Task<FhirResponse?> HandleOperation(ResourceManipulationOperation operation, IInteractionHandler interactionHandler, Mapper<string, IKey>? mapper = null)
+        public async Task<FhirResponse?> HandleOperation(
+            ResourceManipulationOperation operation,
+            IInteractionHandler interactionHandler,
+            Mapper<string, IKey>? mapper = null,
+            CancellationToken cancellationToken = default)
         {
             var interactions = operation.GetEntries();
 
             FhirResponse? response = null;
-            await foreach (var interaction in _transfer.Internalize(interactions, mapper))
+            await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken))
             {
-                response = MergeFhirResponse(response, await interactionHandler.HandleInteraction(interaction).ConfigureAwait(false));
+                response = MergeFhirResponse(
+                    response,
+                    await interactionHandler.HandleInteraction(interaction, cancellationToken).ConfigureAwait(false));
                 if (!response.IsValid)
                 {
                     throw new Exception();
@@ -124,7 +147,10 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             return response;
         }
 
-        public async IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(Bundle bundle, IInteractionHandler interactionHandler)
+        public async IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(
+            Bundle bundle,
+            IInteractionHandler interactionHandler,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             if (interactionHandler == null)
             {
@@ -141,7 +167,12 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             var entries = new List<Entry>();
             var mapper = new Mapper<string, IKey>();
 
-            foreach (var task in entryComponents.Select(e => ResourceManipulationOperationFactory.GetManipulationOperation(e, _localhost, _searchService)))
+            foreach (var task in entryComponents.Select(
+                         e => ResourceManipulationOperationFactory.GetManipulationOperation(
+                             e,
+                             _localhost,
+                             _searchService,
+                             cancellationToken)))
             {
                 var operation = await task.ConfigureAwait(false);
                 IList<Entry> atomicOperations = operation.GetEntries().ToList();
@@ -149,17 +180,21 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                 entries.AddRange(atomicOperations);
             }
 
-            await foreach (var transaction in HandleTransaction(entries, interactionHandler, mapper).ConfigureAwait(false))
+            await foreach (var transaction in HandleTransaction(entries, interactionHandler, mapper, cancellationToken)
+                               .ConfigureAwait(false))
             {
                 yield return transaction;
             }
         }
 
-        public IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(IList<Entry> interactions, IInteractionHandler interactionHandler)
+        public IAsyncEnumerable<Tuple<Entry, FhirResponse>> HandleTransaction(
+            IList<Entry> interactions,
+            IInteractionHandler interactionHandler,
+            CancellationToken cancellationToken)
         {
             return interactionHandler == null
                 ? throw new InvalidOperationException("Unable to run transaction operation")
-                : HandleTransaction(interactions, interactionHandler, null);
+                : HandleTransaction(interactions, interactionHandler, null, cancellationToken);
         }
     }
 }

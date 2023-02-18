@@ -31,7 +31,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
 
         public abstract IAsyncQueryable<TElement> CreateQuery<TElement>(Expression expression);
 
-        protected abstract Task<Bundle> GetResults(SearchParams builder);
+        protected abstract Task<Bundle?> GetResults(SearchParams builder);
 
         /// <inheritdoc />
         public async ValueTask<TResult> ExecuteAsync<TResult>(Expression expression, CancellationToken token)
@@ -42,7 +42,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
             var bundle = await GetResults(p);
             if (typeof(TResult) == typeof(Bundle))
             {
-                return (TResult)(bundle as object);
+                return (TResult)(bundle as object)!;
             }
             var enumerable = bundle.GetResources().OfType<T>();
             object? o = typeof(TResult) switch

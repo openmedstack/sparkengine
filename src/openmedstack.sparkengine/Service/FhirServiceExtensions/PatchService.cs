@@ -44,8 +44,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                 var parameterExpression = Expression.Parameter(resource.GetType(), "x");
                 var expression = operationType == "add" ? _compiler.Parse($"{path}.{name}") : _compiler.Parse(path);
                 var result = expression.Accept(
-                        new ResourceVisitor(parameterExpression),
-                        new fhirExpression.SymbolTable());
+                        new ResourceVisitor(parameterExpression));
                 switch (operationType)
                 {
                     case "add":
@@ -90,7 +89,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             Expression FromString(string str, Type targetType)
             {
                 return targetType.CanBeTreatedAsType(typeof(DataType))
-                    ? (Expression)Expression.MemberInit(
+                    ? Expression.MemberInit(
                         Expression.New(targetType.GetConstructor(Array.Empty<Type>())!),
                         Expression.Bind(
                             targetType.GetProperty("ObjectValue")!,
@@ -182,8 +181,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         {
             return result switch
             {
-                MemberExpression me when me.Type.IsGenericType
-                                         && GetMethod(me.Type, "Insert") != null =>
+                MemberExpression { Type.IsGenericType: true } me when GetMethod(me.Type, "Insert") != null =>
                     Expression.Block(
                         Expression.IfThen(
                             Expression.Equal(me, Expression.Default(result.Type)),
@@ -198,8 +196,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         {
             return result switch
             {
-                MemberExpression me when me.Type.IsGenericType
-                                         && GetMethod(me.Type, "Add") != null =>
+                MemberExpression { Type.IsGenericType: true } me when GetMethod(me.Type, "Add") != null =>
                     Expression.Block(
                         Expression.IfThen(
                             Expression.Equal(me, Expression.Default(result.Type)),
@@ -224,8 +221,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                     indexExpression.Object,
                     GetMethod(indexExpression.Object!.Type, "RemoveAt")!,
                     indexExpression.Arguments),
-                MemberExpression me when me.Type.IsGenericType
-                                         && typeof(List<>).IsAssignableFrom(me.Type.GetGenericTypeDefinition()) =>
+                MemberExpression { Type.IsGenericType: true } me when typeof(List<>).IsAssignableFrom(me.Type.GetGenericTypeDefinition()) =>
                    Expression.Call(me, GetMethod(me.Type, "Clear")!),
                 MemberExpression me => Expression.Assign(me, Expression.Default(me.Type)),
                 _ => result
@@ -261,9 +257,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             }
 
             /// <inheritdoc />
-            public override Expression VisitConstant(
-                fhirExpression.ConstantExpression expression,
-                fhirExpression.SymbolTable scope)
+            public override Expression VisitConstant(fhirExpression.ConstantExpression expression)
             {
                 if (expression.ExpressionType == TypeSpecifier.Integer)
                 {
@@ -284,22 +278,21 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 
             /// <inheritdoc />
             public override Expression VisitFunctionCall(
-                fhirExpression.FunctionCallExpression expression,
-                fhirExpression.SymbolTable scope)
+                fhirExpression.FunctionCallExpression expression)
             {
                 switch (expression)
                 {
                     case fhirExpression.IndexerExpression indexerExpression:
                         {
-                            var index = indexerExpression.Index.Accept(this, scope);
-                            var property = indexerExpression.Focus.Accept(this, scope);
+                            var index = indexerExpression.Index.Accept(this);
+                            var property = indexerExpression.Focus.Accept(this);
                             var itemProperty = GetProperty(property.Type, "Item");
                             return Expression.MakeIndex(property, itemProperty, new[] { index });
                         }
                     case fhirExpression.ChildExpression child:
                         {
-                            var focus = child.Focus.Accept(this, scope);
-                            return child.Arguments.First().Accept(new ResourceVisitor(focus), scope);
+                            var focus = child.Focus.Accept(this);
+                            return child.Arguments.First().Accept(new ResourceVisitor(focus));
                         }
                     default:
                         return _parameter;
@@ -308,14 +301,13 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 
             /// <inheritdoc />
             public override Expression VisitNewNodeListInit(
-                fhirExpression.NewNodeListInitExpression expression,
-                fhirExpression.SymbolTable scope)
+                fhirExpression.NewNodeListInitExpression expression)
             {
                 return _parameter;
             }
 
             /// <inheritdoc />
-            public override Expression VisitVariableRef(fhirExpression.VariableRefExpression expression, fhirExpression.SymbolTable scope)
+            public override Expression VisitVariableRef(fhirExpression.VariableRefExpression expression)
             {
                 return _parameter;
             }

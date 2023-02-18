@@ -24,12 +24,12 @@
         {
             services.AddControllers();
             services.AddLogging(l => l.AddXunit(_outputHelper));
-            services.AddFhir(
+            services.AddFhir<TestFhirController>(
                 new SparkSettings
                 {
                     UseAsynchronousIO = true,
                     Endpoint = new Uri("https://localhost:60001/fhir"),
-                    FhirRelease = "R4",
+                    FhirRelease = "R5",
                     ParserSettings = ParserSettings.CreateDefault(),
                     SerializerSettings = SerializerSettings.CreateDefault()
                 });

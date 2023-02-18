@@ -29,7 +29,7 @@ public class QueryVisitorTests
 
     public static IEnumerable<object[]> QueryExpressions()
     {
-        yield return new object[] { (Expression<Func<Encounter, bool>>)(t => t.PlannedEndDate.Contains("jan")), "plannedenddate:contains=jan" };
+        yield return new object[] { (Expression<Func<Patient, bool>>)(t => t.BirthDate.Contains("jan")), "birthdate:contains=jan" };
         yield return new object[] { (Expression<Func<TestType, bool>>)(t => t.Subject != null), "subject:missing=false" };
         yield return new object[] { (Expression<Func<TestType, bool>>)(t => t.Subject == "Lucy"), "subject=Lucy" };
         yield return new object[] { (Expression<Func<TestType, bool>>)(t => t.Subject != "Lucy"), "subject:not=Lucy" };

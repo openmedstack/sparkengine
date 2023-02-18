@@ -9,6 +9,7 @@
 namespace OpenMedStack.SparkEngine.Service
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Xml.Linq;
     using Core;
@@ -31,10 +32,10 @@ namespace OpenMedStack.SparkEngine.Service
             _generator = generator;
         }
 
-        public async Task<Entry> Internalize(Entry entry, Mapper<string, IKey>? mapper = null)
+        public async Task<Entry> Internalize(Entry entry, Mapper<string, IKey>? mapper = null, CancellationToken cancellationToken = default)
         {
             var m = mapper ?? new Mapper<string, IKey>();
-            await InternalizeKey(entry, m).ConfigureAwait(false);
+            await InternalizeKey(entry, m, cancellationToken).ConfigureAwait(false);
             InternalizeReference(entry, m);
             InternalizeState(entry);
             return entry;
@@ -50,22 +51,22 @@ namespace OpenMedStack.SparkEngine.Service
 
         private void InternalizeReference(Entry entry, Mapper<string, IKey> mapper)
         {
-            if (entry.State == EntryState.Undefined && entry.Resource != null)
+            if (entry is { State: EntryState.Undefined, Resource: { } })
             {
                 InternalizeReferences(entry.Resource!, mapper);
             }
         }
 
-        private async Task<IKey> Remap(Resource resource, Mapper<string, IKey> mapper)
+        private async Task<IKey> Remap(Resource resource, Mapper<string, IKey> mapper, CancellationToken cancellationToken)
         {
-            var newKey = await _generator.NextKey(resource).ConfigureAwait(false);
+            var newKey = await _generator.NextKey(resource, cancellationToken).ConfigureAwait(false);
             AddKeyToInternalMapping(resource.ExtractKey(), newKey.WithoutBase(), mapper);
             return newKey;
         }
 
-        private async Task<IKey> RemapHistoryOnly(IKey key, Mapper<string, IKey> mapper)
+        private async Task<IKey> RemapHistoryOnly(IKey key, Mapper<string, IKey> mapper, CancellationToken cancellationToken)
         {
-            IKey newKey = await _generator.NextHistoryKey(key).ConfigureAwait(false);
+            IKey newKey = await _generator.NextHistoryKey(key, cancellationToken).ConfigureAwait(false);
             AddKeyToInternalMapping(key, newKey.WithoutBase(), mapper);
             return newKey;
         }
@@ -77,7 +78,7 @@ namespace OpenMedStack.SparkEngine.Service
                 generatedKey.WithoutVersion());
         }
 
-        private async Task InternalizeKey(Entry entry, Mapper<string, IKey> mapper)
+        private async Task InternalizeKey(Entry entry, Mapper<string, IKey> mapper, CancellationToken cancellationToken)
         {
             var key = entry.Key;
             if (key == null)
@@ -90,7 +91,7 @@ namespace OpenMedStack.SparkEngine.Service
                     {
                         if (entry.Resource != null)
                         {
-                            entry.Key = await Remap(entry.Resource, mapper).ConfigureAwait(false);
+                            entry.Key = await Remap(entry.Resource, mapper, cancellationToken).ConfigureAwait(false);
                         }
 
                         return;
@@ -99,7 +100,7 @@ namespace OpenMedStack.SparkEngine.Service
                     {
                         if (entry.Resource != null)
                         {
-                            entry.Key = await Remap(entry.Resource, mapper).ConfigureAwait(false);
+                            entry.Key = await Remap(entry.Resource, mapper, cancellationToken).ConfigureAwait(false);
                         }
 
                         return;
@@ -107,16 +108,13 @@ namespace OpenMedStack.SparkEngine.Service
                 case KeyKind.Local:
                 case KeyKind.Internal:
                     {
-                        if (entry.Method == Bundle.HTTPVerb.PUT || entry.Method == Bundle.HTTPVerb.PATCH || entry.Method == Bundle.HTTPVerb.DELETE)
+                        if (entry.Method is Bundle.HTTPVerb.PUT or Bundle.HTTPVerb.PATCH or Bundle.HTTPVerb.DELETE)
                         {
-                            entry.Key = await RemapHistoryOnly(key, mapper);
+                            entry.Key = await RemapHistoryOnly(key, mapper, cancellationToken);
                         }
-                        else if (entry.Method == Bundle.HTTPVerb.POST)
+                        else if (entry is { Method: Bundle.HTTPVerb.POST, Resource: { } })
                         {
-                            if (entry.Resource != null)
-                            {
-                                entry.Key = await Remap(entry.Resource, mapper);
-                            }
+                            entry.Key = await Remap(entry.Resource, mapper, cancellationToken);
                         }
                         return;
                     }

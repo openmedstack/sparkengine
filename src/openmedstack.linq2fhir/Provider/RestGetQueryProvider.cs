@@ -41,7 +41,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
         }
 
         /// <inheritdoc />
-        protected override Task<Bundle> GetResults(SearchParams builder)
+        protected override Task<Bundle?> GetResults(SearchParams builder)
         {
             return Client.SearchAsync<T>(builder);
         }

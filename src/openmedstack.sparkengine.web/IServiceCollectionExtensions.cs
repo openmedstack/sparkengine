@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Web
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using Controllers;
     using Core;
     using FhirResponseFactory;
     using Formatters;
@@ -28,17 +29,21 @@ namespace OpenMedStack.SparkEngine.Web
 
     public static class ServiceCollectionExtensions
     {
-        public static IMvcCoreBuilder AddFhir(
+        public static IMvcCoreBuilder AddFhir<T>(
             this IServiceCollection services,
             SparkSettings settings,
             Action<MvcOptions>? setupAction = null)
+        where T : FhirController
         {
             if (settings == null)
             {
                 throw new ArgumentNullException(nameof(settings));
             }
-
-            services.AddFhirHttpSearchParameters();
+            
+            services.RemoveAll(typeof(FhirController));
+            services.AddTransient<T>();
+            services.AddTransient<ControllerBase>(sp => sp.GetRequiredService<T>());
+            AddFhirHttpSearchParameters();
             services.SetContentTypeAsFhirMediaTypeOnValidationError();
 
             services.TryAddSingleton(settings);
@@ -104,7 +109,7 @@ namespace OpenMedStack.SparkEngine.Web
                         setupAction?.Invoke(options);
                     });
         }
-        
+
         public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)
         {
             return services.AddSingleton<InMemoryFhirIndex>()
@@ -123,7 +128,7 @@ namespace OpenMedStack.SparkEngine.Web
             ModelInfo.SearchParameters.AddRange(searchParameters);
         }
 
-        private static void AddFhirHttpSearchParameters(this IServiceCollection _)
+        private static void AddFhirHttpSearchParameters()
         {
             ModelInfo.SearchParameters.AddRange(
                 new[]

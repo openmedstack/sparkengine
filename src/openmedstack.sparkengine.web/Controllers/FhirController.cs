@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
     using System;
     using System.Linq;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Web;
     using Core;
@@ -27,18 +28,17 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
     using Utility;
 
     [Authorize]
-    [Route("fhir")]
     [ApiController]
     [EnableCors]
-    public class FhirController : ControllerBase
+    public abstract class FhirController : ControllerBase
     {
-        private readonly IFhirService _fhirService;
+        protected IFhirService FhirService { get; }
 
-        public FhirController(IFhirService fhirService) =>
-            _fhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
+        protected FhirController(IFhirService fhirService) =>
+            FhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
 
         [HttpGet("{type}/{id}")]
-        public async Task<ActionResult<FhirResponse>> Read(string type, string id)
+        public virtual async Task<ActionResult<FhirResponse>> Read(string type, string id, CancellationToken cancellationToken)
         {
             var ifModifiedSince = Request.Headers[HeaderNames.IfModifiedSince]
                 .Aggregate(
@@ -47,19 +47,19 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
 
             var parameters = new ConditionalHeaderParameters(Request.Headers[HeaderNames.IfNoneMatch], ifModifiedSince);
             var key = Key.Create(type, id);
-            var result = await _fhirService.Read(key, parameters).ConfigureAwait(false);
+            var result = await FhirService.Read(key, parameters, cancellationToken).ConfigureAwait(false);
             return new ActionResult<FhirResponse>(result);
         }
 
         [HttpGet("{type}/{id}/_history/{vid}")]
-        public Task<FhirResponse> VRead(string type, string id, string vid)
+        public virtual Task<FhirResponse> VRead(string type, string id, string vid, CancellationToken cancellationToken)
         {
             var key = Key.Create(type, id, vid);
-            return _fhirService.VersionRead(key);
+            return FhirService.VersionRead(key, cancellationToken);
         }
 
         [HttpPut("{type}/{id?}")]
-        public async Task<FhirResponse?> Update(string type, Resource resource, string? id = null)
+        public virtual async Task<FhirResponse?> Update(string type, Resource resource, string? id = null, CancellationToken cancellationToken = default)
         {
             var versionId = Request.GetTypedHeaders().IfMatch.FirstOrDefault()?.Tag.Buffer;
             var key = Key.Create(type, id, versionId);
@@ -67,22 +67,24 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
             {
                 Request.TransferResourceIdIfRawBinary(resource, id);
 
-                var update = await _fhirService.Update(key, resource).ConfigureAwait(false);
+                var update = await FhirService.Update(key, resource, cancellationToken).ConfigureAwait(false);
                 return update;
             }
 
-            var conditionalUpdate = await _fhirService.ConditionalUpdate(
+            var conditionalUpdate = await FhirService.ConditionalUpdate(
                     key,
                     resource,
                     SearchParams.FromUriParamList(
-                        Request.TupledParameters().Select(t => Tuple.Create(t.Item1, t.Item2))))
+                        Request.TupledParameters().Select(t => Tuple.Create(t.Item1, t.Item2))),
+                    cancellationToken)
                 .ConfigureAwait(false);
             return conditionalUpdate;
         }
 
         [HttpPost("{type}")]
-        public async Task<FhirResponse?> Create(string type, Resource resource)
+        public virtual async Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
         {
+            resource.Id = Guid.NewGuid().ToString("N");
             var key = Key.Create(type, resource.Id);
 
             if (Request.Headers.ContainsKey(FhirHttpHeaders.IfNoneExist))
@@ -91,94 +93,94 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
                 var searchValues = searchQueryString.Keys.Cast<string>()
                     .Select(k => new Tuple<string, string?>(k, searchQueryString[k]));
 
-                return await _fhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues));
+                return await FhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues), cancellationToken);
             }
 
-            var response = await _fhirService.Create(key, resource);
+            var response = await FhirService.Create(key, resource, cancellationToken);
             return response;
         }
 
         [HttpDelete("{type}/{id}")]
-        public Task<FhirResponse> Delete(string type, string id)
+        public virtual Task<FhirResponse> Delete(string type, string id, CancellationToken cancellationToken)
         {
             var key = Key.Create(type, id);
-            return _fhirService.Delete(key);
+            return FhirService.Delete(key, cancellationToken);
         }
 
         [HttpDelete("{type}")]
-        public Task<FhirResponse> ConditionalDelete(string type)
+        public virtual Task<FhirResponse> ConditionalDelete(string type, CancellationToken cancellationToken)
         {
             var key = Key.Create(type);
-            return _fhirService.ConditionalDelete(key, Request.TupledParameters());
+            return FhirService.ConditionalDelete(key, Request.TupledParameters(), cancellationToken);
         }
 
         [HttpGet("{type}/{id}/_history")]
-        public Task<FhirResponse> History(string type, string id)
+        public virtual Task<FhirResponse> History(string type, string id, CancellationToken cancellationToken)
         {
             var key = Key.Create(type, id);
             var parameters = GetHistoryParameters(Request);
-            return _fhirService.History(key, parameters);
+            return FhirService.History(key, parameters, cancellationToken);
         }
 
         // ============= Validate
 
         [HttpPost("{type}/{id}/$validate")]
-        public Task<FhirResponse> Validate(string type, string id, Resource resource)
+        public virtual Task<FhirResponse> Validate(string type, string id, Resource resource, CancellationToken cancellationToken)
         {
             var key = Key.Create(type, id);
-            return _fhirService.ValidateOperation(key, resource);
+            return FhirService.ValidateOperation(key, resource, cancellationToken);
         }
 
         [HttpPost("{type}/$validate")]
-        public Task<FhirResponse> Validate(string type, Resource resource)
+        public virtual Task<FhirResponse> Validate(string type, Resource resource, CancellationToken cancellationToken)
         {
             var key = Key.Create(type);
-            return _fhirService.ValidateOperation(key, resource);
+            return FhirService.ValidateOperation(key, resource, cancellationToken);
         }
 
         // ============= Type Level Interactions
 
         [HttpGet("{type}")]
-        public Task<FhirResponse> Search(string type)
+        public virtual Task<FhirResponse> Search(string type, CancellationToken cancellationToken)
         {
             var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
             var searchparams = Request.GetSearchParams();
-            //int pagesize = Request.GetIntParameter(FhirParameter.COUNT) ?? Const.DEFAULT_PAGE_SIZE;
-            //string sortby = Request.GetParameter(FhirParameter.SORT);
-
-            return _fhirService.Search(type, searchparams, start);
+            var pagesize = Request.GetParameter(FhirParameter.COUNT)?.ParseIntParameter() ?? 100;//Const.DEFAULT_PAGE_SIZE;
+            var sortby = Request.GetParameter(FhirParameter.SORT);
+            searchparams = searchparams.LimitTo(pagesize).OrderBy(sortby);
+            return FhirService.Search(type, searchparams, start, cancellationToken);
         }
 
         [HttpPost("{type}/_search")]
-        public Task<FhirResponse> SearchWithOperator(string type)
+        public virtual Task<FhirResponse> SearchWithOperator(string type, [FromForm(Name = FhirParameter.SNAPSHOT_INDEX)] int? start, CancellationToken cancellationToken)
         {
             // TODO: start index should be retrieved from the body.
-            var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
-            var searchparams = Request.GetSearchParamsFromBody();
+            //var startIndex = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
+            var searchParams = Request.GetSearchParamsFromBody();
 
-            return _fhirService.Search(type, searchparams, start);
+            return FhirService.Search(type, searchParams, start ?? 0, cancellationToken);
         }
 
         [HttpGet("{type}/_history")]
-        public Task<FhirResponse> History(string type)
+        public virtual Task<FhirResponse> History(string type)
         {
             var parameters = GetHistoryParameters(Request);
-            return _fhirService.History(type, parameters);
+            return FhirService.History(type, parameters);
         }
 
         // ============= Whole System Interactions
 
         [HttpGet]
         [Route("metadata")]
-        public Task<FhirResponse> Metadata() => _fhirService.CapabilityStatement(SparkSettings.Version);
+        public virtual Task<FhirResponse> Metadata() => FhirService.CapabilityStatement(SparkSettings.Version);
 
         [HttpOptions]
         [Route("")]
-        public Task<FhirResponse> Options() => _fhirService.CapabilityStatement(SparkSettings.Version);
+        public virtual Task<FhirResponse> Options() => FhirService.CapabilityStatement(SparkSettings.Version);
 
         [HttpPost]
         [Route("")]
-        public Task<FhirResponse> Transaction(Bundle bundle) => _fhirService.Transaction(bundle);
+        public virtual Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken) => FhirService.Transaction(bundle, cancellationToken);
 
         //[HttpPost, Route("Mailbox")]
         //public FhirResponse Mailbox(Bundle document)
@@ -189,20 +191,20 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
 
         [HttpGet]
         [Route("_history")]
-        public Task<FhirResponse> History()
+        public virtual Task<FhirResponse> History()
         {
             var parameters = GetHistoryParameters(Request);
-            return _fhirService.History(parameters);
+            return FhirService.History(parameters);
         }
 
         [HttpGet]
         [Route("_snapshot")]
-        public Task<FhirResponse> Snapshot()
+        public virtual Task<FhirResponse> Snapshot()
         {
             var snapshot = Request.GetParameter(FhirParameter.SNAPSHOT_ID)
                            ?? throw new ArgumentException("Missing snapshot id");
             var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
-            return _fhirService.GetPage(snapshot, start);
+            return FhirService.GetPage(snapshot, start);
         }
 
         // Operations
@@ -222,17 +224,18 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
 
         [HttpPost]
         [Route("{type}/{id}/${operation}")]
-        public async Task<FhirResponse> InstanceOperation(
+        public virtual async Task<FhirResponse> InstanceOperation(
             string type,
             string id,
             string operation,
-            Parameters parameters)
+            Parameters parameters,
+            CancellationToken cancellationToken)
         {
             var key = Key.Create(type, id);
             return operation.ToLower() switch
             {
-                "meta" => await _fhirService.ReadMeta(key).ConfigureAwait(false),
-                "meta-add" => await _fhirService.AddMeta(key, parameters).ConfigureAwait(false),
+                "meta" => await FhirService.ReadMeta(key, cancellationToken).ConfigureAwait(false),
+                "meta-add" => await FhirService.AddMeta(key, parameters, cancellationToken).ConfigureAwait(false),
                 "meta-delete" => Respond.WithError(HttpStatusCode.NotFound, "Unknown operation"),
                 _ => Respond.WithError(HttpStatusCode.NotFound, "Unknown operation")
             };
@@ -241,28 +244,28 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
         [HttpPost]
         [HttpGet]
         [Route("{type}/{id}/$everything")]
-        public Task<FhirResponse> Everything(string type, string id)
+        public virtual Task<FhirResponse> Everything(string type, string id, CancellationToken cancellationToken)
         {
             var key = Key.Create(type, id);
-            return _fhirService.Everything(key);
+            return FhirService.Everything(key, cancellationToken);
         }
 
         [HttpPost]
         [HttpGet]
         [Route("{type}/$everything")]
-        public Task<FhirResponse> Everything(string type)
+        public virtual Task<FhirResponse> Everything(string type, CancellationToken cancellationToken)
         {
             var key = Key.Create(type);
-            return _fhirService.Everything(key);
+            return FhirService.Everything(key, cancellationToken);
         }
 
         [HttpPost]
         [HttpGet]
         [Route("Composition/{id}/$document")]
-        public Task<FhirResponse> Document(string id)
+        public virtual Task<FhirResponse> Document(string id, CancellationToken cancellationToken)
         {
             var key = Key.Create("Composition", id);
-            return _fhirService.Document(key);
+            return FhirService.Document(key, cancellationToken);
         }
 
         private HistoryParameters GetHistoryParameters(HttpRequest request)

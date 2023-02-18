@@ -9,11 +9,12 @@
 
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
 {
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
 
     public interface IInteractionHandler
     {
-        Task<FhirResponse> HandleInteraction(Entry interaction);
+        Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken);
     }
 }

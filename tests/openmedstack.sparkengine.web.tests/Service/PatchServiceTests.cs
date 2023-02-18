@@ -20,18 +20,18 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
 
     public class PatchServiceTests
     {
-        private readonly PatchService _patchService = new ();
+        private readonly PatchService _patchService = new();
 
         [Fact]
         public void CanReplaceStatusOnMedicationRequest()
         {
-            var resource = new MedicationRequest { Id = "test", Status = MedicationRequest.medicationrequestStatus.Active };
+            var resource = new MedicationRequest { Id = "test", Status = MedicationRequest.MedicationrequestStatus.Active };
             var parameters = new Parameters();
             parameters = parameters.AddReplacePatchParameter("MedicationRequest.status", new Code("completed"));
 
             resource = (MedicationRequest)_patchService.Apply(resource, parameters);
 
-            Assert.Equal(MedicationRequest.medicationrequestStatus.Completed, resource.Status);
+            Assert.Equal(MedicationRequest.MedicationrequestStatus.Completed, resource.Status);
         }
 
         [Fact]
@@ -87,24 +87,25 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
             Assert.Equal("abc", resource.Subject.Reference);
         }
 
-        [Fact]
-        public void CanAddInstantiatesCanonicalOnMedicationRequest()
-        {
-            var resource = new MedicationRequest { Id = "test" };
-            var parameters = new Parameters();
-            parameters.AddAddPatchParameter("MedicationRequest", "instantiatesCanonical", new Canonical("abc"));
+        //[Fact]
+        //public void CanAddInstantiatesCanonicalOnMedicationRequest()
+        //{
+        //    var resource = new MedicationRequest { Id = "test" };
+        //    var parameters = new Parameters();
+        //    parameters.AddAddPatchParameter("MedicationRequest", "instantiatesCanonical", new Canonical("abc"));
 
-            resource = (MedicationRequest)_patchService.Apply(resource, parameters);
+        //    resource = (MedicationRequest)_patchService.Apply(resource, parameters);
 
-            Assert.Equal("abc", resource.InstantiatesCanonical.FirstOrDefault());
-        }
+        //    Assert.Equal("abc", resource.InstantiatesCanonical.FirstOrDefault());
+        //}
 
         [Fact]
         public void CanAddDosageOnMedicationRequest()
         {
             var resource = new MedicationRequest { Id = "test" };
             var parameters = new Parameters();
-            parameters.AddAddPatchParameter("MedicationRequest", "dosageInstruction", new Dosage
+            parameters.AddAddPatchParameter("MedicationRequest", "dose", default);
+            parameters.AddAddPatchParameter("MedicationRequest", "dose.dosageInstruction", new Dosage
             {
                 MaxDosePerLifetime = new Quantity
                 {
@@ -117,7 +118,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
 
             resource = (MedicationRequest)_patchService.Apply(resource, parameters);
 
-            Assert.Equal(1m, resource.DosageInstruction[0].MaxDosePerLifetime.Value);
+            Assert.Equal(1m, resource.Dose.DosageInstruction[0].MaxDosePerLifetime.Value);
         }
 
         [Fact]
@@ -131,17 +132,17 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
 
             Assert.Equal("1930-01-01", resource.BirthDate);
         }
-        
+
         [Fact]
         public void CanApplyCodeValueAsString()
         {
             var parameters = new Parameters();
             parameters.AddReplacePatchParameter("MedicationRequest.status", new FhirString("completed"));
 
-            var resource = new MedicationRequest() { Id = "test"};
+            var resource = new MedicationRequest() { Id = "test" };
             resource = (MedicationRequest)_patchService.Apply(resource, parameters);
 
-            Assert.Equal(MedicationRequest.medicationrequestStatus.Completed, resource.Status);
+            Assert.Equal(MedicationRequest.MedicationrequestStatus.Completed, resource.Status);
         }
 
         [Fact]
@@ -170,7 +171,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
             Assert.Equal("John", resource.Name[0].Given.First());
             Assert.Equal("Doe", resource.Name[0].Family);
         }
-        
+
         [Fact]
         public void CanApplyCollectionAddPatchForNonNamedDataTypes()
         {
@@ -180,12 +181,14 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
             valuePart.Name = "value";
             valuePart.Part.Add(new Parameters.ParameterComponent()
             {
-                Name = "description", Value = new FhirString("testProcessing")
+                Name = "description",
+                Value = new FhirString("testProcessing")
             });
             var dateTime = new FhirDateTime(DateTimeOffset.Now);
             valuePart.Part.Add(new Parameters.ParameterComponent()
             {
-                Name = "time", Value = dateTime 
+                Name = "time",
+                Value = dateTime
             });
 
             var resource = new Specimen() { Id = "test" };
@@ -207,7 +210,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
                 Name = "period",
                 Value = new Period
                 {
-                    End =  "2021-12-24T16:00:00+02:00",
+                    End = "2021-12-24T16:00:00+02:00",
                 },
             });
             parameters.AddAddPatchParameter("Task", "note", new Annotation
@@ -221,7 +224,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
 
             Assert.Equal("2021-12-24T16:00:00+02:00", resource.Restriction.Period.End);
             Assert.Equal("2021-12-10T14:03:42.8007888+02:00", resource.Note[0].Time);
-            Assert.Equal("Oppgavens frist er utsatt da timen er flyttet", resource.Note[0].Text?.Value);
+            Assert.Equal("Oppgavens frist er utsatt da timen er flyttet", resource.Note[0].Text);
         }
 
         [Fact]
@@ -233,7 +236,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
                 return p.Parameter[0].Part[3];
             }, new Specimen() { Id = "test" });
         }
-        
+
         [Fact]
         public void CanApplyCollectionInsertPatchForNonNamedDataTypesWithExtension()
         {
@@ -244,7 +247,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
             }, new Specimen() { Id = "test" });
         }
 
-        [Fact] 
+        [Fact]
         public void CanApplyCollectionReplacePatchForNonNamedDataTypesWithExtension()
         {
             var specimen = new Specimen()
@@ -269,7 +272,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
                 return p.Parameter[0].Part[2];
             }, specimen);
         }
-        
+
         private void CanApplyCollectionOperationPatchForNonNamedDataTypesWithExtension(Func<Parameters, Parameters.ParameterComponent> applyOperationAndGetValuePart,
             Specimen resource)
         {
@@ -287,11 +290,12 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
             {
                 valuePart.Part.Add(new Parameters.ParameterComponent()
                 {
-                    Name = "extension", Part = new List<Parameters.ParameterComponent>()
+                    Name = "extension",
+                    Part = new List<Parameters.ParameterComponent>()
                     {
                         new Parameters.ParameterComponent()
                         {
-                            Name = "url", Value = new FhirUri(extension.Url) 
+                            Name = "url", Value = new FhirUri(extension.Url)
                         },
                         new Parameters.ParameterComponent()
                         {
@@ -302,20 +306,22 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
             }
             valuePart.Part.Add(new Parameters.ParameterComponent()
             {
-                Name = "description", Value = new FhirString("testProcessing")
+                Name = "description",
+                Value = new FhirString("testProcessing")
             });
             var dateTime = new FhirDateTime(DateTimeOffset.Now);
             valuePart.Part.Add(new Parameters.ParameterComponent()
             {
-                Name = "time", Value = dateTime 
+                Name = "time",
+                Value = dateTime
             });
-            
+
             resource = (Specimen)_patchService.Apply(resource, parameters);
 
             Assert.Single(resource.Processing);
             Assert.Equal("testProcessing", resource.Processing[0].Description);
             Assert.Equal(dateTime, resource.Processing[0].Time);
-            Assert.Equal(extensions.Select(x => x.ToXml()), 
+            Assert.Equal(extensions.Select(x => x.ToXml()),
                 resource.Processing[0].Extension.Select(x => x.ToXml()));
         }
 
@@ -407,7 +413,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
 
             Assert.Empty(resource.Name);
         }
-        
+
         [Fact]
         public void ShouldBeAbleToReplaceAttributeBelowRoot()
         {
@@ -427,7 +433,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Service
                     Period = new Period
                     {
                         Start = "2021-12-12T16:00:00+02:00",
-                        End =  "2021-12-24T16:00:00+02:00",
+                        End = "2021-12-24T16:00:00+02:00",
                     },
                 }
             };

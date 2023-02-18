@@ -12,9 +12,9 @@ namespace OpenMedStack.SparkEngine.Utility
 
     public static class FhirParameterParser
     {
-        public static DateTimeOffset? ParseDateParameter(this string value) =>
+        public static DateTimeOffset? ParseDateParameter(this string? value) =>
             DateTimeOffset.TryParse(value, out var dateTime) ? dateTime : (DateTimeOffset?) null;
 
-        public static int? ParseIntParameter(this string value) => int.TryParse(value, out var n) ? n : default(int?);
+        public static int? ParseIntParameter(this string? value) => int.TryParse(value, out var n) ? n : default(int?);
     }
 }

@@ -74,7 +74,7 @@ namespace OpenMedStack.SparkEngine.Web.Tests.Formatters
         {
             var formatter = GetInputFormatter();
 
-            var fhirVersionMoniker = FhirVersionUtility.GetFhirVersionMoniker();
+            var fhirVersionMoniker = FhirVersionUtility.GetFhirVersionMoniker(FhirVersionMoniker.R5);
             var content = GetResourceFromFileAsString(
                 Path.Combine("TestData", fhirVersionMoniker.ToString(), "patient-example.json"));
             var contentBytes = Encoding.UTF8.GetBytes(content);

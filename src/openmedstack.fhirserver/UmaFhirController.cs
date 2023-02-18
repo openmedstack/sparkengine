@@ -1,270 +1,139 @@
 ﻿namespace OpenMedStack.FhirServer;
 
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
+using DotAuth.Client;
+using DotAuth.Shared;
+using DotAuth.Shared.Models;
+using DotAuth.Shared.Requests;
+using DotAuth.Uma;
 using DotAuth.Uma.Web;
 using Hl7.Fhir.Model;
-using Hl7.Fhir.Rest;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Net.Http.Headers;
-using SparkEngine;
 using SparkEngine.Core;
-using SparkEngine.Extensions;
 using SparkEngine.Service;
-using SparkEngine.Utility;
-using SparkEngine.Web.Extensions;
+using SparkEngine.Web.Controllers;
 
-[Authorize]
-[Route("fhir")]
-[ApiController]
-[EnableCors]
-internal class UmaFhirController : ControllerBase
+[Route("")]
+public class DefaultFhirController:FhirController
 {
-    private readonly IFhirService _fhirService;
-
-    public UmaFhirController(IFhirService fhirService) =>
-        _fhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
-
-    [UmaFilter("{0}/{1}", new[] { "type", "id" }, scopes: "read")]
-    [HttpGet("{type}/{id}")]
-    public async Task<ActionResult<FhirResponse>> Read(string type, string id)
+    /// <inheritdoc />
+    public DefaultFhirController(IFhirService fhirService)
+        : base(fhirService)
     {
-        var ifModifiedSince = Request.Headers[HeaderNames.IfModifiedSince]
-            .Aggregate(
-                default(DateTimeOffset?),
-                (d, s) => !d.HasValue && DateTimeOffset.TryParse((string?)s, out var result) ? result : d);
+    }
+}
 
-        var parameters = new ConditionalHeaderParameters(Request.Headers[HeaderNames.IfNoneMatch], ifModifiedSince);
-        var key = Key.Create(type, id);
-        var result = await _fhirService.Read(key, parameters).ConfigureAwait(false);
-        return new ActionResult<FhirResponse>(result);
+[Route("uma")]
+public class UmaFhirController : FhirController
+{
+    private readonly IUmaResourceSetClient _resourceSetClient;
+    private readonly IResourceMap _resourceMap;
+
+    public UmaFhirController(
+        IFhirService fhirService,
+        IUmaResourceSetClient resourceSetClient,
+        IResourceMap resourceMap)
+        : base(fhirService)
+    {
+        _resourceSetClient = resourceSetClient;
+        _resourceMap = resourceMap;
     }
 
-    [HttpGet("{type}/{id}/_history/{vid}")]
-    public Task<FhirResponse> VRead(string type, string id, string vid)
+    [AllowAnonymous]
+    [UmaFilter("{0}/{1}", new[] { "type", "id" }, allowedScope: "read")]
+    public override Task<ActionResult<FhirResponse>> Read(string type, string id, CancellationToken cancellationToken)
     {
-        var key = Key.Create(type, id, vid);
-        return _fhirService.VersionRead(key);
+        return base.Read(type, id, cancellationToken);
     }
 
-    [HttpPut("{type}/{id?}")]
-    public async Task<FhirResponse?> Update(string type, Resource resource, string? id = null)
+    [AllowAnonymous]
+    [UmaFilter("{0}/{1}/_history/{2}", new[] { "type", "id", "vid" }, allowedScope: "read")]
+    public override Task<FhirResponse> VRead(string type, string id, string vid, CancellationToken cancellationToken)
     {
-        var versionId = Request.GetTypedHeaders().IfMatch.FirstOrDefault()?.Tag.Buffer;
-        var key = Key.Create(type, id, versionId);
-        if (key.HasResourceId())
+        return base.VRead(type, id, vid, cancellationToken);
+    }
+
+    public override Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
+    {
+        var subject = User.GetSubject();
+        if (string.IsNullOrWhiteSpace(subject))
         {
-            Request.TransferResourceIdIfRawBinary(resource, id);
-
-            var update = await _fhirService.Update(key, resource).ConfigureAwait(false);
-            return update;
+            return System.Threading.Tasks.Task.FromResult<FhirResponse?>(new FhirResponse(HttpStatusCode.Forbidden));
         }
 
-        var conditionalUpdate = await _fhirService.ConditionalUpdate(
-                key,
-                resource,
-                SearchParams.FromUriParamList(
-                    Request.TupledParameters().Select(t => Tuple.Create(t.Item1, t.Item2))))
-            .ConfigureAwait(false);
-        return conditionalUpdate;
+        bool HasUserReference(ResourceReference reference)
+        {
+            return reference.Reference == $"Patient/{subject}";
+        }
+        var allowed = resource switch
+        {
+            Patient p => p.Contact.Any(
+                x => x.Telecom.Any(
+                    t => t.System == ContactPoint.ContactPointSystem.Url && t.Value == subject)),
+            NutritionIntake n => HasUserReference(n.Subject),
+            Observation o => HasUserReference(o.Subject),
+            Procedure p => HasUserReference(p.Subject),
+            MedicationDispense m => HasDoctorRole(m.Performer.FirstOrDefault(), subject),
+            _ => false
+        };
+        return !allowed
+            ? System.Threading.Tasks.Task.FromResult<FhirResponse?>(new FhirResponse(HttpStatusCode.Forbidden))
+            : base.Create(type, resource, cancellationToken);
     }
 
-    [HttpPost("{type}")]
-    public async Task<FhirResponse?> Create(string type, Resource resource)
+    private static bool HasDoctorRole(MedicationDispense.PerformerComponent? performer, string subject)
     {
-        var key = Key.Create(type, resource.Id);
-
-        if (Request.Headers.ContainsKey(FhirHttpHeaders.IfNoneExist))
+        if (performer == null)
         {
-            var searchQueryString = HttpUtility.ParseQueryString(Request.GetTypedHeaders().IfNoneExist() ?? "");
-            var searchValues = searchQueryString.Keys.Cast<string>()
-                .Select(k => new Tuple<string, string?>(k, searchQueryString[k]));
-
-            return await _fhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues));
+            return false;
         }
 
-        var response = await _fhirService.Create(key, resource);
+        return performer.Actor?.Reference?.EndsWith($"/{subject}") == true;
+    }
+
+    [AllowAnonymous]
+    [UmaFilter("{0}/{1}", new[] { "type", "id" }, allowedScope: "delete")]
+    public override Task<FhirResponse> Delete(string type, string id, CancellationToken cancellationToken)
+    {
+        return base.Delete(type, id, cancellationToken);
+    }
+
+    [AllowAnonymous]
+    [UmaFilter("{0}/{1}/$everything", new[] { "type", "id" }, allowedScope: "read")]
+    public override Task<FhirResponse> Everything(string type, string id, CancellationToken cancellationToken)
+    {
+        return base.Everything(type, id, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override async Task<FhirResponse> Search(string type, CancellationToken cancellationToken)
+    {
+        var response = await base.Search(type, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            var bundle = (response.Resource as Bundle)!;
+            var ids = bundle.GetResources().Select(x => x.HasVersionId ? x.VersionId : x.Id).ToArray();
+            var resourceOptions = await _resourceSetClient.SearchResources(new SearchResourceSet { IdToken = "", Terms = ids }, "", cancellationToken);
+            if (resourceOptions is Option<PagedResult<ResourceSetDescription>>.Result resources)
+            {
+                var availableIds = new HashSet<string>(
+                    (await System.Threading.Tasks.Task.WhenAll(
+                        resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id)))).Where(s => s != null)
+                    .Select(s => s!));
+                var entries = bundle.Entry.Where(x => availableIds.Contains(x.Resource.Id));
+                var resultingBundle = new Bundle { Type = bundle.Type, Total = availableIds.Count };
+                resultingBundle.Entry.AddRange(entries);
+                return new FhirResponse(response.StatusCode, response.Key, resultingBundle);
+            }
+
+            return new FhirResponse(HttpStatusCode.BadRequest, Key.Create(type));
+        }
+
         return response;
-    }
-
-    [HttpDelete("{type}/{id}")]
-    public Task<FhirResponse> Delete(string type, string id)
-    {
-        var key = Key.Create(type, id);
-        return _fhirService.Delete(key);
-    }
-
-    [HttpDelete("{type}")]
-    public Task<FhirResponse> ConditionalDelete(string type)
-    {
-        var key = Key.Create(type);
-        return _fhirService.ConditionalDelete(key, Request.TupledParameters());
-    }
-
-    [HttpGet("{type}/{id}/_history")]
-    public Task<FhirResponse> History(string type, string id)
-    {
-        var key = Key.Create(type, id);
-        var parameters = GetHistoryParameters(Request);
-        return _fhirService.History(key, parameters);
-    }
-
-    // ============= Validate
-
-    [HttpPost("{type}/{id}/$validate")]
-    public Task<FhirResponse> Validate(string type, string id, Resource resource)
-    {
-        var key = Key.Create(type, id);
-        return _fhirService.ValidateOperation(key, resource);
-    }
-
-    [HttpPost("{type}/$validate")]
-    public Task<FhirResponse> Validate(string type, Resource resource)
-    {
-        var key = Key.Create(type);
-        return _fhirService.ValidateOperation(key, resource);
-    }
-
-    // ============= Type Level Interactions
-
-    [HttpGet("{type}")]
-    public Task<FhirResponse> Search(string type)
-    {
-        var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
-        var searchparams = Request.GetSearchParams();
-        //int pagesize = Request.GetIntParameter(FhirParameter.COUNT) ?? Const.DEFAULT_PAGE_SIZE;
-        //string sortby = Request.GetParameter(FhirParameter.SORT);
-
-        return _fhirService.Search(type, searchparams, start);
-    }
-
-    [HttpPost("{type}/_search")]
-    public Task<FhirResponse> SearchWithOperator(string type)
-    {
-        // TODO: start index should be retrieved from the body.
-        var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
-        var searchparams = Request.GetSearchParamsFromBody();
-
-        return _fhirService.Search(type, searchparams, start);
-    }
-
-    [HttpGet("{type}/_history")]
-    public Task<FhirResponse> History(string type)
-    {
-        var parameters = GetHistoryParameters(Request);
-        return _fhirService.History(type, parameters);
-    }
-
-    // ============= Whole System Interactions
-
-    [HttpGet]
-    [Route("metadata")]
-    public Task<FhirResponse> Metadata() => _fhirService.CapabilityStatement(SparkSettings.Version);
-
-    [HttpOptions]
-    [Route("")]
-    public Task<FhirResponse> Options() => _fhirService.CapabilityStatement(SparkSettings.Version);
-
-    [HttpPost]
-    [Route("")]
-    public Task<FhirResponse> Transaction(Bundle bundle) => _fhirService.Transaction(bundle);
-
-    //[HttpPost, Route("Mailbox")]
-    //public FhirResponse Mailbox(Bundle document)
-    //{
-    //    Binary b = Request.GetBody();
-    //    return service.Mailbox(document, b);
-    //}
-
-    [HttpGet]
-    [Route("_history")]
-    public Task<FhirResponse> History()
-    {
-        var parameters = GetHistoryParameters(Request);
-        return _fhirService.History(parameters);
-    }
-
-    [HttpGet]
-    [Route("_snapshot")]
-    public Task<FhirResponse> Snapshot()
-    {
-        var snapshot = Request.GetParameter(FhirParameter.SNAPSHOT_ID)
-                       ?? throw new ArgumentException("Missing snapshot id");
-        var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
-        return _fhirService.GetPage(snapshot, start);
-    }
-
-    // Operations
-
-    [HttpPost]
-    [Route("${operation}")]
-#pragma warning disable CA1822 // Mark members as static
-    public FhirResponse ServerOperation(string operation)
-#pragma warning restore CA1822 // Mark members as static
-    {
-        return operation.ToLower() switch
-        {
-            "error" => throw new Exception("This error is for testing purposes"),
-            _ => Respond.WithError(HttpStatusCode.NotFound, "Unknown operation")
-        };
-    }
-
-    [HttpPost]
-    [Route("{type}/{id}/${operation}")]
-    public async Task<FhirResponse> InstanceOperation(
-        string type,
-        string id,
-        string operation,
-        Parameters parameters)
-    {
-        var key = Key.Create(type, id);
-        return operation.ToLower() switch
-        {
-            "meta" => await _fhirService.ReadMeta(key).ConfigureAwait(false),
-            "meta-add" => await _fhirService.AddMeta(key, parameters).ConfigureAwait(false),
-            "meta-delete" => Respond.WithError(HttpStatusCode.NotFound, "Unknown operation"),
-            _ => Respond.WithError(HttpStatusCode.NotFound, "Unknown operation")
-        };
-    }
-
-    [HttpPost]
-    [HttpGet]
-    [Route("{type}/{id}/$everything")]
-    public Task<FhirResponse> Everything(string type, string id)
-    {
-        var key = Key.Create(type, id);
-        return _fhirService.Everything(key);
-    }
-
-    [HttpPost]
-    [HttpGet]
-    [Route("{type}/$everything")]
-    public Task<FhirResponse> Everything(string type)
-    {
-        var key = Key.Create(type);
-        return _fhirService.Everything(key);
-    }
-
-    [HttpPost]
-    [HttpGet]
-    [Route("Composition/{id}/$document")]
-    public Task<FhirResponse> Document(string id)
-    {
-        var key = Key.Create("Composition", id);
-        return _fhirService.Document(key);
-    }
-
-    private HistoryParameters GetHistoryParameters(HttpRequest request)
-    {
-        var count = request.GetParameter(FhirParameter.COUNT)?.ParseIntParameter();
-        var since = request.GetParameter(FhirParameter.SINCE)?.ParseDateParameter();
-        var sortBy = Request.GetParameter(FhirParameter.SORT);
-        return new HistoryParameters(count, since, sortBy);
     }
 }

@@ -177,7 +177,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             var resource = split.FirstOrDefault();
             var paramname = split.Skip(1).FirstOrDefault();
             var param = ModelInfo.SearchParameters.FirstOrDefault(p => p.Resource == resource && p.Name == paramname);
-            return param != null ? param.Path : Enumerable.Empty<string>();
+            return param is { Path: { } } ? param.Path : Enumerable.Empty<string>();
         }
     }
 }

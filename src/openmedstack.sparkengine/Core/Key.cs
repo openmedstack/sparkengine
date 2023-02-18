@@ -73,7 +73,7 @@ namespace OpenMedStack.SparkEngine.Core
                 key.ResourceId = segments[1];
             }
 
-            if (segments.Length == 4 && segments[2] == "_history")
+            if (segments is [_, _, "_history", _])
             {
                 key.VersionId = segments[3];
             }

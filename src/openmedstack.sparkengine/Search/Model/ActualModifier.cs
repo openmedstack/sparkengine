@@ -100,7 +100,7 @@ namespace OpenMedStack.SparkEngine.Search.Model
             return null;
         }
 
-        private Type TryGetType(string rawModifier) => ModelInfo.GetTypeForFhirType(rawModifier);
+        private Type? TryGetType(string rawModifier) => ModelInfo.GetTypeForFhirType(rawModifier);
 
         public override string ToString()
         {
@@ -108,7 +108,7 @@ namespace OpenMedStack.SparkEngine.Search.Model
             return Modifier switch
             {
                 Modifier.MISSING => modifierText + MISSING_SEPARATOR + (Missing!.Value ? MISSINGTRUE : MISSINGFALSE),
-                Modifier.TYPE => ModelInfo.GetFhirTypeNameForType(ModifierType),
+                Modifier.TYPE => ModelInfo.GetFhirTypeNameForType(ModifierType!) ?? "",
                 _ => modifierText
             };
         }

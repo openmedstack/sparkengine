@@ -1,6 +1,7 @@
 ﻿namespace OpenMedStack.SparkEngine.Web.Tests
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Hl7.Fhir.Model;
     using Interfaces;
@@ -9,13 +10,16 @@
     public class GuidGenerator : IGenerator
     {
         /// <inheritdoc />
-        public Task<string> NextResourceId(Resource resource) => Task.FromResult(Guid.NewGuid().ToString("N"));
+        public Task<string> NextResourceId(Resource resource, CancellationToken cancellationToken) => Task.FromResult(Guid.NewGuid().ToString("N"));
 
         /// <inheritdoc />
-        public Task<string> NextVersionId(string resourceIdentifier) => Task.FromResult(Guid.NewGuid().ToString("N"));
+        public Task<string> NextVersionId(string resourceIdentifier, CancellationToken cancellationToken) => Task.FromResult(Guid.NewGuid().ToString("N"));
 
         /// <inheritdoc />
-        public Task<string> NextVersionId(string resourceType, string resourceIdentifier) =>
+        public Task<string> NextVersionId(
+            string resourceType,
+            string resourceIdentifier,
+            CancellationToken cancellationToken) =>
             Task.FromResult(Guid.NewGuid().ToString("N"));
     }
 }

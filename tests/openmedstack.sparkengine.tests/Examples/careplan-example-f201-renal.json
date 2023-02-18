@@ -87,8 +87,10 @@
   ],
   "addresses": [
     {
-      "reference": "Condition/f204",
-      "display": "Roel\u0027s renal insufficiency"
+      "reference": {
+        "reference": "Condition/f204",
+        "display": "Roel's renal insufficiency"
+      }
     }
   ],
   "goal": [
@@ -98,7 +100,7 @@
   ],
   "activity": [
     {
-      "detail": {
+      "plannedActivityDetail": {
         "kind": "NutritionOrder",
         "code": {
           "coding": [
@@ -125,7 +127,7 @@
       }
     },
     {
-      "detail": {
+      "plannedActivityDetail": {
         "kind": "ServiceRequest",
         "code": {
           "coding": [

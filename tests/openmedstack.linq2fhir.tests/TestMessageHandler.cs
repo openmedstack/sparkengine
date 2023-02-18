@@ -7,7 +7,7 @@ using Hl7.Fhir.Serialization;
 
 internal class TestMessageHandler : HttpMessageHandler
 {
-    public string RequestedPathAndQuery { get; private set; }
+    public string? RequestedPathAndQuery { get; private set; }
 
     /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -153,7 +153,7 @@ internal class TestMessageHandler : HttpMessageHandler
                 key.ResourceId = segments[1];
             }
 
-            if (segments.Length == 4 && segments[2] == "_history")
+            if (segments is [_, _, "_history", _])
             {
                 key.VersionId = segments[3];
             }

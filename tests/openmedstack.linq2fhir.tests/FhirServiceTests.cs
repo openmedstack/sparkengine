@@ -98,15 +98,15 @@ public class FhirServiceTests
         Assert.Equal("/Patient?_include=Patient%3Alink", handler.RequestedPathAndQuery);
     }
 
-    private static IAsyncQueryable<Encounter> GetQueryable()
+    private static IAsyncQueryable<Patient> GetQueryable()
     {
         var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), new TestMessageHandler());
 
-        var asyncQueryable = client.Query<Encounter>()
-            .Where(e => e.PlannedEndDate == "a")
+        var asyncQueryable = client.Query<Patient>()
+            .Where(e => e.BirthDate == "a")
             .UpdatedSince(DateTimeOffset.UnixEpoch)
-            .OrderBy(x => x.PlannedEndDate)
-            .Elements(x => new { s = x.Subject, x.ActualPeriod });
+            .OrderBy(x => x.BirthDate)
+            .Elements(x => new { s = x.BirthDate, x.Active });
         return asyncQueryable;
     }
 }

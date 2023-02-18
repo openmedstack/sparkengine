@@ -11,6 +11,8 @@ namespace OpenMedStack.SparkEngine.Postgres
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using Core;
     using Marten;
@@ -24,7 +26,7 @@ namespace OpenMedStack.SparkEngine.Postgres
         public MartenFhirStore(Func<IDocumentSession> sessionFunc) => _sessionFunc = sessionFunc;
 
         /// <inheritdoc />
-        public async Task Add(Entry entry)
+        public async Task Add(Entry entry, CancellationToken cancellationToken = default)
         {
             if (entry.Key == null || entry.Resource == null)
             {
@@ -36,14 +38,14 @@ namespace OpenMedStack.SparkEngine.Postgres
             {
                 var existing = await session.Query<EntryEnvelope>()
                     .Where(x => x.Id == entry.Key.ToStorageKey())
-                    .ToListAsync();
+                    .ToListAsync(token: cancellationToken);
                 foreach (var envelope in existing)
                 {
                     envelope.IsPresent = false;
                 }
 
                 session.Store<EntryEnvelope>(existing);
-                await session.SaveChangesAsync();
+                await session.SaveChangesAsync(cancellationToken);
             }
 
             session.Store(
@@ -62,11 +64,11 @@ namespace OpenMedStack.SparkEngine.Postgres
                     IsPresent = entry.IsPresent,
                     Deleted = entry.IsDelete
                 });
-            await session.SaveChangesAsync().ConfigureAwait(false);
+            await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<Entry?> Get(IKey? key)
+        public async Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default)
         {
             if (key == null)
             {
@@ -75,7 +77,7 @@ namespace OpenMedStack.SparkEngine.Postgres
 
             await using var session = _sessionFunc();
             var result = key.HasVersionId()
-                ? await session.LoadAsync<EntryEnvelope>(key.ToStorageKey()).ConfigureAwait(false)
+                ? await session.LoadAsync<EntryEnvelope>(key.ToStorageKey(), cancellationToken).ConfigureAwait(false)
                 : await session.Query<EntryEnvelope>()
                     .Where(
                         x => x.ResourceType == key.TypeName
@@ -83,26 +85,28 @@ namespace OpenMedStack.SparkEngine.Postgres
                              && x.IsPresent
                              && x.ResourceKey == key.WithoutVersion().ToStorageKey())
                     .OrderByDescending(x => x.When)
-                    .FirstOrDefaultAsync()
+                    .FirstOrDefaultAsync(token: cancellationToken)
                     .ConfigureAwait(false);
 
             return result == null ? null : Entry.Create(result.Method, Key.Create(result.ResourceType, result.ResourceId, result.VersionId), result.Resource);
         }
 
         /// <inheritdoc />
-        public async IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers)
+        public async IAsyncEnumerable<Entry> Get(
+            IEnumerable<IKey> localIdentifiers,
+           [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var localKeys = localIdentifiers.Select(x => x.ToStorageKey()).ToArray();
             await using var session = _sessionFunc();
-            var results = session.Query<EntryEnvelope>().Where(e => e.Id.IsOneOf(localKeys)).ToAsyncEnumerable();
-            await foreach (var result in results)
+            var results = session.Query<EntryEnvelope>().Where(e => e.Id.IsOneOf(localKeys)).ToAsyncEnumerable(token: cancellationToken);
+            await foreach (var result in results.WithCancellation(cancellationToken))
             {
                 yield return Entry.Create(result.Method, Key.Create(result.ResourceType, result.ResourceId, result.VersionId), result.Resource);
             }
         }
 
         /// <inheritdoc />
-        public async Task<bool> Exists(IKey? key)
+        public async Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default)
         {
             if (key == null)
             {
@@ -114,7 +118,8 @@ namespace OpenMedStack.SparkEngine.Postgres
                 .CountAsync(
                     x => x.ResourceType == key.TypeName
                          && x.ResourceId == key.ResourceId
-                         && x.VersionId == key.VersionId)
+                         && x.VersionId == key.VersionId,
+                    token: cancellationToken)
                 .ConfigureAwait(false);
             return count > 0;
         }

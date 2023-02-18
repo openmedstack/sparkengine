@@ -20,13 +20,6 @@ namespace OpenMedStack.SparkEngine.Tests.Core.Builders
 
     public class CapabilityStatementBuilderTests
     {
-        private readonly ITestOutputHelper _output;
-
-        public CapabilityStatementBuilderTests(ITestOutputHelper output)
-        {
-            _output = output;
-        }
-        
         [Fact]
         public void CapabilityStatementStatusIsActive()
         {
@@ -66,7 +59,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core.Builders
                 .Build();
             Assert.Equal("Spark Capability Statement", capabilityStatement.Title);
         }
-        
+
         [Fact]
         public void CapabilityStatementCanBuildRestComponent()
         {
@@ -80,11 +73,11 @@ namespace OpenMedStack.SparkEngine.Tests.Core.Builders
                 .WithFhirVersion(FHIRVersion.N4_0_1)
                 .WithAcceptFormat(FhirMediaType.JsonMimeTypes)
                 .WithAcceptFormat(FhirMediaType.XmlMimeTypes)
-                .WithRest(() => 
+                .WithRest(() =>
                     new RestComponentBuilder()
                         .WithResource(() => new ResourceComponent
                         {
-                            Type = ResourceType.Patient,
+                            Type = ModelInfo.ResourceTypeToFhirTypeName(ResourceType.Patient),
                             Profile = "http://hl7.no/fhir/StructureDefinition/no-helseapi-Patient",
                             Interaction = new List<ResourceInteractionComponent>
                             {
@@ -102,7 +95,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core.Builders
                         })
                         .WithResource(() => new ResourceComponent
                         {
-                            Type = ResourceType.Practitioner,
+                            Type = ModelInfo.ResourceTypeToFhirTypeName(ResourceType.Practitioner),
                             Profile = "http://hl7.no/fhir/StructureDefinition/no-helseapi-Practitioner",
                             Interaction = new List<ResourceInteractionComponent>
                             {
@@ -119,7 +112,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core.Builders
                         })
                         .WithResource(() => new ResourceComponent
                         {
-                            Type = ResourceType.DocumentReference,
+                            Type = ModelInfo.ResourceTypeToFhirTypeName(ResourceType.DocumentReference),
                             Profile = "http://hl7.no/fhir/StructureDefinition/no-helseapi-DocumentReference",
                             Interaction = new List<ResourceInteractionComponent>
                             {
@@ -137,12 +130,12 @@ namespace OpenMedStack.SparkEngine.Tests.Core.Builders
                         .Build()
                     )
                 .Build();
-            
+
             Assert.Equal(1, capabilityStatement.Rest?.Count);
             Assert.Equal(3, capabilityStatement.Rest?.FirstOrDefault()?.Resource.Count);
             Assert.Equal(3, capabilityStatement.Rest?.FirstOrDefault()?.Resource.Count);
-            Assert.Equal(5, capabilityStatement.Rest?.FirstOrDefault()?.Resource.Find(rest => rest.Type == ResourceType.Patient)?.SearchParam?.Count);
-            Assert.NotNull(capabilityStatement.Rest?.FirstOrDefault()?.Resource.Find(rest => rest.Type == ResourceType.DocumentReference)?.Interaction.Find(interaction => interaction.Code == CapabilityStatement.TypeRestfulInteraction.Create));
+            Assert.Equal(5, capabilityStatement.Rest?.FirstOrDefault()?.Resource.Find(rest => rest.Type == ModelInfo.ResourceTypeToFhirTypeName(ResourceType.Patient))?.SearchParam?.Count);
+            Assert.NotNull(capabilityStatement.Rest?.FirstOrDefault()?.Resource.Find(rest => rest.Type == ModelInfo.ResourceTypeToFhirTypeName(ResourceType.DocumentReference))?.Interaction.Find(interaction => interaction.Code == TypeRestfulInteraction.Create));
         }
     }
 }
