@@ -6,16 +6,14 @@
  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Core
-{
-    using System;
+namespace OpenMedStack.SparkEngine.Core;
 
-    public interface ILocalhost
-    {
-        Uri DefaultBase { get; }
-        Uri Absolute(Uri uri);
-        bool IsBaseOf(Uri uri);
-        Uri? GetBaseOf(Uri uri);
-    }
-    
+using System;
+
+public interface ILocalhost
+{
+    Uri DefaultBase { get; }
+    Uri Absolute(Uri uri);
+    bool IsBaseOf(Uri uri);
+    Uri? GetBaseOf(Uri uri);
 }

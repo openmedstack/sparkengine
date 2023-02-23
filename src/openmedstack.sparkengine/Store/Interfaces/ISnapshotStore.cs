@@ -7,15 +7,14 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces
+namespace OpenMedStack.SparkEngine.Store.Interfaces;
+
+using System.Threading.Tasks;
+using Core;
+
+public interface ISnapshotStore
 {
-    using System.Threading.Tasks;
-    using Core;
+    Task AddSnapshot(Snapshot snapshot);
 
-    public interface ISnapshotStore
-    {
-        Task AddSnapshot(Snapshot snapshot);
-
-        Task<Snapshot?> GetSnapshot(string snapshotId);
-    }
+    Task<Snapshot?> GetSnapshot(string snapshotId);
 }

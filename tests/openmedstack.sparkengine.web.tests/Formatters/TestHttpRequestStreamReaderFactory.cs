@@ -6,16 +6,15 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web.Tests.Formatters
-{
-    using System.IO;
-    using System.Text;
-    using Microsoft.AspNetCore.Mvc.Infrastructure;
-    using Microsoft.AspNetCore.WebUtilities;
+namespace OpenMedStack.SparkEngine.Web.Tests.Formatters;
 
-    public class TestHttpRequestStreamReaderFactory : IHttpRequestStreamReaderFactory
-    {
-        public TextReader CreateReader(Stream stream, Encoding encoding) =>
-            new HttpRequestStreamReader(stream, encoding);
-    }
+using System.IO;
+using System.Text;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.WebUtilities;
+
+public class TestHttpRequestStreamReaderFactory : IHttpRequestStreamReaderFactory
+{
+    public TextReader CreateReader(Stream stream, Encoding encoding) =>
+        new HttpRequestStreamReader(stream, encoding);
 }

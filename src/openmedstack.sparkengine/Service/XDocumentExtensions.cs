@@ -6,25 +6,24 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
-{
-    using System;
-    using System.Xml.Linq;
-    using Core;
+namespace OpenMedStack.SparkEngine.Service;
 
-    public static class XDocumentExtensions
+using System;
+using System.Xml.Linq;
+using Core;
+
+public static class XDocumentExtensions
+{
+    public static void VisitAttributes(
+        this XDocument document,
+        string tagname,
+        string attrName,
+        Action<XAttribute> action)
     {
-        public static void VisitAttributes(
-            this XDocument document,
-            string tagname,
-            string attrName,
-            Action<XAttribute> action)
+        var nodes = document.Descendants(Namespaces.XHtml + tagname).Attributes(attrName);
+        foreach (var node in nodes)
         {
-            var nodes = document.Descendants(Namespaces.XHtml + tagname).Attributes(attrName);
-            foreach (var node in nodes)
-            {
-                action(node);
-            }
+            action(node);
         }
     }
 }

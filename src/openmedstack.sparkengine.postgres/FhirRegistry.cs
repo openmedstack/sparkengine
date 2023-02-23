@@ -6,30 +6,29 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
-{
-    using System;
-    using Marten;
+namespace OpenMedStack.SparkEngine.Postgres;
 
-    public class FhirRegistry : MartenRegistry
+using System;
+using Marten;
+
+public class FhirRegistry : MartenRegistry
+{
+    public FhirRegistry()
     {
-        public FhirRegistry()
-        {
-            For<EntryEnvelope>()
-                .Index(x => x.Id)
-                .Duplicate(x => x.ResourceType)
-                .Duplicate(x => x.ResourceId!)
-                .Duplicate(x => x.VersionId!)
-                .Duplicate(x => x.ResourceKey)
-                .Duplicate(x => x.Deleted)
-                .Duplicate(x => x.IsPresent)
-                .Index(x => x.When)
-                .GinIndexJsonData();
-            For<IndexEntry>()
-                .Identity(x => x.Id)
-                .Index(x => x.Id)
-                .Duplicate(x => x.ResourceType)
-                .GinIndexJsonData();
-        }
+        For<EntryEnvelope>()
+            .Index(x => x.Id)
+            .Duplicate(x => x.ResourceType)
+            .Duplicate(x => x.ResourceId!)
+            .Duplicate(x => x.VersionId!)
+            .Duplicate(x => x.ResourceKey)
+            .Duplicate(x => x.Deleted)
+            .Duplicate(x => x.IsPresent)
+            .Index(x => x.When)
+            .GinIndexJsonData();
+        For<IndexEntry>()
+            .Identity(x => x.Id)
+            .Index(x => x.Id)
+            .Duplicate(x => x.ResourceType)
+            .GinIndexJsonData();
     }
 }

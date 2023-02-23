@@ -6,15 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces
-{
-    using System.Threading.Tasks;
-    using Core;
+namespace OpenMedStack.SparkEngine.Store.Interfaces;
 
-    public interface IHistoryStore
-    {
-        Task<Snapshot> History(string typename, HistoryParameters parameters);
-        Task<Snapshot> History(IKey key, HistoryParameters parameters);
-        Task<Snapshot> History(HistoryParameters parameters);
-    }
+using System.Threading.Tasks;
+using Core;
+
+public interface IHistoryStore
+{
+    Task<Snapshot> History(string typename, HistoryParameters parameters);
+    Task<Snapshot> History(IKey key, HistoryParameters parameters);
+    Task<Snapshot> History(HistoryParameters parameters);
 }

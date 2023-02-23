@@ -6,46 +6,45 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+using System.Collections.Generic;
+using System.Linq;
+using Support;
+
+public class ChoiceValue : ValueExpression
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Support;
+    private const char ValueSeparator = ',';
 
-    public class ChoiceValue : ValueExpression
+    public ChoiceValue(ValueExpression[] choices)
     {
-        private const char ValueSeparator = ',';
+        Choices = choices;
+    }
 
-        public ChoiceValue(ValueExpression[] choices)
-        {
-            Choices = choices;
-        }
+    public ChoiceValue(IEnumerable<ValueExpression> choices) : this(choices.ToArray())
+    {
+    }
 
-        public ChoiceValue(IEnumerable<ValueExpression> choices) : this(choices.ToArray())
-        {
-        }
+    public ValueExpression[] Choices { get; }
 
-        public ValueExpression[] Choices { get; }
+    public override string ToString()
+    {
+        var values = Choices.Select(v => v.ToString());
+        return string.Join(ValueSeparator.ToString(), values);
+    }
 
-        public override string ToString()
-        {
-            var values = Choices.Select(v => v.ToString());
-            return string.Join(ValueSeparator.ToString(), values);
-        }
+    public static ChoiceValue Parse(string text)
+    {
+        var values = text.SplitNotEscaped(ValueSeparator);
 
-        public static ChoiceValue Parse(string text)
-        {
-            var values = text.SplitNotEscaped(ValueSeparator);
+        return new ChoiceValue(values.Select(SplitIntoComposite));
+    }
 
-            return new ChoiceValue(values.Select(SplitIntoComposite));
-        }
+    private static ValueExpression SplitIntoComposite(string text)
+    {
+        var composite = CompositeValue.Parse(text);
 
-        private static ValueExpression SplitIntoComposite(string text)
-        {
-            var composite = CompositeValue.Parse(text);
-
-            // If there's only one component, this really was a single value
-            return composite.Components.Length == 1 ? composite.Components[0] : composite;
-        }
+        // If there's only one component, this really was a single value
+        return composite.Components.Length == 1 ? composite.Components[0] : composite;
     }
 }

@@ -6,12 +6,11 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
-{
-    using System.Xml.Linq;
+namespace OpenMedStack.SparkEngine.Core;
 
-    public static class Namespaces
-    {
-        public static XNamespace XHtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
-    }
+using System.Xml.Linq;
+
+public static class Namespaces
+{
+    public static XNamespace XHtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
 }

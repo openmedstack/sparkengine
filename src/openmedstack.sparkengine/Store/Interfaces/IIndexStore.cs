@@ -6,18 +6,17 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces
+namespace OpenMedStack.SparkEngine.Store.Interfaces;
+
+using System.Threading.Tasks;
+using Core;
+using Model;
+
+public interface IIndexStore
 {
-    using System.Threading.Tasks;
-    using Core;
-    using Model;
+    Task Save(IndexValue indexValue);
 
-    public interface IIndexStore
-    {
-        Task Save(IndexValue indexValue);
+    Task Delete(Entry entry);
 
-        Task Delete(Entry entry);
-
-        Task Clean();
-    }
+    Task Clean();
 }

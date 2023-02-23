@@ -6,48 +6,47 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+using System.Collections.Generic;
+using System.Linq;
+using Support;
+
+public class CompositeValue : ValueExpression
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Support;
+    private const char _tupleseparator = '$';
 
-    public class CompositeValue : ValueExpression
+    public CompositeValue(ValueExpression[] components) =>
+        Components = components ?? throw Error.ArgumentNull("components");
+
+    public CompositeValue(IEnumerable<ValueExpression> components)
     {
-        private const char _tupleseparator = '$';
-
-        public CompositeValue(ValueExpression[] components) =>
-            Components = components ?? throw Error.ArgumentNull("components");
-
-        public CompositeValue(IEnumerable<ValueExpression> components)
+        if (components == null)
         {
-            if (components == null)
-            {
-                throw Error.ArgumentNull("components");
-            }
-
-            Components = components.ToArray();
+            throw Error.ArgumentNull("components");
         }
 
-        public ValueExpression[] Components { get; }
+        Components = components.ToArray();
+    }
 
-        public override string ToString()
+    public ValueExpression[] Components { get; }
+
+    public override string ToString()
+    {
+        var values = Components.Select(v => v.ToString());
+        return string.Join(_tupleseparator.ToString(), values);
+    }
+
+
+    public static CompositeValue Parse(string text)
+    {
+        if (text == null)
         {
-            var values = Components.Select(v => v.ToString());
-            return string.Join(_tupleseparator.ToString(), values);
+            throw Error.ArgumentNull("text");
         }
 
+        var values = text.SplitNotEscaped(_tupleseparator);
 
-        public static CompositeValue Parse(string text)
-        {
-            if (text == null)
-            {
-                throw Error.ArgumentNull("text");
-            }
-
-            var values = text.SplitNotEscaped(_tupleseparator);
-
-            return new CompositeValue(values.Select(v => new UntypedValue(v)));
-        }
+        return new CompositeValue(values.Select(v => new UntypedValue(v)));
     }
 }

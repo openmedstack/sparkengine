@@ -6,50 +6,49 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
+namespace OpenMedStack.SparkEngine.Postgres;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Marten;
+using Marten.Pagination;
+using Store.Interfaces;
+
+public class MartenFhirStorePagedReader : IFhirStorePagedReader
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Core;
-    using Marten;
-    using Marten.Pagination;
-    using Store.Interfaces;
+    private readonly Func<IDocumentSession> _sessionFunc;
 
-    public class MartenFhirStorePagedReader : IFhirStorePagedReader
+    public MartenFhirStorePagedReader(Func<IDocumentSession> sessionFunc) => _sessionFunc = sessionFunc;
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<Entry> Read(
+        FhirStorePageReaderOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        private readonly Func<IDocumentSession> _sessionFunc;
-
-        public MartenFhirStorePagedReader(Func<IDocumentSession> sessionFunc) => _sessionFunc = sessionFunc;
-
-        /// <inheritdoc />
-        public async IAsyncEnumerable<Entry> Read(
-            FhirStorePageReaderOptions? options = null,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        var pagesize = options?.PageSize ?? 100;
+        var pageNumber = 0;
+        var session = _sessionFunc();
+        await using var _ = session.ConfigureAwait(false);
+        while (true)
         {
-            var pagesize = options?.PageSize ?? 100;
-            var pageNumber = 0;
-            var session = _sessionFunc();
-            await using var _ = session.ConfigureAwait(false);
-            while (true)
+            var data = await session.Query<EntryEnvelope>()
+                .OrderBy(x => x.Id)
+                .ToPagedListAsync(pageNumber, pagesize, cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var envelope in data)
             {
-                var data = await session.Query<EntryEnvelope>()
-                    .OrderBy(x => x.Id)
-                    .ToPagedListAsync(pageNumber, pagesize, cancellationToken)
-                    .ConfigureAwait(false);
+                yield return Entry.Create(envelope.Method, Key.Create(envelope.ResourceType, envelope.ResourceId, envelope.VersionId), envelope.Resource);
+            }
 
-                foreach (var envelope in data)
-                {
-                    yield return Entry.Create(envelope.Method, Key.Create(envelope.ResourceType, envelope.ResourceId, envelope.VersionId), envelope.Resource);
-                }
-
-                if (data.IsLastPage)
-                {
-                    break;
-                }
+            if (data.IsLastPage)
+            {
+                break;
             }
         }
     }

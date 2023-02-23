@@ -6,16 +6,15 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Maintenance
-{
-    using System.Net;
-    using Core;
+namespace OpenMedStack.SparkEngine.Maintenance;
 
-    internal class MaintenanceModeEnabledException : SparkException
+using System.Net;
+using Core;
+
+internal class MaintenanceModeEnabledException : SparkException
+{
+    public MaintenanceModeEnabledException()
+        : base(HttpStatusCode.ServiceUnavailable)
     {
-        public MaintenanceModeEnabledException()
-            : base(HttpStatusCode.ServiceUnavailable)
-        {
-        }
     }
 }

@@ -6,10 +6,9 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web.Extensions
+namespace OpenMedStack.SparkEngine.Web.Extensions;
+
+public static class FhirHttpHeaders
 {
-    public static class FhirHttpHeaders
-    {
-        public const string IfNoneExist = "If-None-Exist";
-    }
+    public const string IfNoneExist = "If-None-Exist";
 }

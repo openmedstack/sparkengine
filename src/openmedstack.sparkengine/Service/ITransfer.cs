@@ -6,22 +6,21 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
-{
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Core;
+namespace OpenMedStack.SparkEngine.Service;
 
-    public interface ITransfer
-    {
-        IAsyncEnumerable<Entry> Externalize(IAsyncEnumerable<Entry> interactions);
-        IEnumerable<Entry> Externalize(IEnumerable<Entry> interactions);
-        Entry Externalize(Entry interaction);
-        IAsyncEnumerable<Entry> Internalize(
-            IEnumerable<Entry> interactions,
-            Mapper<string, IKey>? mapper,
-            CancellationToken cancellationToken);
-        Task Internalize(Entry entry, CancellationToken cancellationToken);
-    }
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+
+public interface ITransfer
+{
+    IAsyncEnumerable<Entry> Externalize(IAsyncEnumerable<Entry> interactions);
+    IEnumerable<Entry> Externalize(IEnumerable<Entry> interactions);
+    Entry Externalize(Entry interaction);
+    IAsyncEnumerable<Entry> Internalize(
+        IEnumerable<Entry> interactions,
+        Mapper<string, IKey>? mapper,
+        CancellationToken cancellationToken);
+    Task Internalize(Entry entry, CancellationToken cancellationToken);
 }

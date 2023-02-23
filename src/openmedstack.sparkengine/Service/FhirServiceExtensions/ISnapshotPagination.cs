@@ -6,15 +6,14 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
-{
-    using System;
-    using System.Threading.Tasks;
-    using Core;
-    using Hl7.Fhir.Model;
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-    public interface ISnapshotPagination
-    {
-        Task<Bundle> GetPage(int? index = null, Action<Entry>? transformElement = null);
-    }
+using System;
+using System.Threading.Tasks;
+using Core;
+using Hl7.Fhir.Model;
+
+public interface ISnapshotPagination
+{
+    Task<Bundle> GetPage(int? index = null, Action<Entry>? transformElement = null);
 }

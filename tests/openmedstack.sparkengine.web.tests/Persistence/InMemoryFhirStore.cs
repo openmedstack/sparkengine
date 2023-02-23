@@ -1,85 +1,84 @@
 ﻿#nullable enable
-namespace OpenMedStack.SparkEngine.Web.Tests.Persistence
+namespace OpenMedStack.SparkEngine.Web.Tests.Persistence;
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using SparkEngine.Extensions;
+using Store.Interfaces;
+
+public class InMemoryFhirStore : IFhirStore
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Core;
-    using SparkEngine.Extensions;
-    using Store.Interfaces;
+    private readonly List<Entry> _entries = new();
 
-    public class InMemoryFhirStore : IFhirStore
+    /// <inheritdoc />
+    public Task Add(Entry entry, CancellationToken cancellationToken = default)
     {
-        private readonly List<Entry> _entries = new();
-
-        /// <inheritdoc />
-        public Task Add(Entry entry, CancellationToken cancellationToken = default)
+        lock (_entries)
         {
-            lock (_entries)
+            if (entry.IsDelete)
             {
-                if (entry.IsDelete)
-                {
-                    _entries.RemoveAll(
-                        x => x.Key.EqualTo(entry.Key) || entry.Key != null && x.Key.EqualTo(entry.Key.WithoutBase().WithoutVersion()));
-                }
-                else
-                {
-                    _entries.Add(entry);
-                }
+                _entries.RemoveAll(
+                    x => x.Key.EqualTo(entry.Key) || entry.Key != null && x.Key.EqualTo(entry.Key.WithoutBase().WithoutVersion()));
             }
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc />
-        public Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default)
-        {
-            if (key == null)
+            else
             {
-                return Task.FromResult<Entry?>(null);
-            }
-            lock (_entries)
-            {
-                var entries = _entries.Where(x => x.Key != null).ToArray();
-                var result = entries
-                                 .FirstOrDefault(x => key.ToStorageKey().Equals(x.Key!.ToStorageKey()) && !x.IsDelete)
-                             ?? entries.Where(
-                                 x => key.WithoutVersion().ToStorageKey().Equals(x.Key!.WithoutVersion().ToStorageKey())
-                                      && !x.IsDelete).MaxBy(x => x.When);
-                return Task.FromResult(result);
+                _entries.Add(entry);
             }
         }
+        return Task.CompletedTask;
+    }
 
-        /// <inheritdoc />
-        public async IAsyncEnumerable<Entry> Get(
-            IEnumerable<IKey> localIdentifiers,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default)
+    {
+        if (key == null)
         {
-            await Task.Yield();
-            var storageKeys = localIdentifiers.Select(x => x.ToStorageKey()).ToArray();
-            lock (_entries)
+            return Task.FromResult<Entry?>(null);
+        }
+        lock (_entries)
+        {
+            var entries = _entries.Where(x => x.Key != null).ToArray();
+            var result = entries
+                             .FirstOrDefault(x => key.ToStorageKey().Equals(x.Key!.ToStorageKey()) && !x.IsDelete)
+                         ?? entries.Where(
+                             x => key.WithoutVersion().ToStorageKey().Equals(x.Key!.WithoutVersion().ToStorageKey())
+                                  && !x.IsDelete).MaxBy(x => x.When);
+            return Task.FromResult(result);
+        }
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<Entry> Get(
+        IEnumerable<IKey> localIdentifiers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await Task.Yield();
+        var storageKeys = localIdentifiers.Select(x => x.ToStorageKey()).ToArray();
+        lock (_entries)
+        {
+            var result = _entries.Where(x => x is { IsDelete: false, Key: { } } && storageKeys.Contains(x.Key.ToStorageKey()));
+            foreach (var entry in result)
             {
-                var result = _entries.Where(x => x is { IsDelete: false, Key: { } } && storageKeys.Contains(x.Key.ToStorageKey()));
-                foreach (var entry in result)
-                {
-                    yield return entry;
-                }
+                yield return entry;
             }
         }
+    }
 
-        /// <inheritdoc />
-        public Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default)
+    /// <inheritdoc />
+    public Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default)
+    {
+        if (key == null)
         {
-            if (key == null)
-            {
-                return Task.FromResult(false);
-            }
-            lock (_entries)
-            {
-                var exists = _entries.Any(e => e.Key.EqualTo(key));
-                return Task.FromResult(exists);
-            }
+            return Task.FromResult(false);
+        }
+        lock (_entries)
+        {
+            var exists = _entries.Any(e => e.Key.EqualTo(key));
+            return Task.FromResult(exists);
         }
     }
 }

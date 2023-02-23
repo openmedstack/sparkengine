@@ -6,57 +6,56 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web
+namespace OpenMedStack.SparkEngine.Web;
+
+using System;
+using System.Net;
+using System.Threading.Tasks;
+using Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using SparkEngine.Extensions;
+
+// https://stackoverflow.com/a/38935583
+public class ErrorHandler : IMiddleware
 {
-    using System;
-    using System.Net;
-    using System.Threading.Tasks;
-    using Core;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Mvc.Formatters;
-    using SparkEngine.Extensions;
-
-    // https://stackoverflow.com/a/38935583
-    public class ErrorHandler : IMiddleware
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+        try
         {
-            try
-            {
-                await next(context).ConfigureAwait(false);
-            }
-            catch (Exception exception)
-            {
-                await HandleExceptionAsync(context, exception).ConfigureAwait(false);
-            }
+            await next(context).ConfigureAwait(false);
         }
-
-        private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+        catch (Exception exception)
         {
-            var code = HttpStatusCode.InternalServerError;
-            Hl7.Fhir.Model.OperationOutcome outcome;
-            if (exception is SparkException ex1)
-            {
-                code = ex1.StatusCode;
-                outcome = GetOperationOutcome(ex1);
-            }
-            else
-            {
-                outcome = GetOperationOutcome(exception);
-            }
-
-            // Set HTTP status code
-            context.Response.StatusCode = (int)code;
-            var writeContext = context.GetOutputFormatterWriteContext(outcome);
-            var formatter = context.SelectFormatter(writeContext) ?? new HttpNoContentOutputFormatter();
-            // Write the OperationOutcome to the Response using an OutputFormatter from the request pipeline
-            await formatter.WriteAsync(writeContext).ConfigureAwait(false);
+            await HandleExceptionAsync(context, exception).ConfigureAwait(false);
         }
-
-        private static Hl7.Fhir.Model.OperationOutcome GetOperationOutcome(SparkException exception) =>
-            (exception.Outcome ?? new Hl7.Fhir.Model.OperationOutcome()).AddAllInnerErrors(exception);
-
-        private static Hl7.Fhir.Model.OperationOutcome GetOperationOutcome(Exception exception) =>
-           new Hl7.Fhir.Model.OperationOutcome().AddAllInnerErrors(exception);
     }
+
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        var code = HttpStatusCode.InternalServerError;
+        Hl7.Fhir.Model.OperationOutcome outcome;
+        if (exception is SparkException ex1)
+        {
+            code = ex1.StatusCode;
+            outcome = GetOperationOutcome(ex1);
+        }
+        else
+        {
+            outcome = GetOperationOutcome(exception);
+        }
+
+        // Set HTTP status code
+        context.Response.StatusCode = (int)code;
+        var writeContext = context.GetOutputFormatterWriteContext(outcome);
+        var formatter = context.SelectFormatter(writeContext) ?? new HttpNoContentOutputFormatter();
+        // Write the OperationOutcome to the Response using an OutputFormatter from the request pipeline
+        await formatter.WriteAsync(writeContext).ConfigureAwait(false);
+    }
+
+    private static Hl7.Fhir.Model.OperationOutcome GetOperationOutcome(SparkException exception) =>
+        (exception.Outcome ?? new Hl7.Fhir.Model.OperationOutcome()).AddAllInnerErrors(exception);
+
+    private static Hl7.Fhir.Model.OperationOutcome GetOperationOutcome(Exception exception) =>
+        new Hl7.Fhir.Model.OperationOutcome().AddAllInnerErrors(exception);
 }

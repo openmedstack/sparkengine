@@ -6,31 +6,30 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
+namespace OpenMedStack.SparkEngine.Postgres;
+
+using System;
+using System.Threading.Tasks;
+using Core;
+using Interfaces;
+using Marten;
+
+public class MartenFhirStoreAdministration : IFhirStoreAdministration
 {
-    using System;
-    using System.Threading.Tasks;
-    using Core;
-    using Interfaces;
-    using Marten;
+    private readonly Func<IDocumentSession> _sessionFunc;
 
-    public class MartenFhirStoreAdministration : IFhirStoreAdministration
+    public MartenFhirStoreAdministration(Func<IDocumentSession> sessionFunc) => _sessionFunc = sessionFunc;
+
+    public Task Clean()
     {
-        private readonly Func<IDocumentSession> _sessionFunc;
-
-        public MartenFhirStoreAdministration(Func<IDocumentSession> sessionFunc) => _sessionFunc = sessionFunc;
-
-        public Task Clean()
+        using var session = _sessionFunc();
+        var documentCleaner = session.DocumentStore.Advanced.Clean;
+        var tasks = new[]
         {
-            using var session = _sessionFunc();
-            var documentCleaner = session.DocumentStore.Advanced.Clean;
-            var tasks = new[]
-            {
-                documentCleaner.DeleteDocumentsByTypeAsync(typeof(IndexEntry)),
-                documentCleaner.DeleteDocumentsByTypeAsync(typeof(EntryEnvelope)),
-                documentCleaner.DeleteDocumentsByTypeAsync(typeof(Snapshot))
-            };
-            return Task.WhenAll(tasks);
-        }
+            documentCleaner.DeleteDocumentsByTypeAsync(typeof(IndexEntry)),
+            documentCleaner.DeleteDocumentsByTypeAsync(typeof(EntryEnvelope)),
+            documentCleaner.DeleteDocumentsByTypeAsync(typeof(Snapshot))
+        };
+        return Task.WhenAll(tasks);
     }
 }

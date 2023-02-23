@@ -1,58 +1,57 @@
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using Core;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+
+public static partial class ResourceManipulationOperationFactory
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Net;
-    using Core;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Rest;
-
-    public static partial class ResourceManipulationOperationFactory
+    public class PatchManipulationOperation : ResourceManipulationOperation
     {
-        public class PatchManipulationOperation : ResourceManipulationOperation
+        public PatchManipulationOperation(
+            Resource resource,
+            IKey operationKey,
+            SearchResults? searchResults,
+            SearchParams? searchCommand = null)
+            : base(resource, operationKey, searchResults, searchCommand)
         {
-            public PatchManipulationOperation(
-                Resource resource,
-                IKey operationKey,
-                SearchResults? searchResults,
-                SearchParams? searchCommand = null)
-                : base(resource, operationKey, searchResults, searchCommand)
+        }
+
+        public static Uri? ReadSearchUri(Bundle.EntryComponent entry)
+        {
+            return entry.Request != null ? new Uri(entry.Request.Url, UriKind.RelativeOrAbsolute) : null;
+        }
+
+        protected override IEnumerable<Entry> ComputeEntries()
+        {
+            Entry? entry = null;
+            if (SearchResults != null)
             {
+                if (SearchResults.Count > 1)
+                {
+                    throw new SparkException(
+                        HttpStatusCode.PreconditionFailed,
+                        $"Multiple matches found when trying to resolve conditional create. Client's criteria were not selective enough. {GetSearchInformation()}");
+                }
+
+                var localKeyLiteral = SearchResults.SingleOrDefault();
+                if (!string.IsNullOrEmpty(localKeyLiteral))
+                {
+                    entry = Entry.Patch(Key.ParseOperationPath(localKeyLiteral), Resource);
+                }
+            }
+            else
+            {
+                entry = Entry.Patch(OperationKey, Resource);
             }
 
-            public static Uri? ReadSearchUri(Bundle.EntryComponent entry)
+            if (entry != null)
             {
-                return entry.Request != null ? new Uri(entry.Request.Url, UriKind.RelativeOrAbsolute) : null;
-            }
-
-            protected override IEnumerable<Entry> ComputeEntries()
-            {
-                Entry? entry = null;
-                if (SearchResults != null)
-                {
-                    if (SearchResults.Count > 1)
-                    {
-                        throw new SparkException(
-                            HttpStatusCode.PreconditionFailed,
-                            $"Multiple matches found when trying to resolve conditional create. Client's criteria were not selective enough. {GetSearchInformation()}");
-                    }
-
-                    var localKeyLiteral = SearchResults.SingleOrDefault();
-                    if (!string.IsNullOrEmpty(localKeyLiteral))
-                    {
-                        entry = Entry.Patch(Key.ParseOperationPath(localKeyLiteral), Resource);
-                    }
-                }
-                else
-                {
-                    entry = Entry.Patch(OperationKey, Resource);
-                }
-
-                if (entry != null)
-                {
-                    yield return entry;
-                }
+                yield return entry;
             }
         }
     }

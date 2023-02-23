@@ -6,17 +6,16 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Service
-{
-    using System.Collections.Generic;
-    using System.Linq;
-    using Model;
+namespace OpenMedStack.SparkEngine.Tests.Service;
 
-    public static class IndexValueTestExtensions
+using System.Collections.Generic;
+using System.Linq;
+using Model;
+
+public static class IndexValueTestExtensions
+{
+    public static IEnumerable<IndexValue> NonInternalValues(this IndexValue root)
     {
-        public static IEnumerable<IndexValue> NonInternalValues(this IndexValue root)
-        {
-            return root.IndexValues().Where(v => !v.Name.StartsWith("internal_"));
-        }
+        return root.IndexValues().Where(v => !v.Name.StartsWith("internal_"));
     }
 }

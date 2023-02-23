@@ -1,62 +1,61 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Persistence
+﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
+
+using System;
+using System.Collections.Generic;
+
+public class IndexEntry : IEquatable<IndexEntry>
 {
-    using System;
-    using System.Collections.Generic;
-
-    public class IndexEntry : IEquatable<IndexEntry>
+    public IndexEntry(string id, string canonicalId, string resourceType, Dictionary<string, object> values)
     {
-        public IndexEntry(string id, string canonicalId, string resourceType, Dictionary<string, object> values)
+        Id = id;
+        CanonicalId = canonicalId;
+        ResourceType = resourceType;
+        Values = values;
+    }
+
+    public string Id { get; }
+
+    public string CanonicalId { get; }
+
+    public string ResourceType { get; }
+
+    public Dictionary<string, object> Values { get; }
+
+    /// <inheritdoc />
+    public bool Equals(IndexEntry? other)
+    {
+        if (other is null)
         {
-            Id = id;
-            CanonicalId = canonicalId;
-            ResourceType = resourceType;
-            Values = values;
+            return false;
         }
 
-        public string Id { get; }
-
-        public string CanonicalId { get; }
-
-        public string ResourceType { get; }
-
-        public Dictionary<string, object> Values { get; }
-
-        /// <inheritdoc />
-        public bool Equals(IndexEntry? other)
+        if (ReferenceEquals(this, other))
         {
-            if (other is null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return Id == other.Id && Equals(Values, other.Values);
+            return true;
         }
 
-        /// <inheritdoc />
-        public override bool Equals(object? obj)
+        return Id == other.Id && Equals(Values, other.Values);
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        if (obj is null)
         {
-            if (obj is null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            return obj.GetType() == this.GetType() && Equals((IndexEntry)obj);
+            return false;
         }
 
-        /// <inheritdoc />
-        public override int GetHashCode()
+        if (ReferenceEquals(this, obj))
         {
-            return HashCode.Combine(Id, Values);
+            return true;
         }
+
+        return obj.GetType() == this.GetType() && Equals((IndexEntry)obj);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Id, Values);
     }
 }

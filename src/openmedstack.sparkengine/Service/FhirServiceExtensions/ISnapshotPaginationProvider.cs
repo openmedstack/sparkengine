@@ -6,12 +6,11 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
-{
-    using Core;
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-    public interface ISnapshotPaginationProvider
-    {
-        ISnapshotPagination StartPagination(Snapshot snapshot);
-    }
+using Core;
+
+public interface ISnapshotPaginationProvider
+{
+    ISnapshotPagination StartPagination(Snapshot snapshot);
 }

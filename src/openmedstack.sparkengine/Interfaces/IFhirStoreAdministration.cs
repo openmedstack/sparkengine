@@ -7,12 +7,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Interfaces
-{
-    using System.Threading.Tasks;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
-    public interface IFhirStoreAdministration
-    {
-        Task Clean();
-    }
+using System.Threading.Tasks;
+
+public interface IFhirStoreAdministration
+{
+    Task Clean();
 }

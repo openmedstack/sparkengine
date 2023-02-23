@@ -7,14 +7,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
-{
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Core;
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-    public interface IInteractionHandler
-    {
-        Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken);
-    }
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+
+public interface IInteractionHandler
+{
+    Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken);
 }

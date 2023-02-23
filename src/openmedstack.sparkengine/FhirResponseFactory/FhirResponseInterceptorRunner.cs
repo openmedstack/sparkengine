@@ -6,48 +6,47 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.FhirResponseFactory
+namespace OpenMedStack.SparkEngine.FhirResponseFactory;
+
+using System.Collections.Generic;
+using System.Linq;
+using Core;
+using Interfaces;
+
+public class FhirResponseInterceptorRunner : IFhirResponseInterceptorRunner
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Core;
-    using Interfaces;
+    private readonly IList<IFhirResponseInterceptor> _interceptors;
 
-    public class FhirResponseInterceptorRunner : IFhirResponseInterceptorRunner
+    public FhirResponseInterceptorRunner(IFhirResponseInterceptor[] interceptors) =>
+        _interceptors = new List<IFhirResponseInterceptor>(interceptors);
+
+    public void AddInterceptor(IFhirResponseInterceptor interceptor)
     {
-        private readonly IList<IFhirResponseInterceptor> _interceptors;
+        _interceptors.Add(interceptor);
+    }
 
-        public FhirResponseInterceptorRunner(IFhirResponseInterceptor[] interceptors) =>
-            _interceptors = new List<IFhirResponseInterceptor>(interceptors);
+    public void ClearInterceptors()
+    {
+        _interceptors.Clear();
+    }
 
-        public void AddInterceptor(IFhirResponseInterceptor interceptor)
-        {
-            _interceptors.Add(interceptor);
-        }
+    public FhirResponse? RunInterceptors(Entry entry, IEnumerable<object> parameters)
+    {
+        FhirResponse? response = null;
+        _ = parameters.FirstOrDefault(p => (response = RunInterceptors(entry, p)) != null);
+        return response;
+    }
 
-        public void ClearInterceptors()
-        {
-            _interceptors.Clear();
-        }
+    private FhirResponse? RunInterceptors(Entry entry, object input)
+    {
+        FhirResponse? response = null;
+        _ = GetResponseInterceptors(input)
+            .FirstOrDefault(f => (response = f.GetFhirResponse(entry, input)) != null);
+        return response;
+    }
 
-        public FhirResponse? RunInterceptors(Entry entry, IEnumerable<object> parameters)
-        {
-            FhirResponse? response = null;
-            _ = parameters.FirstOrDefault(p => (response = RunInterceptors(entry, p)) != null);
-            return response;
-        }
-
-        private FhirResponse? RunInterceptors(Entry entry, object input)
-        {
-            FhirResponse? response = null;
-            _ = GetResponseInterceptors(input)
-                .FirstOrDefault(f => (response = f.GetFhirResponse(entry, input)) != null);
-            return response;
-        }
-
-        private IEnumerable<IFhirResponseInterceptor> GetResponseInterceptors(object input)
-        {
-            return _interceptors.Where(i => i.CanHandle(input));
-        }
+    private IEnumerable<IFhirResponseInterceptor> GetResponseInterceptors(object input)
+    {
+        return _interceptors.Where(i => i.CanHandle(input));
     }
 }

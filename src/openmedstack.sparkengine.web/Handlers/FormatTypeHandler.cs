@@ -6,54 +6,53 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web.Handlers
+namespace OpenMedStack.SparkEngine.Web.Handlers;
+
+using System.Threading.Tasks;
+using Core;
+using Extensions;
+using Hl7.Fhir.Rest;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
+
+public class FormatTypeHandler : IMiddleware
 {
-    using System.Threading.Tasks;
-    using Core;
-    using Extensions;
-    using Hl7.Fhir.Rest;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.Extensions.Primitives;
-
-    public class FormatTypeHandler : IMiddleware
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+        var format = context.Request.GetParameter("_format");
+        if (!string.IsNullOrEmpty(format))
         {
-            var format = context.Request.GetParameter("_format");
-            if (!string.IsNullOrEmpty(format))
+            var accepted = ContentType.GetResourceFormatFromFormatParam(format);
+            if (accepted != ResourceFormat.Unknown)
             {
-                var accepted = ContentType.GetResourceFormatFromFormatParam(format);
-                if (accepted != ResourceFormat.Unknown)
+                if (context.Request.Headers.ContainsKey("Accept"))
                 {
-                    if (context.Request.Headers.ContainsKey("Accept"))
-                    {
-                        context.Request.Headers.Remove("Accept");
-                    }
-
-                    context.Request.Headers.Add(
-                        "Accept",
-                        accepted == ResourceFormat.Json
-                            ? new StringValues(ContentType.JSON_CONTENT_HEADER)
-                            : new StringValues(ContentType.XML_CONTENT_HEADER));
+                    context.Request.Headers.Remove("Accept");
                 }
-            }
 
-            if (context.Request.IsRawBinaryPostOrPutRequest())
-            {
-                if (!context.Request.ContentType.IsContentTypeHeaderFhirMediaType())
-                {
-                    var contentType = context.Request.ContentType;
-                    context.Request.Headers.Add("X-Content-Type", contentType);
-                    context.Request.ContentType = FhirMediaType.OctetStreamMimeType;
-                }
+                context.Request.Headers.Add(
+                    "Accept",
+                    accepted == ResourceFormat.Json
+                        ? new StringValues(ContentType.JSON_CONTENT_HEADER)
+                        : new StringValues(ContentType.XML_CONTENT_HEADER));
             }
-            //else if(context.Request.IsRawBinaryRequest())
-            //{
-            //    if (context.Request.Headers.ContainsKey("Accept")) context.Request.Headers.Remove("Accept");
-            //    context.Request.Headers.Add("Accept", new StringValues(FhirMediaType.OCTET_STREAM_CONTENT_HEADER));
-            //}
-
-            await next(context).ConfigureAwait(false);
         }
+
+        if (context.Request.IsRawBinaryPostOrPutRequest())
+        {
+            if (!context.Request.ContentType.IsContentTypeHeaderFhirMediaType())
+            {
+                var contentType = context.Request.ContentType;
+                context.Request.Headers.Add("X-Content-Type", contentType);
+                context.Request.ContentType = FhirMediaType.OctetStreamMimeType;
+            }
+        }
+        //else if(context.Request.IsRawBinaryRequest())
+        //{
+        //    if (context.Request.Headers.ContainsKey("Accept")) context.Request.Headers.Remove("Accept");
+        //    context.Request.Headers.Add("Accept", new StringValues(FhirMediaType.OCTET_STREAM_CONTENT_HEADER));
+        //}
+
+        await next(context).ConfigureAwait(false);
     }
 }

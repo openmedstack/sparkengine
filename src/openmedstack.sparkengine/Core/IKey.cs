@@ -6,13 +6,12 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+public interface IKey
 {
-    public interface IKey
-    {
-        string? Base { get; }
-        string? TypeName { get; }
-        string? ResourceId { get; }
-        string? VersionId { get; }
-    }
+    string? Base { get; }
+    string? TypeName { get; }
+    string? ResourceId { get; }
+    string? VersionId { get; }
 }

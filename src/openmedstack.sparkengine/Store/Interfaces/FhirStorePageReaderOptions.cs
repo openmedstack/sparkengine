@@ -6,13 +6,12 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces
-{
-    public class FhirStorePageReaderOptions
-    {
-        public int PageSize { get; set; } = 100;
+namespace OpenMedStack.SparkEngine.Store.Interfaces;
 
-        // TODO: add criteria?
-        // TODO: add sorting?
-    }
+public class FhirStorePageReaderOptions
+{
+    public int PageSize { get; set; } = 100;
+
+    // TODO: add criteria?
+    // TODO: add sorting?
 }

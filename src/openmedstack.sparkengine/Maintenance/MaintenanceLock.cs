@@ -6,26 +6,25 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Maintenance
+namespace OpenMedStack.SparkEngine.Maintenance;
+
+using System;
+
+internal class MaintenanceLock : IDisposable
 {
-    using System;
+    public MaintenanceLock(MaintenanceLockMode mode) => Mode = mode;
 
-    internal class MaintenanceLock : IDisposable
+    public MaintenanceLockMode Mode { get; private set; }
+
+    public bool IsLocked => Mode > MaintenanceLockMode.None;
+
+    public void Dispose()
     {
-        public MaintenanceLock(MaintenanceLockMode mode) => Mode = mode;
+        Unlock();
+    }
 
-        public MaintenanceLockMode Mode { get; private set; }
-
-        public bool IsLocked => Mode > MaintenanceLockMode.None;
-
-        public void Dispose()
-        {
-            Unlock();
-        }
-
-        public void Unlock()
-        {
-            Mode = MaintenanceLockMode.None;
-        }
+    public void Unlock()
+    {
+        Mode = MaintenanceLockMode.None;
     }
 }

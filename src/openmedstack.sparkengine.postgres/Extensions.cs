@@ -6,12 +6,11 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
-{
-    using System.Collections.Generic;
+namespace OpenMedStack.SparkEngine.Postgres;
 
-    internal static class Extensions
-    {
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source) => new(source);
-    }
+using System.Collections.Generic;
+
+internal static class Extensions
+{
+    public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source) => new(source);
 }

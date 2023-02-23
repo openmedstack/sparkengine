@@ -6,16 +6,15 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces
+namespace OpenMedStack.SparkEngine.Store.Interfaces;
+
+using System.Collections.Generic;
+
+public interface IPageResult<out T>
 {
-    using System.Collections.Generic;
+    long TotalRecords { get; }
 
-    public interface IPageResult<out T>
-    {
-        long TotalRecords { get; }
+    long TotalPages { get; }
 
-        long TotalPages { get; }
-
-        IAsyncEnumerable<T> IterateAllPages();
-    }
+    IAsyncEnumerable<T> IterateAllPages();
 }

@@ -6,92 +6,91 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Extensions
+namespace OpenMedStack.SparkEngine.Tests.Extensions;
+
+using System;
+using Hl7.Fhir.Model;
+using SparkEngine.Extensions;
+using Xunit;
+
+public class OperationOutcomeExtensionsTests
 {
-    using System;
-    using Hl7.Fhir.Model;
-    using SparkEngine.Extensions;
-    using Xunit;
-
-    public class OperationOutcomeExtensionsTests
+    [Fact]
+    public void Three_Level_InnerErrors_Test()
     {
-        [Fact]
-        public void Three_Level_InnerErrors_Test()
-        {
-            OperationOutcome outcome;
+        OperationOutcome outcome;
 
+        try
+        {
             try
             {
                 try
                 {
-                    try
-                    {
-                        throw new Exception("Third error level");
-                    }
-                    catch (Exception e3)
-                    {
-                        throw new Exception("Second error level", e3);
-                    }
+                    throw new Exception("Third error level");
                 }
-                catch (Exception e2)
+                catch (Exception e3)
                 {
-                    throw new Exception("First error level", e2);
+                    throw new Exception("Second error level", e3);
                 }
             }
-            catch (Exception e1)
+            catch (Exception e2)
             {
-                outcome = new OperationOutcome().AddAllInnerErrors(e1);
+                throw new Exception("First error level", e2);
             }
-
-            Assert.True(
-                outcome.Issue.FindIndex(i => i.Diagnostics.Equals("Exception: First error level")) == 0,
-                "First error level should be at index 0");
-            Assert.True(
-                outcome.Issue.FindIndex(i => i.Diagnostics.Equals("Exception: Second error level")) == 1,
-                "Second error level should be at index 1");
-            Assert.True(
-                outcome.Issue.FindIndex(i => i.Diagnostics.Equals("Exception: Third error level")) == 2,
-                "Third error level should be at index 2");
         }
-
-        [Fact]
-        public void IssueSeverity_Is_Information_When_HttpStatusCode_Is_Continue_Test()
+        catch (Exception e1)
         {
-            Assert.Equal(
-                OperationOutcome.IssueSeverity.Information,
-                OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.Continue));
+            outcome = new OperationOutcome().AddAllInnerErrors(e1);
         }
 
-        [Fact]
-        public void IssueSeverity_Is_Information_When_HttpStatusCode_Is_Created_Test()
-        {
-            Assert.Equal(
-                OperationOutcome.IssueSeverity.Information,
-                OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.Created));
-        }
+        Assert.True(
+            outcome.Issue.FindIndex(i => i.Diagnostics.Equals("Exception: First error level")) == 0,
+            "First error level should be at index 0");
+        Assert.True(
+            outcome.Issue.FindIndex(i => i.Diagnostics.Equals("Exception: Second error level")) == 1,
+            "Second error level should be at index 1");
+        Assert.True(
+            outcome.Issue.FindIndex(i => i.Diagnostics.Equals("Exception: Third error level")) == 2,
+            "Third error level should be at index 2");
+    }
 
-        [Fact]
-        public void IssueSeverity_Is_Warning_When_HttpStatusCode_Is_MovedPermanently_Test()
-        {
-            Assert.Equal(
-                OperationOutcome.IssueSeverity.Warning,
-                OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.MovedPermanently));
-        }
+    [Fact]
+    public void IssueSeverity_Is_Information_When_HttpStatusCode_Is_Continue_Test()
+    {
+        Assert.Equal(
+            OperationOutcome.IssueSeverity.Information,
+            OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.Continue));
+    }
 
-        [Fact]
-        public void IssueSeverity_Is_Error_When_HttpStatusCode_Is_BadRequest_Test()
-        {
-            Assert.Equal(
-                OperationOutcome.IssueSeverity.Error,
-                OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.BadRequest));
-        }
+    [Fact]
+    public void IssueSeverity_Is_Information_When_HttpStatusCode_Is_Created_Test()
+    {
+        Assert.Equal(
+            OperationOutcome.IssueSeverity.Information,
+            OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.Created));
+    }
 
-        [Fact]
-        public void IssueSeverity_Is_Fatal_When_HttpStatusCode_Is_InternalServerError_Test()
-        {
-            Assert.Equal(
-                OperationOutcome.IssueSeverity.Fatal,
-                OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.InternalServerError));
-        }
+    [Fact]
+    public void IssueSeverity_Is_Warning_When_HttpStatusCode_Is_MovedPermanently_Test()
+    {
+        Assert.Equal(
+            OperationOutcome.IssueSeverity.Warning,
+            OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.MovedPermanently));
+    }
+
+    [Fact]
+    public void IssueSeverity_Is_Error_When_HttpStatusCode_Is_BadRequest_Test()
+    {
+        Assert.Equal(
+            OperationOutcome.IssueSeverity.Error,
+            OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.BadRequest));
+    }
+
+    [Fact]
+    public void IssueSeverity_Is_Fatal_When_HttpStatusCode_Is_InternalServerError_Test()
+    {
+        Assert.Equal(
+            OperationOutcome.IssueSeverity.Fatal,
+            OperationOutcomeExtensions.IssueSeverityOf(System.Net.HttpStatusCode.InternalServerError));
     }
 }

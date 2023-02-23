@@ -6,50 +6,49 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
+namespace OpenMedStack.SparkEngine.Service;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Core;
+
+public class ServiceListener : ICompositeServiceListener
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Core;
+    private readonly List<IServiceListener> _listeners;
+    private readonly ILocalhost _localhost;
 
-    public class ServiceListener : ICompositeServiceListener
+    public ServiceListener(ILocalhost localhost, params IServiceListener[] listeners)
     {
-        private readonly List<IServiceListener> _listeners;
-        private readonly ILocalhost _localhost;
+        _localhost = localhost;
+        _listeners = listeners.ToList();
+    }
 
-        public ServiceListener(ILocalhost localhost, params IServiceListener[] listeners)
+    public void Add(IServiceListener listener)
+    {
+        _listeners.Add(listener);
+    }
+
+    public void Clear()
+    {
+        _listeners.Clear();
+    }
+
+    public Task Inform(Entry interaction)
+    {
+        if (interaction.Key == null)
         {
-            _localhost = localhost;
-            _listeners = listeners.ToList();
+            return Task.CompletedTask;
         }
 
-        public void Add(IServiceListener listener)
-        {
-            _listeners.Add(listener);
-        }
+        return Task.WhenAll(
+            _listeners.Select(
+                listener => listener.Inform(_localhost.GetAbsoluteUri(interaction.Key), interaction)));
+    }
 
-        public void Clear()
-        {
-            _listeners.Clear();
-        }
-
-        public Task Inform(Entry interaction)
-        {
-            if (interaction.Key == null)
-            {
-                return Task.CompletedTask;
-            }
-
-            return Task.WhenAll(
-                _listeners.Select(
-                    listener => listener.Inform(_localhost.GetAbsoluteUri(interaction.Key), interaction)));
-        }
-
-        public Task Inform(Uri location, Entry entry)
-        {
-            return Task.WhenAll(_listeners.Select(listener => listener.Inform(location, entry)));
-        }
+    public Task Inform(Uri location, Entry entry)
+    {
+        return Task.WhenAll(_listeners.Select(listener => listener.Inform(location, entry)));
     }
 }

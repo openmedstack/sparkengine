@@ -6,171 +6,170 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
+namespace OpenMedStack.SparkEngine.Service;
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
+
+public static class PatchExtensions
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Serialization;
-
-    public static class PatchExtensions
+    private enum Change
     {
-        private enum Change
-        {
-            Delete,
-            Replace,
-            None
-        }
+        Delete,
+        Replace,
+        None
+    }
 
-        public static Parameters ToPatch<T>(this T current, T previous) where T : Resource
-        {
-            var operations = typeof(T).GetProperties()
-                .Where(
-                    p => p.SetMethod != null && typeof(DataType).IsAssignableFrom(p.PropertyType)
-                         || p.PropertyType.IsGenericType
-                         && typeof(List<>).IsAssignableFrom(p.PropertyType.GetGenericTypeDefinition())
-                         && typeof(DataType).IsAssignableFrom(p.PropertyType.GenericTypeArguments[0]))
-                .Select(p => CreateChangeTuple(current, previous, p))
-                .Where(x => x.Item1 != Change.None)
-                .SelectMany(x =>
-                {
-                    if (x.Item1 == Change.Delete)
-                    {
-                        return CreateDeleteParameter<T>(x.name!);
-                    }
-                    if (x.Item3 is IEnumerable items)
-                    {
-                        return CreateDeleteParameter<T>(x.name!)
-                            .Concat(items.OfType<DataType>().Select(d => CreateSingleAddParameter<T>(x.name!, d)));
-                    }
-
-                    return new[] { CreateSingleValueParameters<T>(x.name!, x.Item3 as DataType) };
-                });
-
-            return new Parameters { Parameter = operations.ToList() };
-        }
-
-        public static Parameters ToPatch<T>(this T resource)
-            where T : Resource
-        {
-            var operations = typeof(T).GetProperties()
-                .Where(
-                    p => typeof(DataType).IsAssignableFrom(p.PropertyType)
-                         || p.PropertyType.IsGenericType
-                         && typeof(List<>).IsAssignableFrom(p.PropertyType.GetGenericTypeDefinition())
-                         && typeof(DataType).IsAssignableFrom(p.PropertyType.GenericTypeArguments[0]))
-                .SelectMany(
-                    p =>
-                    {
-                        var name = p.Name.Replace("Element", "");
-                        name = char.ToLowerInvariant(name[0]) + name[1..];
-                        var value = p.GetValue(resource);
-                        if (value is IEnumerable enumerable)
-                        {
-                            return CreateDeleteParameter<T>(name)
-                                .Concat(
-                                    enumerable.OfType<DataType>()
-                                        .Select(v => CreateSingleAddParameter<T>(name, v)));
-                        }
-
-                        return new[]
-                        {
-                            CreateSingleValueParameters<T>(
-                                name,
-                                (DataType) value!)
-                        };
-                    });
-
-            return new Parameters { Parameter = operations.ToList() };
-        }
-
-        private static (Change, string? name, object?) CreateChangeTuple<T>(T current, T previous, PropertyInfo p)
-            where T : Resource
-        {
-            var currentValue = p.GetValue(current);
-            var previousValue = p.GetValue(previous);
-
-            var name = p.Name.Replace("Element", "");
-            name = char.ToLowerInvariant(name[0]) + name[1..];
-
-            if (currentValue == null)
+    public static Parameters ToPatch<T>(this T current, T previous) where T : Resource
+    {
+        var operations = typeof(T).GetProperties()
+            .Where(
+                p => p.SetMethod != null && typeof(DataType).IsAssignableFrom(p.PropertyType)
+                     || p.PropertyType.IsGenericType
+                     && typeof(List<>).IsAssignableFrom(p.PropertyType.GetGenericTypeDefinition())
+                     && typeof(DataType).IsAssignableFrom(p.PropertyType.GenericTypeArguments[0]))
+            .Select(p => CreateChangeTuple(current, previous, p))
+            .Where(x => x.Item1 != Change.None)
+            .SelectMany(x =>
             {
-                return previousValue == null ? (Change.None, null, null) : (Change.Delete, name, null);
-            }
-
-            if (currentValue is IEnumerable currentEnumerable)
-            {
-                var currentArray = currentEnumerable.OfType<DataType>().Select(x => x.ToXml()).ToHashSet();
-                if (previousValue == null || !(previousValue is IEnumerable previousEnumerable))
+                if (x.Item1 == Change.Delete)
                 {
-                    return (Change.Replace, name, currentValue);
+                    return CreateDeleteParameter<T>(x.name!);
+                }
+                if (x.Item3 is IEnumerable items)
+                {
+                    return CreateDeleteParameter<T>(x.name!)
+                        .Concat(items.OfType<DataType>().Select(d => CreateSingleAddParameter<T>(x.name!, d)));
                 }
 
-                var previousArray = previousEnumerable.OfType<DataType>().Select(x => x.ToXml()).ToHashSet();
-                return currentArray.SetEquals(previousArray) ? (Change.None, name, null) : (Change.Replace, name, currentValue);
-            }
+                return new[] { CreateSingleValueParameters<T>(x.name!, x.Item3 as DataType) };
+            });
 
-            if (previousValue == null || ((DataType)previousValue).ToXml() != ((DataType)currentValue).ToXml())
+        return new Parameters { Parameter = operations.ToList() };
+    }
+
+    public static Parameters ToPatch<T>(this T resource)
+        where T : Resource
+    {
+        var operations = typeof(T).GetProperties()
+            .Where(
+                p => typeof(DataType).IsAssignableFrom(p.PropertyType)
+                     || p.PropertyType.IsGenericType
+                     && typeof(List<>).IsAssignableFrom(p.PropertyType.GetGenericTypeDefinition())
+                     && typeof(DataType).IsAssignableFrom(p.PropertyType.GenericTypeArguments[0]))
+            .SelectMany(
+                p =>
+                {
+                    var name = p.Name.Replace("Element", "");
+                    name = char.ToLowerInvariant(name[0]) + name[1..];
+                    var value = p.GetValue(resource);
+                    if (value is IEnumerable enumerable)
+                    {
+                        return CreateDeleteParameter<T>(name)
+                            .Concat(
+                                enumerable.OfType<DataType>()
+                                    .Select(v => CreateSingleAddParameter<T>(name, v)));
+                    }
+
+                    return new[]
+                    {
+                        CreateSingleValueParameters<T>(
+                            name,
+                            (DataType) value!)
+                    };
+                });
+
+        return new Parameters { Parameter = operations.ToList() };
+    }
+
+    private static (Change, string? name, object?) CreateChangeTuple<T>(T current, T previous, PropertyInfo p)
+        where T : Resource
+    {
+        var currentValue = p.GetValue(current);
+        var previousValue = p.GetValue(previous);
+
+        var name = p.Name.Replace("Element", "");
+        name = char.ToLowerInvariant(name[0]) + name[1..];
+
+        if (currentValue == null)
+        {
+            return previousValue == null ? (Change.None, null, null) : (Change.Delete, name, null);
+        }
+
+        if (currentValue is IEnumerable currentEnumerable)
+        {
+            var currentArray = currentEnumerable.OfType<DataType>().Select(x => x.ToXml()).ToHashSet();
+            if (previousValue == null || !(previousValue is IEnumerable previousEnumerable))
             {
                 return (Change.Replace, name, currentValue);
             }
 
-            return (Change.None, null, null);
+            var previousArray = previousEnumerable.OfType<DataType>().Select(x => x.ToXml()).ToHashSet();
+            return currentArray.SetEquals(previousArray) ? (Change.None, name, null) : (Change.Replace, name, currentValue);
         }
 
-        private static Parameters.ParameterComponent CreateSingleValueParameters<T>(string name, DataType? value)
-            where T : Resource
+        if (previousValue == null || ((DataType)previousValue).ToXml() != ((DataType)currentValue).ToXml())
         {
-            var operation = new Parameters.ParameterComponent { Name = "operation" };
-            operation.Part.Add(
-                new Parameters.ParameterComponent { Name = "path", Value = new FhirString(typeof(T).Name + "." + name) });
-            if (value != null)
-            {
-                operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("replace") });
-                var item = value is PrimitiveType
-                    ? new Parameters.ParameterComponent { Name = "value", Value = value }
-                    : new Parameters.ParameterComponent { Name = "value", Part = { new Parameters.ParameterComponent { Value = value } } };
-                operation.Part.Add(item);
-            }
-            else
-            {
-                operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("delete") });
-            }
-
-            return operation;
+            return (Change.Replace, name, currentValue);
         }
 
-        private static Parameters.ParameterComponent CreateSingleAddParameter<T>(string name, DataType value)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+        return (Change.None, null, null);
+    }
 
-            var operation = new Parameters.ParameterComponent { Name = "operation" };
-            operation.Part.Add(
-                new Parameters.ParameterComponent { Name = "path", Value = new FhirString(typeof(T).Name) });
-            operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("add") });
-            operation.Part.Add(new Parameters.ParameterComponent { Name = "name", Value = new FhirString(name) });
+    private static Parameters.ParameterComponent CreateSingleValueParameters<T>(string name, DataType? value)
+        where T : Resource
+    {
+        var operation = new Parameters.ParameterComponent { Name = "operation" };
+        operation.Part.Add(
+            new Parameters.ParameterComponent { Name = "path", Value = new FhirString(typeof(T).Name + "." + name) });
+        if (value != null)
+        {
+            operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("replace") });
             var item = value is PrimitiveType
                 ? new Parameters.ParameterComponent { Name = "value", Value = value }
                 : new Parameters.ParameterComponent { Name = "value", Part = { new Parameters.ParameterComponent { Value = value } } };
             operation.Part.Add(item);
-
-            return operation;
         }
-
-        private static IEnumerable<Parameters.ParameterComponent> CreateDeleteParameter<T>(string name)
+        else
         {
-            var operation = new Parameters.ParameterComponent { Name = "operation" };
-            operation.Part.Add(
-                new Parameters.ParameterComponent { Name = "path", Value = new FhirString(typeof(T).Name + "." + name) });
             operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("delete") });
-
-            yield return operation;
         }
+
+        return operation;
+    }
+
+    private static Parameters.ParameterComponent CreateSingleAddParameter<T>(string name, DataType value)
+    {
+        if (value == null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
+        var operation = new Parameters.ParameterComponent { Name = "operation" };
+        operation.Part.Add(
+            new Parameters.ParameterComponent { Name = "path", Value = new FhirString(typeof(T).Name) });
+        operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("add") });
+        operation.Part.Add(new Parameters.ParameterComponent { Name = "name", Value = new FhirString(name) });
+        var item = value is PrimitiveType
+            ? new Parameters.ParameterComponent { Name = "value", Value = value }
+            : new Parameters.ParameterComponent { Name = "value", Part = { new Parameters.ParameterComponent { Value = value } } };
+        operation.Part.Add(item);
+
+        return operation;
+    }
+
+    private static IEnumerable<Parameters.ParameterComponent> CreateDeleteParameter<T>(string name)
+    {
+        var operation = new Parameters.ParameterComponent { Name = "operation" };
+        operation.Part.Add(
+            new Parameters.ParameterComponent { Name = "path", Value = new FhirString(typeof(T).Name + "." + name) });
+        operation.Part.Add(new Parameters.ParameterComponent { Name = "type", Value = new Code("delete") });
+
+        yield return operation;
     }
 }

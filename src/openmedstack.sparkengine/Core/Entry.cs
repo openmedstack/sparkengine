@@ -1,154 +1,153 @@
-﻿namespace OpenMedStack.SparkEngine.Core
+﻿namespace OpenMedStack.SparkEngine.Core;
+
+using System;
+using Extensions;
+using Hl7.Fhir.Model;
+
+public class Entry
 {
-    using System;
-    using Extensions;
-    using Hl7.Fhir.Model;
-
-    public class Entry
+    public IKey? Key
     {
-        public IKey? Key
+        get
         {
-            get
-            {
-                return Resource != null && !(Method == Bundle.HTTPVerb.PATCH && Resource is Parameters)
-                    ? Resource.ExtractKey()
-                    : _key;
-            }
-            set
-            {
-                if (Resource != null)
-                {
-                    value?.ApplyTo(Resource);
-                }
-                else
-                {
-                    _key = value;
-                }
-            }
+            return Resource != null && !(Method == Bundle.HTTPVerb.PATCH && Resource is Parameters)
+                ? Resource.ExtractKey()
+                : _key;
         }
-
-        public Resource? Resource { get; set; }
-
-        public Bundle.HTTPVerb Method { get; private set; }
-
-        // API: HttpVerb should not be in Bundle.
-        public DateTimeOffset? When
+        set
         {
-            get { return Resource is { Meta: { } } ? Resource.Meta.LastUpdated : _when; }
-            set
+            if (Resource != null)
             {
-                if (Resource != null)
-                {
-                    Resource.Meta ??= new Meta();
-                    Resource.Meta.LastUpdated = value?.TruncateToMillis();
-                }
-                else
-                {
-                    _when = value;
-                }
-            }
-        }
-
-        public EntryState State { get; set; }
-
-        private IKey? _key;
-        private DateTimeOffset? _when;
-
-        private Entry(Bundle.HTTPVerb method, IKey? key, DateTimeOffset? when, Resource? resource)
-        {
-            if (resource != null && !(method == Bundle.HTTPVerb.PATCH && resource is Parameters))
-            {
-                key?.ApplyTo(resource);
+                value?.ApplyTo(Resource);
             }
             else
             {
-                Key = key;
+                _key = value;
             }
-
-            Resource = resource;
-            Method = method;
-            When = when ?? DateTimeOffset.Now;
-            State = EntryState.Undefined;
         }
-        
-        protected Entry(IKey key, Resource resource)
+    }
+
+    public Resource? Resource { get; set; }
+
+    public Bundle.HTTPVerb Method { get; private set; }
+
+    // API: HttpVerb should not be in Bundle.
+    public DateTimeOffset? When
+    {
+        get { return Resource is { Meta: { } } ? Resource.Meta.LastUpdated : _when; }
+        set
+        {
+            if (Resource != null)
+            {
+                Resource.Meta ??= new Meta();
+                Resource.Meta.LastUpdated = value?.TruncateToMillis();
+            }
+            else
+            {
+                _when = value;
+            }
+        }
+    }
+
+    public EntryState State { get; set; }
+
+    private IKey? _key;
+    private DateTimeOffset? _when;
+
+    private Entry(Bundle.HTTPVerb method, IKey? key, DateTimeOffset? when, Resource? resource)
+    {
+        if (resource != null && !(method == Bundle.HTTPVerb.PATCH && resource is Parameters))
+        {
+            key?.ApplyTo(resource);
+        }
+        else
         {
             Key = key;
-            Resource = resource;
-            State = EntryState.Undefined;
         }
 
-        public static Entry Create(Bundle.HTTPVerb method, Resource resource)
-        {
-            return new(method, null, DateTimeOffset.UtcNow, resource);
-        }
+        Resource = resource;
+        Method = method;
+        When = when ?? DateTimeOffset.Now;
+        State = EntryState.Undefined;
+    }
+        
+    protected Entry(IKey key, Resource resource)
+    {
+        Key = key;
+        Resource = resource;
+        State = EntryState.Undefined;
+    }
 
-        public static Entry Create(Bundle.HTTPVerb method, IKey key)
-        {
-            return new Entry(method, key, null, null);
-        }
+    public static Entry Create(Bundle.HTTPVerb method, Resource resource)
+    {
+        return new(method, null, DateTimeOffset.UtcNow, resource);
+    }
 
-        public static Entry Create(Bundle.HTTPVerb method, IKey key, Resource? resource = null)
-        {
-            return new(method, key, DateTimeOffset.UtcNow, resource);
-        }
+    public static Entry Create(Bundle.HTTPVerb method, IKey key)
+    {
+        return new Entry(method, key, null, null);
+    }
 
-        public static Entry Create(IKey key, Resource resource)
-        {
-            return new Entry(key, resource);
-        }
+    public static Entry Create(Bundle.HTTPVerb method, IKey key, Resource? resource = null)
+    {
+        return new(method, key, DateTimeOffset.UtcNow, resource);
+    }
 
-        public static Entry Create(Bundle.HTTPVerb method, IKey key, DateTimeOffset when)
-        {
-            return new(method, key, when, null);
-        }
+    public static Entry Create(IKey key, Resource resource)
+    {
+        return new Entry(key, resource);
+    }
 
-        /// <summary>
-        ///  Creates a deleted entry
-        /// </summary>
-        public static Entry Delete(IKey key, DateTimeOffset? when)
-        {
-            return Create(Bundle.HTTPVerb.DELETE, key, when ?? DateTimeOffset.UtcNow);
-        }
+    public static Entry Create(Bundle.HTTPVerb method, IKey key, DateTimeOffset when)
+    {
+        return new(method, key, when, null);
+    }
 
-        public bool IsDelete
-        {
-            get { return Method == Bundle.HTTPVerb.DELETE; }
-            set
-            {
-                Method = Bundle.HTTPVerb.DELETE;
-                Resource = null;
-            }
-        }
+    /// <summary>
+    ///  Creates a deleted entry
+    /// </summary>
+    public static Entry Delete(IKey key, DateTimeOffset? when)
+    {
+        return Create(Bundle.HTTPVerb.DELETE, key, when ?? DateTimeOffset.UtcNow);
+    }
 
-        public bool IsPresent
+    public bool IsDelete
+    {
+        get { return Method == Bundle.HTTPVerb.DELETE; }
+        set
         {
-            get { return Method != Bundle.HTTPVerb.DELETE; }
+            Method = Bundle.HTTPVerb.DELETE;
+            Resource = null;
         }
+    }
 
-        public static Entry Post(IKey key, Resource? resource)
-        {
-            return Create(Bundle.HTTPVerb.POST, key, resource);
-        }
+    public bool IsPresent
+    {
+        get { return Method != Bundle.HTTPVerb.DELETE; }
+    }
 
-        public static Entry Post(Resource resource)
-        {
-            return Create(Bundle.HTTPVerb.POST, resource);
-        }
+    public static Entry Post(IKey key, Resource? resource)
+    {
+        return Create(Bundle.HTTPVerb.POST, key, resource);
+    }
 
-        public static Entry Put(IKey key, Resource? resource)
-        {
-            return Create(Bundle.HTTPVerb.PUT, key, resource);
-        }
+    public static Entry Post(Resource resource)
+    {
+        return Create(Bundle.HTTPVerb.POST, resource);
+    }
 
-        public static Entry Patch(IKey key, Resource? resource)
-        {
-            return Create(Bundle.HTTPVerb.PATCH, key, resource);
-        }
+    public static Entry Put(IKey key, Resource? resource)
+    {
+        return Create(Bundle.HTTPVerb.PUT, key, resource);
+    }
 
-        public override string ToString()
-        {
-            return $"{Method} {Key}";
-        }
+    public static Entry Patch(IKey key, Resource? resource)
+    {
+        return Create(Bundle.HTTPVerb.PATCH, key, resource);
+    }
+
+    public override string ToString()
+    {
+        return $"{Method} {Key}";
     }
 }

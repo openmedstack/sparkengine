@@ -6,31 +6,30 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+/// <summary>
+///     Any <see cref="IKey" /> will be triaged by an <see cref="ILocalhost" /> as one of these.
+/// </summary>
+public enum KeyKind
 {
     /// <summary>
-    ///     Any <see cref="IKey" /> will be triaged by an <see cref="ILocalhost" /> as one of these.
+    ///     absolute url, where base is not localhost
     /// </summary>
-    public enum KeyKind
-    {
-        /// <summary>
-        ///     absolute url, where base is not localhost
-        /// </summary>
-        Foreign,
+    Foreign,
 
-        /// <summary>
-        ///     temporary id, URN, but not a URL.
-        /// </summary>
-        Temporary,
+    /// <summary>
+    ///     temporary id, URN, but not a URL.
+    /// </summary>
+    Temporary,
 
-        /// <summary>
-        ///     absolute url, but base is (any of the) localhost(s)
-        /// </summary>
-        Local,
+    /// <summary>
+    ///     absolute url, but base is (any of the) localhost(s)
+    /// </summary>
+    Local,
 
-        /// <summary>
-        ///     Relative url, for internal references
-        /// </summary>
-        Internal
-    }
+    /// <summary>
+    ///     Relative url, for internal references
+    /// </summary>
+    Internal
 }

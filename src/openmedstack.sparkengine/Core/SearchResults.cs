@@ -6,53 +6,52 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System.Collections.Generic;
+using System.Linq;
+using Hl7.Fhir.Model;
+using Search.ValueExpressionTypes;
+
+public class SearchResults : List<string>
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Hl7.Fhir.Model;
-    using Search.ValueExpressionTypes;
+    private readonly OperationOutcome _outcome;
 
-    public class SearchResults : List<string>
+
+    // todo: I think OperationOutcome logic should be on a higher level or at least not SearchResults specific -mh
+    public SearchResults()
     {
-        private readonly OperationOutcome _outcome;
+        UsedCriteria = new List<Criterium>();
+        MatchCount = 0;
+        _outcome = new OperationOutcome { Issue = new List<OperationOutcome.IssueComponent>() };
+    }
 
+    public List<Criterium> UsedCriteria { get; init; }
+    public int MatchCount { get; init; }
+    public OperationOutcome? Outcome => _outcome.Issue.Any() ? _outcome : null;
 
-        // todo: I think OperationOutcome logic should be on a higher level or at least not SearchResults specific -mh
-        public SearchResults()
+    public bool HasErrors
+    {
+        get
         {
-            UsedCriteria = new List<Criterium>();
-            MatchCount = 0;
-            _outcome = new OperationOutcome { Issue = new List<OperationOutcome.IssueComponent>() };
+            return Outcome != null && Outcome.Issue.Any(i => i.Severity <= OperationOutcome.IssueSeverity.Error);
         }
+    }
 
-        public List<Criterium> UsedCriteria { get; init; }
-        public int MatchCount { get; init; }
-        public OperationOutcome? Outcome => _outcome.Issue.Any() ? _outcome : null;
-
-        public bool HasErrors
+    public string UsedParameters
+    {
+        get
         {
-            get
-            {
-                return Outcome != null && Outcome.Issue.Any(i => i.Severity <= OperationOutcome.IssueSeverity.Error);
-            }
+            var used = UsedCriteria.Select(c => c.ToString()).ToArray();
+            return string.Join("&", used);
         }
+    }
 
-        public string UsedParameters
-        {
-            get
-            {
-                var used = UsedCriteria.Select(c => c.ToString()).ToArray();
-                return string.Join("&", used);
-            }
-        }
-
-        public void AddIssue(
-            string errorMessage,
-            OperationOutcome.IssueSeverity severity = OperationOutcome.IssueSeverity.Error)
-        {
-            var newIssue = new OperationOutcome.IssueComponent { Diagnostics = errorMessage, Severity = severity };
-            _outcome.Issue.Add(newIssue);
-        }
+    public void AddIssue(
+        string errorMessage,
+        OperationOutcome.IssueSeverity severity = OperationOutcome.IssueSeverity.Error)
+    {
+        var newIssue = new OperationOutcome.IssueComponent { Diagnostics = errorMessage, Severity = severity };
+        _outcome.Issue.Add(newIssue);
     }
 }

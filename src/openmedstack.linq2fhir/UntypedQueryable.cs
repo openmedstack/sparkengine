@@ -10,37 +10,36 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OpenMedStack.Linq2Fhir
+namespace OpenMedStack.Linq2Fhir;
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+
+internal class UntypedQueryable<T> : IQueryable<object>
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Linq.Expressions;
+    private readonly IQueryable _source;
 
-    internal class UntypedQueryable<T> : IQueryable<object>
+    public UntypedQueryable(IQueryable<T> source, Expression<Func<T, object>> projection)
     {
-        private readonly IQueryable _source;
+        _source = projection == null ? (IQueryable) source : source.Select(projection);
+    }
 
-        public UntypedQueryable(IQueryable<T> source, Expression<Func<T, object>> projection)
-        {
-            _source = projection == null ? (IQueryable) source : source.Select(projection);
-        }
+    public Expression Expression => _source.Expression;
 
-        public Expression Expression => _source.Expression;
+    public Type ElementType => typeof(T);
 
-        public Type ElementType => typeof(T);
+    public IQueryProvider Provider => _source.Provider;
 
-        public IQueryProvider Provider => _source.Provider;
+    public IEnumerator<object> GetEnumerator()
+    {
+        return Enumerable.Cast<object>(_source).GetEnumerator();
+    }
 
-        public IEnumerator<object> GetEnumerator()
-        {
-            return Enumerable.Cast<object>(_source).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

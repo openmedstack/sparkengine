@@ -6,56 +6,55 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Core
+namespace OpenMedStack.SparkEngine.Tests.Core;
+
+using System;
+using System.Collections.Generic;
+using Hl7.Fhir.Model;
+using SparkEngine.Core;
+using Xunit;
+
+public class FhirPropertyIndexTests
 {
-    using System;
-    using System.Collections.Generic;
-    using Hl7.Fhir.Model;
-    using SparkEngine.Core;
-    using Xunit;
+    private static readonly IFhirModel _fhirModel = new FhirModel();
 
-    public class FhirPropertyIndexTests
+    [Fact]
+    public void TestGetIndex()
     {
-        private static readonly IFhirModel _fhirModel = new FhirModel();
+        var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(Patient), typeof(Account)});
+        Assert.NotNull(index);
+    }
 
-        [Fact]
-        public void TestGetIndex()
-        {
-            var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(Patient), typeof(Account)});
-            Assert.NotNull(index);
-        }
+    [Fact]
+    public void TestExistingPropertyIsFound()
+    {
+        var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(Patient), typeof(HumanName)});
 
-        [Fact]
-        public void TestExistingPropertyIsFound()
-        {
-            var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(Patient), typeof(HumanName)});
+        var pm = index.FindPropertyInfo("Patient", "name");
+        Assert.NotNull(pm);
 
-            var pm = index.FindPropertyInfo("Patient", "name");
-            Assert.NotNull(pm);
+        pm = index.FindPropertyInfo("HumanName", "given");
+        Assert.NotNull(pm);
+    }
 
-            pm = index.FindPropertyInfo("HumanName", "given");
-            Assert.NotNull(pm);
-        }
+    [Fact]
+    public void TestTypedNameIsFound()
+    {
+        var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(ClinicalImpression), typeof(Period)});
 
-        [Fact]
-        public void TestTypedNameIsFound()
-        {
-            var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(ClinicalImpression), typeof(Period)});
+        var pm = index.FindPropertyInfo("ClinicalImpression", "effective"); //"effectivePeriod");
+        Assert.NotNull(pm);
+    }
 
-            var pm = index.FindPropertyInfo("ClinicalImpression", "effective"); //"effectivePeriod");
-            Assert.NotNull(pm);
-        }
+    [Fact]
+    public void TestNonExistingPropertyReturnsNull()
+    {
+        var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(Patient), typeof(Account)});
 
-        [Fact]
-        public void TestNonExistingPropertyReturnsNull()
-        {
-            var index = new FhirPropertyIndex(_fhirModel, new List<Type> {typeof(Patient), typeof(Account)});
+        var pm = index.FindPropertyInfo("TypeNotPresent", "subject");
+        Assert.Null(pm);
 
-            var pm = index.FindPropertyInfo("TypeNotPresent", "subject");
-            Assert.Null(pm);
-
-            pm = index.FindPropertyInfo("Patient", "property_not_present");
-            Assert.Null(pm);
-        }
+        pm = index.FindPropertyInfo("Patient", "property_not_present");
+        Assert.Null(pm);
     }
 }

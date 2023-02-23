@@ -6,19 +6,18 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+using Hl7.Fhir.Serialization;
+
+public class NumberValue : ValueExpression
 {
-    using Hl7.Fhir.Serialization;
+    public NumberValue(decimal value) => Value = value;
 
-    public class NumberValue : ValueExpression
-    {
-        public NumberValue(decimal value) => Value = value;
+    public decimal Value { get; }
 
-        public decimal Value { get; }
+    public override string ToString() => PrimitiveTypeConverter.ConvertTo<string>(Value);
 
-        public override string ToString() => PrimitiveTypeConverter.ConvertTo<string>(Value);
-
-        public static NumberValue Parse(string text) =>
-            new(PrimitiveTypeConverter.ConvertTo<decimal>(text));
-    }
+    public static NumberValue Parse(string text) =>
+        new(PrimitiveTypeConverter.ConvertTo<decimal>(text));
 }

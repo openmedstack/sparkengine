@@ -7,29 +7,28 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces
+namespace OpenMedStack.SparkEngine.Store.Interfaces;
+
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Hl7.Fhir.Model;
+using Task = System.Threading.Tasks.Task;
+
+public interface IFhirStore
 {
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Core;
-    using Hl7.Fhir.Model;
-    using Task = System.Threading.Tasks.Task;
+    Task Add(Entry entry, CancellationToken cancellationToken = default);
 
-    public interface IFhirStore
-    {
-        Task Add(Entry entry, CancellationToken cancellationToken = default);
+    Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default);
 
-        Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers, CancellationToken cancellationToken = default);
+    Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default);
+}
 
-        Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default);
-    }
-
-    public interface IResourcePersistence
-    {
-        Task<bool> Store(Resource resource, CancellationToken cancellationToken);
-        Task<Resource?> Get(IKey key, CancellationToken cancellationToken);
-    }
+public interface IResourcePersistence
+{
+    Task<bool> Store(Resource resource, CancellationToken cancellationToken);
+    Task<Resource?> Get(IKey key, CancellationToken cancellationToken);
 }

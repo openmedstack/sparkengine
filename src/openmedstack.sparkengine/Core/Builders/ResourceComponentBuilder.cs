@@ -8,352 +8,351 @@
 
 using static Hl7.Fhir.Model.CapabilityStatement;
 
-namespace OpenMedStack.SparkEngine.Core.Builders
+namespace OpenMedStack.SparkEngine.Core.Builders;
+
+using System.Collections.Generic;
+using System.Linq;
+using Hl7.Fhir.Model;
+
+public class ResourceComponentBuilder
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Hl7.Fhir.Model;
+    private Code<ResourceType>? _type;
+    private Canonical? _profile;
+    private List<Canonical>? _supportedProfile;
+    private List<ResourceInteractionComponent>? _interaction;
+    private Code<ResourceVersionPolicy>? _versioning;
+    private FhirBoolean? _readHistory;
+    private FhirBoolean? _updateCreate;
+    private FhirBoolean? _conditionalCreate;
+    private Code<ConditionalReadStatus>? _conditionalRead;
+    private FhirBoolean? _conditionalUpdate;
+    private Code<ConditionalDeleteStatus>? _conditionalDelete;
+    private List<Code<ReferenceHandlingPolicy>> _referencePolicy = new();
+    private List<FhirString> _searchInclude = new();
+    private List<FhirString> _searchRevInclude = new();
+    private List<SearchParamComponent> _searchParam = new();
+    private List<OperationComponent> _operation = new();
 
-    public class ResourceComponentBuilder
+    public ResourceComponent Build()
     {
-        private Code<ResourceType>? _type;
-        private Canonical? _profile;
-        private List<Canonical>? _supportedProfile;
-        private List<ResourceInteractionComponent>? _interaction;
-        private Code<ResourceVersionPolicy>? _versioning;
-        private FhirBoolean? _readHistory;
-        private FhirBoolean? _updateCreate;
-        private FhirBoolean? _conditionalCreate;
-        private Code<ConditionalReadStatus>? _conditionalRead;
-        private FhirBoolean? _conditionalUpdate;
-        private Code<ConditionalDeleteStatus>? _conditionalDelete;
-        private List<Code<ReferenceHandlingPolicy>> _referencePolicy = new();
-        private List<FhirString> _searchInclude = new();
-        private List<FhirString> _searchRevInclude = new();
-        private List<SearchParamComponent> _searchParam = new();
-        private List<OperationComponent> _operation = new();
-
-        public ResourceComponent Build()
+        var resource = new ResourceComponent();
+        if (_type == null)
         {
-            var resource = new ResourceComponent();
-            if (_type == null)
-            {
-                throw new RequiredAttributeException("Attribute 'Type' of ResourceComponent is required.");
-            }
-
-            resource.TypeElement = _type.Value == null
-                ? new Code()
-                : new Code(ModelInfo.ResourceTypeToFhirTypeName((ResourceType)_type.Value));
-            if (_profile != null)
-            {
-                resource.ProfileElement = _profile;
-            }
-
-            if (_supportedProfile is { Count: > 0 })
-            {
-                resource.SupportedProfileElement = _supportedProfile;
-            }
-
-            if (_interaction != null && _interaction.Any())
-            {
-                resource.Interaction = _interaction;
-            }
-
-            if (_versioning != null)
-            {
-                resource.VersioningElement = _versioning;
-            }
-
-            if (_readHistory != null)
-            {
-                resource.ReadHistoryElement = _readHistory;
-            }
-
-            if (_updateCreate != null)
-            {
-                resource.UpdateCreateElement = _updateCreate;
-            }
-
-            if (_conditionalCreate != null)
-            {
-                resource.ConditionalCreateElement = _conditionalCreate;
-            }
-
-            if (_conditionalRead != null)
-            {
-                resource.ConditionalReadElement = _conditionalRead;
-            }
-
-            if (_conditionalUpdate != null)
-            {
-                resource.ConditionalUpdateElement = _conditionalUpdate;
-            }
-
-            if (_conditionalDelete != null)
-            {
-                resource.ConditionalDeleteElement = _conditionalDelete;
-            }
-
-            if (_referencePolicy != null && _referencePolicy.Count() > 0)
-            {
-                resource.ReferencePolicyElement = _referencePolicy;
-            }
-
-            if (_searchParam != null && _searchParam.Count() > 0)
-            {
-                resource.SearchParam = _searchParam;
-            }
-
-            if (_operation is { Count: > 0 })
-            {
-                resource.Operation = _operation;
-            }
-
-            return resource;
+            throw new RequiredAttributeException("Attribute 'Type' of ResourceComponent is required.");
         }
 
-        public ResourceComponentBuilder WithType(ResourceType type)
+        resource.TypeElement = _type.Value == null
+            ? new Code()
+            : new Code(ModelInfo.ResourceTypeToFhirTypeName((ResourceType)_type.Value));
+        if (_profile != null)
         {
-            return WithType(new Code<ResourceType>(type));
+            resource.ProfileElement = _profile;
         }
 
-        public ResourceComponentBuilder WithType(Code<ResourceType> type)
+        if (_supportedProfile is { Count: > 0 })
         {
-            _type = type;
-            return this;
+            resource.SupportedProfileElement = _supportedProfile;
         }
 
-        public ResourceComponentBuilder WithProfile(string profile)
+        if (_interaction != null && _interaction.Any())
         {
-            return WithProfile(new Canonical(profile));
+            resource.Interaction = _interaction;
         }
 
-        public ResourceComponentBuilder WithProfile(Canonical? profile)
+        if (_versioning != null)
         {
-            _profile = profile;
-            return this;
+            resource.VersioningElement = _versioning;
         }
 
-        public ResourceComponentBuilder WithSupportedProfile(string supportedProfile)
+        if (_readHistory != null)
         {
-            return WithProfile(string.IsNullOrWhiteSpace(supportedProfile) ? null : new Canonical(supportedProfile));
+            resource.ReadHistoryElement = _readHistory;
         }
 
-        public ResourceComponentBuilder WithSupportedProfile(Canonical supportedProfile)
+        if (_updateCreate != null)
         {
-            if (_supportedProfile == null)
-            {
-                _supportedProfile = new List<Canonical>();
-            }
-
-            _supportedProfile.Add(supportedProfile);
-            return this;
+            resource.UpdateCreateElement = _updateCreate;
         }
 
-        public ResourceComponentBuilder WithInteraction(TypeRestfulInteraction code, Markdown? documentation = null)
+        if (_conditionalCreate != null)
         {
-            return WithInteraction(new ResourceInteractionComponent { Code = code, Documentation = documentation });
+            resource.ConditionalCreateElement = _conditionalCreate;
         }
 
-        public ResourceComponentBuilder WithInteraction(ResourceInteractionComponent interaction)
+        if (_conditionalRead != null)
         {
-            if (_interaction == null)
-            {
-                _interaction = new List<ResourceInteractionComponent>();
-            }
-
-            if (interaction != null)
-            {
-                _interaction.Add(interaction);
-            }
-            return this;
+            resource.ConditionalReadElement = _conditionalRead;
         }
 
-        public ResourceComponentBuilder WithVersioning(ResourceVersionPolicy versioning)
+        if (_conditionalUpdate != null)
         {
-            return WithVersioning(new Code<ResourceVersionPolicy>(versioning));
+            resource.ConditionalUpdateElement = _conditionalUpdate;
         }
 
-        public ResourceComponentBuilder WithVersioning(Code<ResourceVersionPolicy> versioning)
+        if (_conditionalDelete != null)
         {
-            _versioning = versioning;
-            return this;
+            resource.ConditionalDeleteElement = _conditionalDelete;
         }
 
-        public ResourceComponentBuilder WithReadHistory(bool readHistory)
+        if (_referencePolicy != null && _referencePolicy.Count() > 0)
         {
-            return WithReadHistory(new FhirBoolean(readHistory));
+            resource.ReferencePolicyElement = _referencePolicy;
         }
 
-        public ResourceComponentBuilder WithReadHistory(FhirBoolean readHistory)
+        if (_searchParam != null && _searchParam.Count() > 0)
         {
-            _readHistory = readHistory;
-            return this;
+            resource.SearchParam = _searchParam;
         }
 
-        public ResourceComponentBuilder WithUpdateCreate(bool updateCreate)
+        if (_operation is { Count: > 0 })
         {
-            return WithUpdateCreate(new FhirBoolean(updateCreate));
+            resource.Operation = _operation;
         }
 
-        public ResourceComponentBuilder WithUpdateCreate(FhirBoolean updateCreate)
+        return resource;
+    }
+
+    public ResourceComponentBuilder WithType(ResourceType type)
+    {
+        return WithType(new Code<ResourceType>(type));
+    }
+
+    public ResourceComponentBuilder WithType(Code<ResourceType> type)
+    {
+        _type = type;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithProfile(string profile)
+    {
+        return WithProfile(new Canonical(profile));
+    }
+
+    public ResourceComponentBuilder WithProfile(Canonical? profile)
+    {
+        _profile = profile;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithSupportedProfile(string supportedProfile)
+    {
+        return WithProfile(string.IsNullOrWhiteSpace(supportedProfile) ? null : new Canonical(supportedProfile));
+    }
+
+    public ResourceComponentBuilder WithSupportedProfile(Canonical supportedProfile)
+    {
+        if (_supportedProfile == null)
         {
-            _updateCreate = updateCreate;
-            return this;
+            _supportedProfile = new List<Canonical>();
         }
 
-        public ResourceComponentBuilder WithConditionalCreate(bool conditionalCreate)
+        _supportedProfile.Add(supportedProfile);
+        return this;
+    }
+
+    public ResourceComponentBuilder WithInteraction(TypeRestfulInteraction code, Markdown? documentation = null)
+    {
+        return WithInteraction(new ResourceInteractionComponent { Code = code, Documentation = documentation });
+    }
+
+    public ResourceComponentBuilder WithInteraction(ResourceInteractionComponent interaction)
+    {
+        if (_interaction == null)
         {
-            return WithConditionalCreate(new FhirBoolean(conditionalCreate));
+            _interaction = new List<ResourceInteractionComponent>();
         }
 
-        public ResourceComponentBuilder WithConditionalCreate(FhirBoolean conditionalCreate)
+        if (interaction != null)
         {
-            _conditionalCreate = conditionalCreate;
-            return this;
+            _interaction.Add(interaction);
+        }
+        return this;
+    }
+
+    public ResourceComponentBuilder WithVersioning(ResourceVersionPolicy versioning)
+    {
+        return WithVersioning(new Code<ResourceVersionPolicy>(versioning));
+    }
+
+    public ResourceComponentBuilder WithVersioning(Code<ResourceVersionPolicy> versioning)
+    {
+        _versioning = versioning;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithReadHistory(bool readHistory)
+    {
+        return WithReadHistory(new FhirBoolean(readHistory));
+    }
+
+    public ResourceComponentBuilder WithReadHistory(FhirBoolean readHistory)
+    {
+        _readHistory = readHistory;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithUpdateCreate(bool updateCreate)
+    {
+        return WithUpdateCreate(new FhirBoolean(updateCreate));
+    }
+
+    public ResourceComponentBuilder WithUpdateCreate(FhirBoolean updateCreate)
+    {
+        _updateCreate = updateCreate;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithConditionalCreate(bool conditionalCreate)
+    {
+        return WithConditionalCreate(new FhirBoolean(conditionalCreate));
+    }
+
+    public ResourceComponentBuilder WithConditionalCreate(FhirBoolean conditionalCreate)
+    {
+        _conditionalCreate = conditionalCreate;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithConditionalRead(ConditionalReadStatus? conditionalRead)
+    {
+        return WithConditionalRead(new Code<ConditionalReadStatus>(conditionalRead));
+    }
+
+    public ResourceComponentBuilder WithConditionalRead(Code<ConditionalReadStatus> conditionalRead)
+    {
+        _conditionalRead = conditionalRead;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithConditionalUpdate(bool? conditionalUpdate)
+    {
+        return WithConditionalUpdate(new FhirBoolean(conditionalUpdate));
+    }
+
+    public ResourceComponentBuilder WithConditionalUpdate(FhirBoolean conditionalUpdate)
+    {
+        _conditionalUpdate = conditionalUpdate;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithConditionalDelete(ConditionalDeleteStatus? conditionalDelete)
+    {
+        return WithConditionalDelete(new Code<ConditionalDeleteStatus>(conditionalDelete));
+    }
+
+    public ResourceComponentBuilder WithConditionalDelete(Code<ConditionalDeleteStatus> conditionalDelete)
+    {
+        _conditionalDelete = conditionalDelete;
+        return this;
+    }
+
+    public ResourceComponentBuilder WithReferencePolicy(ReferenceHandlingPolicy referencePolicy)
+    {
+        return WithReferencePolicy(new Code<ReferenceHandlingPolicy>(referencePolicy));
+    }
+
+    public ResourceComponentBuilder WithReferencePolicy(Code<ReferenceHandlingPolicy> referencePolicy)
+    {
+        if (_referencePolicy == null)
+        {
+            _referencePolicy = new List<Code<ReferenceHandlingPolicy>>();
         }
 
-        public ResourceComponentBuilder WithConditionalRead(ConditionalReadStatus? conditionalRead)
+        _referencePolicy.Add(referencePolicy);
+        return this;
+    }
+
+    public ResourceComponentBuilder WithSearchInclude(string searchInclude)
+    {
+        return WithSearchInclude(new FhirString(searchInclude));
+    }
+
+    public ResourceComponentBuilder WithSearchInclude(FhirString searchInclude)
+    {
+        if (_searchInclude == null)
         {
-            return WithConditionalRead(new Code<ConditionalReadStatus>(conditionalRead));
+            _searchInclude = new List<FhirString>();
         }
 
-        public ResourceComponentBuilder WithConditionalRead(Code<ConditionalReadStatus> conditionalRead)
+        _searchInclude.Add(searchInclude);
+        return this;
+    }
+
+    public ResourceComponentBuilder WithSearchRevInclude(string searchRevInclude)
+    {
+        return WithSearchRevInclude(new FhirString(searchRevInclude));
+    }
+
+    public ResourceComponentBuilder WithSearchRevInclude(FhirString searchRevInclude)
+    {
+        if (_searchRevInclude == null)
         {
-            _conditionalRead = conditionalRead;
-            return this;
+            _searchRevInclude = new List<FhirString>();
         }
 
-        public ResourceComponentBuilder WithConditionalUpdate(bool? conditionalUpdate)
+        _searchRevInclude.Add(searchRevInclude);
+        return this;
+    }
+
+    public ResourceComponentBuilder WithSearchParam(string name, SearchParamType type, string? defintion = null, string? documentation = null)
+    {
+        return WithSearchParam(
+            !string.IsNullOrWhiteSpace(name) ? new FhirString(name) : null,
+            new Code<SearchParamType>(type),
+            !string.IsNullOrWhiteSpace(defintion) ? new Canonical(defintion) : null,
+            !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null
+        );
+    }
+
+    public ResourceComponentBuilder WithSearchParam(FhirString? name, Code<SearchParamType> type, Canonical? defintion = null, Markdown? documentation = null)
+    {
+        return WithSearchParam(new SearchParamComponent
         {
-            return WithConditionalUpdate(new FhirBoolean(conditionalUpdate));
+            NameElement = name,
+            TypeElement = type,
+            DefinitionElement = defintion,
+            Documentation = documentation,
+        });
+    }
+
+    public ResourceComponentBuilder WithSearchParam(SearchParamComponent searchParam)
+    {
+        if (_searchParam == null)
+        {
+            _searchParam = new List<SearchParamComponent>();
         }
 
-        public ResourceComponentBuilder WithConditionalUpdate(FhirBoolean conditionalUpdate)
+        _searchParam.Add(searchParam);
+        return this;
+    }
+
+    public ResourceComponentBuilder WithOperation(string name, string definition, string? documentation = null)
+    {
+        return WithOperation(
+            string.IsNullOrWhiteSpace(name) ? null : new FhirString(name),
+            string.IsNullOrWhiteSpace(definition) ? null : new Canonical(definition),
+            string.IsNullOrWhiteSpace(documentation) ? null : new Markdown(documentation)
+        );
+    }
+
+    public ResourceComponentBuilder WithOperation(FhirString? name, Canonical? definition, Markdown? documentation)
+    {
+        return WithOperation(new OperationComponent
         {
-            _conditionalUpdate = conditionalUpdate;
-            return this;
+            NameElement = name,
+            DefinitionElement = definition,
+            Documentation = documentation,
+        });
+    }
+
+    public ResourceComponentBuilder WithOperation(OperationComponent operation)
+    {
+        if (_operation == null)
+        {
+            _operation = new List<OperationComponent>();
         }
 
-        public ResourceComponentBuilder WithConditionalDelete(ConditionalDeleteStatus? conditionalDelete)
-        {
-            return WithConditionalDelete(new Code<ConditionalDeleteStatus>(conditionalDelete));
-        }
-
-        public ResourceComponentBuilder WithConditionalDelete(Code<ConditionalDeleteStatus> conditionalDelete)
-        {
-            _conditionalDelete = conditionalDelete;
-            return this;
-        }
-
-        public ResourceComponentBuilder WithReferencePolicy(ReferenceHandlingPolicy referencePolicy)
-        {
-            return WithReferencePolicy(new Code<ReferenceHandlingPolicy>(referencePolicy));
-        }
-
-        public ResourceComponentBuilder WithReferencePolicy(Code<ReferenceHandlingPolicy> referencePolicy)
-        {
-            if (_referencePolicy == null)
-            {
-                _referencePolicy = new List<Code<ReferenceHandlingPolicy>>();
-            }
-
-            _referencePolicy.Add(referencePolicy);
-            return this;
-        }
-
-        public ResourceComponentBuilder WithSearchInclude(string searchInclude)
-        {
-            return WithSearchInclude(new FhirString(searchInclude));
-        }
-
-        public ResourceComponentBuilder WithSearchInclude(FhirString searchInclude)
-        {
-            if (_searchInclude == null)
-            {
-                _searchInclude = new List<FhirString>();
-            }
-
-            _searchInclude.Add(searchInclude);
-            return this;
-        }
-
-        public ResourceComponentBuilder WithSearchRevInclude(string searchRevInclude)
-        {
-            return WithSearchRevInclude(new FhirString(searchRevInclude));
-        }
-
-        public ResourceComponentBuilder WithSearchRevInclude(FhirString searchRevInclude)
-        {
-            if (_searchRevInclude == null)
-            {
-                _searchRevInclude = new List<FhirString>();
-            }
-
-            _searchRevInclude.Add(searchRevInclude);
-            return this;
-        }
-
-        public ResourceComponentBuilder WithSearchParam(string name, SearchParamType type, string? defintion = null, string? documentation = null)
-        {
-            return WithSearchParam(
-                !string.IsNullOrWhiteSpace(name) ? new FhirString(name) : null,
-                new Code<SearchParamType>(type),
-                !string.IsNullOrWhiteSpace(defintion) ? new Canonical(defintion) : null,
-                !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null
-            );
-        }
-
-        public ResourceComponentBuilder WithSearchParam(FhirString? name, Code<SearchParamType> type, Canonical? defintion = null, Markdown? documentation = null)
-        {
-            return WithSearchParam(new SearchParamComponent
-            {
-                NameElement = name,
-                TypeElement = type,
-                DefinitionElement = defintion,
-                Documentation = documentation,
-            });
-        }
-
-        public ResourceComponentBuilder WithSearchParam(SearchParamComponent searchParam)
-        {
-            if (_searchParam == null)
-            {
-                _searchParam = new List<SearchParamComponent>();
-            }
-
-            _searchParam.Add(searchParam);
-            return this;
-        }
-
-        public ResourceComponentBuilder WithOperation(string name, string definition, string? documentation = null)
-        {
-            return WithOperation(
-                string.IsNullOrWhiteSpace(name) ? null : new FhirString(name),
-                string.IsNullOrWhiteSpace(definition) ? null : new Canonical(definition),
-                string.IsNullOrWhiteSpace(documentation) ? null : new Markdown(documentation)
-            );
-        }
-
-        public ResourceComponentBuilder WithOperation(FhirString? name, Canonical? definition, Markdown? documentation)
-        {
-            return WithOperation(new OperationComponent
-            {
-                NameElement = name,
-                DefinitionElement = definition,
-                Documentation = documentation,
-            });
-        }
-
-        public ResourceComponentBuilder WithOperation(OperationComponent operation)
-        {
-            if (_operation == null)
-            {
-                _operation = new List<OperationComponent>();
-            }
-
-            _operation.Add(operation);
-            return this;
-        }
+        _operation.Add(operation);
+        return this;
     }
 }

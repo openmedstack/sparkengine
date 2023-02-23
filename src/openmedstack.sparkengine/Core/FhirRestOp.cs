@@ -6,10 +6,9 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+public static class FhirRestOp
 {
-    public static class FhirRestOp
-    {
-        public const string SNAPSHOT = "_snapshot";
-    }
+    public const string SNAPSHOT = "_snapshot";
 }

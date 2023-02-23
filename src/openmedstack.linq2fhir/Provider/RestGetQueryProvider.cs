@@ -10,40 +10,39 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OpenMedStack.Linq2Fhir.Provider
+namespace OpenMedStack.Linq2Fhir.Provider;
+
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+using Expression = System.Linq.Expressions.Expression;
+
+internal class RestGetQueryProvider<T> : RestQueryProvider<T> where T : Resource, new()
 {
-    using System;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Rest;
-    using Expression = System.Linq.Expressions.Expression;
-
-    internal class RestGetQueryProvider<T> : RestQueryProvider<T> where T : Resource, new()
+    public RestGetQueryProvider(FhirClient client)
+        : base(client)
     {
-        public RestGetQueryProvider(FhirClient client)
-            : base(client)
-        {
-        }
+    }
 
-        protected override
-            Func<FhirClient, Expression, Type, IAsyncQueryable<TResult>> CreateQueryable<TResult>()
-        {
-            return InnerCreateQueryable<TResult>;
-        }
+    protected override
+        Func<FhirClient, Expression, Type, IAsyncQueryable<TResult>> CreateQueryable<TResult>()
+    {
+        return InnerCreateQueryable<TResult>;
+    }
         
-        private static IAsyncQueryable<TResult> InnerCreateQueryable<TResult>(
-            FhirClient client,
-            Expression expression,
-            Type type) where TResult : Resource, new()
-        {
-            return new RestGetQueryable<TResult>(client, expression);
-        }
+    private static IAsyncQueryable<TResult> InnerCreateQueryable<TResult>(
+        FhirClient client,
+        Expression expression,
+        Type type) where TResult : Resource, new()
+    {
+        return new RestGetQueryable<TResult>(client, expression);
+    }
 
-        /// <inheritdoc />
-        protected override Task<Bundle?> GetResults(SearchParams builder)
-        {
-            return Client.SearchAsync<T>(builder);
-        }
+    /// <inheritdoc />
+    protected override Task<Bundle?> GetResults(SearchParams builder)
+    {
+        return Client.SearchAsync<T>(builder);
     }
 }

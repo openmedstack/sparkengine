@@ -6,21 +6,20 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class ConditionalHeaderParameters
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-
-    public class ConditionalHeaderParameters
+    public ConditionalHeaderParameters(IEnumerable<string> ifNoneMatchTags, DateTimeOffset? ifModifiedSince)
     {
-        public ConditionalHeaderParameters(IEnumerable<string> ifNoneMatchTags, DateTimeOffset? ifModifiedSince)
-        {
-            IfModifiedSince = ifModifiedSince;
-            IfNoneMatchTags = ifNoneMatchTags.ToArray();
-        }
-
-        public IEnumerable<string> IfNoneMatchTags { get; }
-        public DateTimeOffset? IfModifiedSince { get; }
+        IfModifiedSince = ifModifiedSince;
+        IfNoneMatchTags = ifNoneMatchTags.ToArray();
     }
+
+    public IEnumerable<string> IfNoneMatchTags { get; }
+    public DateTimeOffset? IfModifiedSince { get; }
 }

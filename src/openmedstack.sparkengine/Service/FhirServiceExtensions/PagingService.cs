@@ -6,35 +6,34 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+
+using System;
+using System.Threading.Tasks;
+using Core;
+using Store.Interfaces;
+
+public class PagingService : IPagingService
 {
-    using System;
-    using System.Threading.Tasks;
-    using Core;
-    using Store.Interfaces;
+    private readonly ISnapshotPaginationProvider _paginationProvider;
+    private readonly ISnapshotStore _snapshotstore;
 
-    public class PagingService : IPagingService
+    public PagingService(ISnapshotStore snapshotstore, ISnapshotPaginationProvider paginationProvider)
     {
-        private readonly ISnapshotPaginationProvider _paginationProvider;
-        private readonly ISnapshotStore _snapshotstore;
+        _snapshotstore = snapshotstore;
+        _paginationProvider = paginationProvider;
+    }
 
-        public PagingService(ISnapshotStore snapshotstore, ISnapshotPaginationProvider paginationProvider)
-        {
-            _snapshotstore = snapshotstore;
-            _paginationProvider = paginationProvider;
-        }
+    public async Task<ISnapshotPagination> StartPagination(Snapshot snapshot)
+    {
+        await _snapshotstore.AddSnapshot(snapshot).ConfigureAwait(false);
 
-        public async Task<ISnapshotPagination> StartPagination(Snapshot snapshot)
-        {
-            await _snapshotstore.AddSnapshot(snapshot).ConfigureAwait(false);
+        return _paginationProvider.StartPagination(snapshot);
+    }
 
-            return _paginationProvider.StartPagination(snapshot);
-        }
-
-        public async Task<ISnapshotPagination> StartPagination(string snapshotkey)
-        {
-            var snapshot = await _snapshotstore.GetSnapshot(snapshotkey).ConfigureAwait(false);
-            return _paginationProvider.StartPagination(snapshot!);
-        }
+    public async Task<ISnapshotPagination> StartPagination(string snapshotkey)
+    {
+        var snapshot = await _snapshotstore.GetSnapshot(snapshotkey).ConfigureAwait(false);
+        return _paginationProvider.StartPagination(snapshot!);
     }
 }

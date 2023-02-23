@@ -6,15 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Utility
+namespace OpenMedStack.SparkEngine.Utility;
+
+using System;
+
+public static class FhirParameterParser
 {
-    using System;
+    public static DateTimeOffset? ParseDateParameter(this string? value) =>
+        DateTimeOffset.TryParse(value, out var dateTime) ? dateTime : (DateTimeOffset?) null;
 
-    public static class FhirParameterParser
-    {
-        public static DateTimeOffset? ParseDateParameter(this string? value) =>
-            DateTimeOffset.TryParse(value, out var dateTime) ? dateTime : (DateTimeOffset?) null;
-
-        public static int? ParseIntParameter(this string? value) => int.TryParse(value, out var n) ? n : default(int?);
-    }
+    public static int? ParseIntParameter(this string? value) => int.TryParse(value, out var n) ? n : default(int?);
 }

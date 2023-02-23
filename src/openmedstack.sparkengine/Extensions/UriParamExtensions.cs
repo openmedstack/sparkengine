@@ -6,30 +6,29 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Extensions
+namespace OpenMedStack.SparkEngine.Extensions;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public static class UriParamExtensions
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-
-    public static class UriParamExtensions
+    //TODO: horrible!! Should refactor
+    public static Uri AddParam(this Uri uri, string name, params string[] values)
     {
-        //TODO: horrible!! Should refactor
-        public static Uri AddParam(this Uri uri, string name, params string[] values)
+        var fakeBase = new Uri("http://example.com");
+        var builder = uri.IsAbsoluteUri ? new UriBuilder(uri) : new UriBuilder(fakeBase) {Path = uri.ToString()};
+
+        ICollection<Tuple<string, string>> query = UriUtil.SplitParams(builder.Query).ToList();
+
+        foreach (var value in values)
         {
-            var fakeBase = new Uri("http://example.com");
-            var builder = uri.IsAbsoluteUri ? new UriBuilder(uri) : new UriBuilder(fakeBase) {Path = uri.ToString()};
-
-            ICollection<Tuple<string, string>> query = UriUtil.SplitParams(builder.Query).ToList();
-
-            foreach (var value in values)
-            {
-                query.Add(new Tuple<string, string>(name, value));
-            }
-
-            builder.Query = UriUtil.JoinParams(query);
-
-            return uri.IsAbsoluteUri ? builder.Uri : fakeBase.MakeRelativeUri(builder.Uri);
+            query.Add(new Tuple<string, string>(name, value));
         }
+
+        builder.Query = UriUtil.JoinParams(query);
+
+        return uri.IsAbsoluteUri ? builder.Uri : fakeBase.MakeRelativeUri(builder.Uri);
     }
 }

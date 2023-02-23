@@ -6,54 +6,53 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web.Extensions
+namespace OpenMedStack.SparkEngine.Web.Extensions;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using Hl7.Fhir.Rest;
+using Microsoft.AspNetCore.Http;
+using SparkEngine.Extensions;
+
+public static class HttpRequestExtensions
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Net.Http;
-    using Hl7.Fhir.Rest;
-    using Microsoft.AspNetCore.Http;
-    using SparkEngine.Extensions;
+    /// <summary>
+    ///     Returns true if the Content-Type header matches any of the supported Xml or Json MIME types.
+    /// </summary>
+    /// <param name="content">An instance of <see cref="HttpContent" />.</param>
+    /// <returns>Returns true if the Content-Type header matches any of the supported Xml or Json MIME types.</returns>
+    internal static bool IsContentTypeHeaderFhirMediaType(this HttpContent content) =>
+        IsContentTypeHeaderFhirMediaType(content.Headers.ContentType?.MediaType);
 
-    public static class HttpRequestExtensions
+    public static bool IsContentTypeHeaderFhirMediaType(this string? contentType) =>
+        !string.IsNullOrEmpty(contentType)
+        && (ContentType.XML_CONTENT_HEADERS.Contains(contentType)
+            || ContentType.JSON_CONTENT_HEADERS.Contains(contentType));
+
+    public static string? GetParameter(this HttpRequest request, string key)
     {
-        /// <summary>
-        ///     Returns true if the Content-Type header matches any of the supported Xml or Json MIME types.
-        /// </summary>
-        /// <param name="content">An instance of <see cref="HttpContent" />.</param>
-        /// <returns>Returns true if the Content-Type header matches any of the supported Xml or Json MIME types.</returns>
-        internal static bool IsContentTypeHeaderFhirMediaType(this HttpContent content) =>
-            IsContentTypeHeaderFhirMediaType(content.Headers.ContentType?.MediaType);
-
-        public static bool IsContentTypeHeaderFhirMediaType(this string? contentType) =>
-            !string.IsNullOrEmpty(contentType)
-            && (ContentType.XML_CONTENT_HEADERS.Contains(contentType)
-                || ContentType.JSON_CONTENT_HEADERS.Contains(contentType));
-
-        public static string? GetParameter(this HttpRequest request, string key)
+        string? value = null;
+        if (request.Query.ContainsKey(key))
         {
-            string? value = null;
-            if (request.Query.ContainsKey(key))
-            {
-                value = request.Query.FirstOrDefault(p => p.Key == key).Value.FirstOrDefault();
-            }
-
-            return value;
+            value = request.Query.FirstOrDefault(p => p.Key == key).Value.FirstOrDefault();
         }
 
-        public static SearchParams GetSearchParamsFromBody(this HttpRequest request)
-        {
-            var list = request.Form.Select(parameter => new Tuple<string, string>(parameter.Key, parameter.Value.ToString())).ToList();
+        return value;
+    }
 
-            return request.GetSearchParams().AddAll(list);
-        }
+    public static SearchParams GetSearchParamsFromBody(this HttpRequest request)
+    {
+        var list = request.Form.Select(parameter => new Tuple<string, string>(parameter.Key, parameter.Value.ToString())).ToList();
 
-        public static SearchParams GetSearchParams(this HttpRequest request)
-        {
-            var parameters = request.TupledParameters().Where(tp => tp.Item1 != "_format");
-            var searchCommand = SearchParams.FromUriParamList(parameters.Select(x => Tuple.Create(x.Item1, x.Item2)));
-            return searchCommand;
-        }
+        return request.GetSearchParams().AddAll(list);
+    }
+
+    public static SearchParams GetSearchParams(this HttpRequest request)
+    {
+        var parameters = request.TupledParameters().Where(tp => tp.Item1 != "_format");
+        var searchCommand = SearchParams.FromUriParamList(parameters.Select(x => Tuple.Create(x.Item1, x.Item2)));
+        return searchCommand;
     }
 }

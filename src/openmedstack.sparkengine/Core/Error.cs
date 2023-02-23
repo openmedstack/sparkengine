@@ -6,22 +6,21 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System.Net;
+
+public static class Error
 {
-    using System.Net;
+    public static SparkException Internal(string message, params object[] values) =>
+        new(HttpStatusCode.InternalServerError, message, values);
 
-    public static class Error
-    {
-        public static SparkException Internal(string message, params object[] values) =>
-            new(HttpStatusCode.InternalServerError, message, values);
+    public static SparkException NotFound(string message, params object[] values) =>
+        new(HttpStatusCode.NotFound, message, values);
 
-        public static SparkException NotFound(string message, params object[] values) =>
-            new(HttpStatusCode.NotFound, message, values);
+    public static SparkException Create(HttpStatusCode code, string message, params object[] values) =>
+        new(code, message, values);
 
-        public static SparkException Create(HttpStatusCode code, string message, params object[] values) =>
-            new(code, message, values);
-
-        public static SparkException BadRequest(string message, params object[] values) =>
-            new(HttpStatusCode.BadRequest, message, values);
-    }
+    public static SparkException BadRequest(string message, params object[] values) =>
+        new(HttpStatusCode.BadRequest, message, values);
 }

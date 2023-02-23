@@ -6,31 +6,30 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Model
+namespace OpenMedStack.SparkEngine.Model;
+
+using System.Collections.Generic;
+using Hl7.Fhir.Model;
+
+/// <summary>
+///     Class for holding information as present in a CompartmentDefinition resource.
+///     This is a (hopefully) temporary solution, since the Hl7.Fhir api does not containt CompartmentDefinition yet.
+/// </summary>
+public class CompartmentInfo
 {
-    using System.Collections.Generic;
-    using Hl7.Fhir.Model;
+    public CompartmentInfo(ResourceType resourceType) => ResourceType = resourceType;
 
-    /// <summary>
-    ///     Class for holding information as present in a CompartmentDefinition resource.
-    ///     This is a (hopefully) temporary solution, since the Hl7.Fhir api does not containt CompartmentDefinition yet.
-    /// </summary>
-    public class CompartmentInfo
+    public ResourceType ResourceType { get; set; }
+
+    public List<string> ReverseIncludes { get; } = new();
+
+    public void AddReverseInclude(string revInclude)
     {
-        public CompartmentInfo(ResourceType resourceType) => ResourceType = resourceType;
+        ReverseIncludes.Add(revInclude);
+    }
 
-        public ResourceType ResourceType { get; set; }
-
-        public List<string> ReverseIncludes { get; } = new();
-
-        public void AddReverseInclude(string revInclude)
-        {
-            ReverseIncludes.Add(revInclude);
-        }
-
-        public void AddReverseIncludes(IEnumerable<string> revIncludes)
-        {
-            ReverseIncludes.AddRange(revIncludes);
-        }
+    public void AddReverseIncludes(IEnumerable<string> revIncludes)
+    {
+        ReverseIncludes.AddRange(revIncludes);
     }
 }

@@ -6,16 +6,15 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests
-{
-    using System.IO;
+namespace OpenMedStack.SparkEngine.Tests;
 
-    public static class TextFileHelper
+using System.IO;
+
+public static class TextFileHelper
+{
+    public static string ReadTextFileFromDisk(string path)
     {
-        public static string ReadTextFileFromDisk(string path)
-        {
-            using TextReader reader = new StreamReader(path);
-            return reader.ReadToEnd();
-        }
+        using TextReader reader = new StreamReader(path);
+        return reader.ReadToEnd();
     }
 }

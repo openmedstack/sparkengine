@@ -10,44 +10,43 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OpenMedStack.Linq2Fhir.Provider
+namespace OpenMedStack.Linq2Fhir.Provider;
+
+using System;
+using System.Linq;
+using System.Reflection;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+using Expression = System.Linq.Expressions.Expression;
+
+internal abstract class RestQueryProvider<T> : RestQueryProviderBase<T> where T : Resource, new()
 {
-    using System;
-    using System.Linq;
-    using System.Reflection;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Rest;
-    using Expression = System.Linq.Expressions.Expression;
-
-    internal abstract class RestQueryProvider<T> : RestQueryProviderBase<T> where T : Resource, new()
+    public RestQueryProvider(FhirClient client)
     {
-        public RestQueryProvider(FhirClient client)
+        Client = client;
+    }
+
+    protected FhirClient Client { get; }
+
+    protected abstract Func<FhirClient, Expression, Type, IAsyncQueryable<TResult>> CreateQueryable<TResult>() where TResult : Resource, new();
+        
+    public override IAsyncQueryable<TResult> CreateQuery<TResult>(Expression expression)
+    {
+        if (expression == null)
         {
-            Client = client;
+            throw new ArgumentNullException(nameof(expression));
         }
 
-        protected FhirClient Client { get; }
-
-        protected abstract Func<FhirClient, Expression, Type, IAsyncQueryable<TResult>> CreateQueryable<TResult>() where TResult : Resource, new();
+        var methodInfo = GetType().GetMethod(nameof(CreateQueryable), BindingFlags.InvokeMethod | BindingFlags.NonPublic | BindingFlags.Instance);
+        var method = (Func<FhirClient, Expression, Type, IAsyncQueryable<TResult>>)methodInfo!.MakeGenericMethod(typeof(TResult)).Invoke(this, Array.Empty<object>())!;
+        return method(Client, expression, typeof(T));
+    }
         
-        public override IAsyncQueryable<TResult> CreateQuery<TResult>(Expression expression)
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
         {
-            if (expression == null)
-            {
-                throw new ArgumentNullException(nameof(expression));
-            }
-
-            var methodInfo = GetType().GetMethod(nameof(CreateQueryable), BindingFlags.InvokeMethod | BindingFlags.NonPublic | BindingFlags.Instance);
-            var method = (Func<FhirClient, Expression, Type, IAsyncQueryable<TResult>>)methodInfo!.MakeGenericMethod(typeof(TResult)).Invoke(this, Array.Empty<object>())!;
-            return method(Client, expression, typeof(T));
-        }
-        
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                Client.Dispose();
-            }
+            Client.Dispose();
         }
     }
 }

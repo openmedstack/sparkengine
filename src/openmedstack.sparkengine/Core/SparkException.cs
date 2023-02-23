@@ -6,32 +6,31 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System;
+using System.Net;
+using Hl7.Fhir.Model;
+
+// Placed in a sub-namespace because you must be explicit about it if you want to throw this error directly
+
+// todo: Can this be replaced by a FhirOperationException ?
+
+public class SparkException : Exception
 {
-    using System;
-    using System.Net;
-    using Hl7.Fhir.Model;
+    public SparkException(HttpStatusCode statuscode, string? message = null)
+        : base(message) =>
+        StatusCode = statuscode;
 
-    // Placed in a sub-namespace because you must be explicit about it if you want to throw this error directly
+    public SparkException(HttpStatusCode statuscode, string message, params object[] values)
+        : base(string.Format(message, values)) =>
+        StatusCode = statuscode;
 
-    // todo: Can this be replaced by a FhirOperationException ?
+    public SparkException(HttpStatusCode statuscode, OperationOutcome outcome, string? message = null)
+        : this(statuscode, message) =>
+        Outcome = outcome;
 
-    public class SparkException : Exception
-    {
-        public SparkException(HttpStatusCode statuscode, string? message = null)
-            : base(message) =>
-            StatusCode = statuscode;
+    public HttpStatusCode StatusCode { get; }
 
-        public SparkException(HttpStatusCode statuscode, string message, params object[] values)
-            : base(string.Format(message, values)) =>
-            StatusCode = statuscode;
-
-        public SparkException(HttpStatusCode statuscode, OperationOutcome outcome, string? message = null)
-            : this(statuscode, message) =>
-            Outcome = outcome;
-
-        public HttpStatusCode StatusCode { get; }
-
-        public OperationOutcome? Outcome { get; }
-    }
+    public OperationOutcome? Outcome { get; }
 }

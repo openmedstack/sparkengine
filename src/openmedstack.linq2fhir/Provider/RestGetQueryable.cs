@@ -10,38 +10,37 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace OpenMedStack.Linq2Fhir.Provider
+namespace OpenMedStack.Linq2Fhir.Provider;
+
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+using Expression = System.Linq.Expressions.Expression;
+
+internal class RestGetQueryable<T> : RestQueryableBase<T> where T : Resource, new()
 {
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Rest;
-    using Expression = System.Linq.Expressions.Expression;
-
-    internal class RestGetQueryable<T> : RestQueryableBase<T> where T : Resource, new()
+    public RestGetQueryable(FhirClient client)
+        : base(client)
     {
-        public RestGetQueryable(FhirClient client)
-            : base(client)
-        {
-            Provider = new RestGetQueryProvider<T>(client);
-        }
+        Provider = new RestGetQueryProvider<T>(client);
+    }
 
-        public RestGetQueryable(FhirClient client, Expression expression)
-            : base(client, expression)
-        {
-            Provider = new RestGetQueryProvider<T>(client);
-        }
+    public RestGetQueryable(FhirClient client, Expression expression)
+        : base(client, expression)
+    {
+        Provider = new RestGetQueryProvider<T>(client);
+    }
 
-        protected override void Dispose(bool disposing)
+    protected override void Dispose(bool disposing)
+    {
+        try
         {
-            try
+            if (disposing)
             {
-                if (disposing)
-                {
-                }
             }
-            finally
-            {
-                base.Dispose(disposing);
-            }
+        }
+        finally
+        {
+            base.Dispose(disposing);
         }
     }
 }

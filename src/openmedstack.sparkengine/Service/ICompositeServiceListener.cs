@@ -6,15 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
-{
-    using System.Threading.Tasks;
-    using Core;
+namespace OpenMedStack.SparkEngine.Service;
 
-    public interface ICompositeServiceListener : IServiceListener
-    {
-        void Add(IServiceListener listener);
-        void Clear();
-        Task Inform(Entry interaction);
-    }
+using System.Threading.Tasks;
+using Core;
+
+public interface ICompositeServiceListener : IServiceListener
+{
+    void Add(IServiceListener listener);
+    void Clear();
+    Task Inform(Entry interaction);
 }

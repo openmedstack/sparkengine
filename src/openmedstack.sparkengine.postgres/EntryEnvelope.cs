@@ -6,38 +6,37 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
+namespace OpenMedStack.SparkEngine.Postgres;
+
+using System;
+using Core;
+using Hl7.Fhir.Model;
+
+public class EntryEnvelope
 {
-    using System;
-    using Core;
-    using Hl7.Fhir.Model;
+    public string Id { get; init; } = null!;
 
-    public class EntryEnvelope
-    {
-        public string Id { get; init; } = null!;
+    public string? ResourceId { get; init; }
 
-        public string? ResourceId { get; init; }
+    public string? VersionId { get; init; }
 
-        public string? VersionId { get; init; }
+    public string ResourceType { get; init; } = null!;
 
-        public string ResourceType { get; init; } = null!;
+    public EntryState State { get; init; }
 
-        public EntryState State { get; init; }
+    //public IKey Key { get; init; } = null!;
 
-        //public IKey Key { get; init; } = null!;
+    public string ResourceKey { get; init; } = null!;
 
-        public string ResourceKey { get; init; } = null!;
+    public Bundle.HTTPVerb Method { get; init; }
 
-        public Bundle.HTTPVerb Method { get; init; }
+    public DateTimeOffset When { get; init; }
 
-        public DateTimeOffset When { get; init; }
+    public Resource? Resource { get; init; }
 
-        public Resource? Resource { get; init; }
+    public string? StorageKey { get; init; }
 
-        public string? StorageKey { get; init; }
+    public bool IsPresent { get; set; }
 
-        public bool IsPresent { get; set; }
-
-        public bool Deleted { get; init; }
-    }
+    public bool Deleted { get; init; }
 }
