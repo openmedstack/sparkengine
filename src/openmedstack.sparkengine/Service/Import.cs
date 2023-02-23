@@ -110,11 +110,11 @@ namespace OpenMedStack.SparkEngine.Service
                     {
                         if (entry.Method is Bundle.HTTPVerb.PUT or Bundle.HTTPVerb.PATCH or Bundle.HTTPVerb.DELETE)
                         {
-                            entry.Key = await RemapHistoryOnly(key, mapper, cancellationToken);
+                            entry.Key = await RemapHistoryOnly(key, mapper, cancellationToken).ConfigureAwait(false);
                         }
                         else if (entry is { Method: Bundle.HTTPVerb.POST, Resource: { } })
                         {
-                            entry.Key = await Remap(entry.Resource, mapper, cancellationToken);
+                            entry.Key = await Remap(entry.Resource, mapper, cancellationToken).ConfigureAwait(false);
                         }
                         return;
                     }

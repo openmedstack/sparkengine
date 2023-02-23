@@ -13,6 +13,8 @@ namespace OpenMedStack.SparkEngine.Store.Interfaces
     using System.Threading;
     using System.Threading.Tasks;
     using Core;
+    using Hl7.Fhir.Model;
+    using Task = System.Threading.Tasks.Task;
 
     public interface IFhirStore
     {
@@ -23,5 +25,11 @@ namespace OpenMedStack.SparkEngine.Store.Interfaces
         IAsyncEnumerable<Entry> Get(IEnumerable<IKey> localIdentifiers, CancellationToken cancellationToken = default);
 
         Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default);
+    }
+
+    public interface IResourcePersistence
+    {
+        Task<bool> Store(Resource resource, CancellationToken cancellationToken);
+        Task<Resource?> Get(IKey key, CancellationToken cancellationToken);
     }
 }

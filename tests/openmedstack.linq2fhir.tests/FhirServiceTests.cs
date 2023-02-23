@@ -9,7 +9,7 @@ public class FhirServiceTests
     public async System.Threading.Tasks.Task CanQueryResourcesToList()
     {
         var asyncQueryable = GetQueryable();
-        var bundle = await asyncQueryable.ToListAsync();
+        var bundle = await asyncQueryable.ToListAsync().ConfigureAwait(false);
 
         Assert.NotNull(bundle);
     }
@@ -18,7 +18,7 @@ public class FhirServiceTests
     public async System.Threading.Tasks.Task CanQueryResourcesToArray()
     {
         var asyncQueryable = GetQueryable();
-        var bundle = await asyncQueryable.ToArrayAsync();
+        var bundle = await asyncQueryable.ToArrayAsync().ConfigureAwait(false);
 
         Assert.NotNull(bundle);
     }
@@ -27,7 +27,7 @@ public class FhirServiceTests
     public async System.Threading.Tasks.Task CanQueryResourcesToBundle()
     {
         var asyncQueryable = GetQueryable();
-        var bundle = await asyncQueryable.GetBundle();
+        var bundle = await asyncQueryable.GetBundle().ConfigureAwait(false);
 
         Assert.NotNull(bundle);
     }
@@ -38,7 +38,7 @@ public class FhirServiceTests
         var handler = new TestMessageHandler();
         var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
         var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.Family == "a"));
-        _ = await asyncQueryable.GetBundle();
+        _ = await asyncQueryable.GetBundle().ConfigureAwait(false);
 
         Assert.Equal("/Patient?name.family=a", handler.RequestedPathAndQuery);
     }
@@ -49,7 +49,7 @@ public class FhirServiceTests
         var handler = new TestMessageHandler();
         var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
         var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.MatchAnyAttribute("a")));
-        _ = await asyncQueryable.GetBundle();
+        _ = await asyncQueryable.GetBundle().ConfigureAwait(false);
 
         Assert.Equal("/Patient?name=a", handler.RequestedPathAndQuery);
     }
@@ -60,7 +60,7 @@ public class FhirServiceTests
         var handler = new TestMessageHandler();
         var client = new FhirClient("http://localhost", FhirClientSettings.CreateDefault(), handler);
         var asyncQueryable = client.Query<Patient>().Where(p => p.Name.Any(n => n.DoNotMatchAnyAttribute("a")));
-        _ = await asyncQueryable.GetBundle();
+        _ = await asyncQueryable.GetBundle().ConfigureAwait(false);
 
         Assert.Equal("/Patient?name%3Anot=a", handler.RequestedPathAndQuery);
     }

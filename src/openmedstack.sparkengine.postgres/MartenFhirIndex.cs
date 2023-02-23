@@ -92,7 +92,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         /// <inheritdoc />
         public async Task Save(IndexValue indexValue)
         {
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             var values = indexValue.IndexValues().ToArray();
             var id = (StringValue)values.First(x => x.Name == "internal_forResource").Values[0];
             var resource = (StringValue)values.First(x => x.Name == "internal_resource").Values[0];
@@ -146,7 +147,9 @@ namespace OpenMedStack.SparkEngine.Postgres
             {
                 return;
             }
-            await using var session = _sessionFunc();
+
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             session.Delete<IndexEntry>(entry.Key.ToStorageKey());
             await session.SaveChangesAsync().ConfigureAwait(false);
         }
@@ -155,7 +158,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         async Task IIndexStore.Clean()
         {
             _logger.LogDebug("Clean requested");
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             session.DeleteWhere<IndexEntry>(e => e.Id != "");
             await session.SaveChangesAsync().ConfigureAwait(false);
         }
@@ -189,7 +193,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         private async Task<List<string>> GetIndexValues(string resource, SearchParams searchCommand)
         {
             var criteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2));
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             var queryBuilder = new StringBuilder();
             queryBuilder.AppendFormat(@"where data -> 'Values' ->> 'internal_resource' = '{0}'", resource);
             queryBuilder = criteria.Aggregate(

@@ -39,7 +39,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
             var visitor = new QueryExpressionVisitor();
             visitor.Visit(expression);
             var p = visitor.GetParams();
-            var bundle = await GetResults(p);
+            var bundle = await GetResults(p).ConfigureAwait(false);
             if (typeof(TResult) == typeof(Bundle))
             {
                 return (TResult)(bundle as object)!;

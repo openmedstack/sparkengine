@@ -32,7 +32,9 @@ namespace OpenMedStack.SparkEngine.Postgres
 
         public DateTimeOffset When { get; init; }
 
-        public Resource Resource { get; init; } = null!;
+        public Resource? Resource { get; init; }
+
+        public string? StorageKey { get; init; }
 
         public bool IsPresent { get; set; }
 

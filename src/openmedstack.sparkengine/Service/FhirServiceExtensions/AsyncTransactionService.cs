@@ -91,7 +91,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             Mapper<string, IKey>? mapper,
             [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken))
+            await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken).ConfigureAwait(false))
             {
                 var response = await interactionHandler.HandleInteraction(interaction, cancellationToken)
                     .ConfigureAwait(false);
@@ -129,7 +129,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             var interactions = operation.GetEntries();
 
             FhirResponse? response = null;
-            await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken))
+            await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken).ConfigureAwait(false))
             {
                 response = MergeFhirResponse(
                     response,

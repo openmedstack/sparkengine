@@ -30,7 +30,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         public async Task AddSnapshot(Snapshot snapshot)
         {
             _logger.LogDebug("Snapshot added");
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             session.Store(snapshot);
             await session.SaveChangesAsync().ConfigureAwait(false);
         }
@@ -39,7 +40,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         public async Task<Snapshot?> GetSnapshot(string snapshotId)
         {
             _logger.LogDebug("Returned snapshot " + snapshotId);
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             var snapshot = await session.LoadAsync<Snapshot>(snapshotId).ConfigureAwait(false);
 
             return snapshot;

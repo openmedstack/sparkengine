@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Web
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using Controllers;
     using Core;
     using FhirResponseFactory;
@@ -26,6 +27,16 @@ namespace OpenMedStack.SparkEngine.Web
     using Search;
     using Service;
     using Service.FhirServiceExtensions;
+    
+    [Route("fhir")]
+    public class DefaultFhirController : FhirController
+    {
+        /// <inheritdoc />
+        public DefaultFhirController(IFhirService fhirService)
+            : base(fhirService)
+        {
+        }
+    }
 
     public static class ServiceCollectionExtensions
     {
@@ -42,6 +53,10 @@ namespace OpenMedStack.SparkEngine.Web
             
             services.RemoveAll(typeof(FhirController));
             services.AddTransient<T>();
+            if (typeof(T).GetCustomAttribute<RouteAttribute>()?.Template != "fhir")
+            {
+                services.AddTransient<DefaultFhirController>();
+            }
             services.AddTransient<ControllerBase>(sp => sp.GetRequiredService<T>());
             AddFhirHttpSearchParameters();
             services.SetContentTypeAsFhirMediaTypeOnValidationError();

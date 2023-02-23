@@ -227,13 +227,13 @@
         public async Task<FhirResponse> Transaction(IList<Entry> interactions, CancellationToken cancellationToken)
         {
             var responses = _transactionService.HandleTransaction(interactions, this, cancellationToken);
-            return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse);
+            return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse).ConfigureAwait(false);
         }
 
         public async Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken)
         {
             var responses = _transactionService.HandleTransaction(bundle, this, cancellationToken);
-            return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse);
+            return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse).ConfigureAwait(false);
         }
 
         public async Task<FhirResponse> Update(IKey key, Resource resource, CancellationToken cancellationToken)

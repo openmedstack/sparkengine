@@ -15,7 +15,7 @@ internal class TestMessageHandler : HttpMessageHandler
         RequestedPathAndQuery = request.RequestUri!.PathAndQuery;
         var serializer = new FhirJsonSerializer();
         var value = new Bundle { Type = Bundle.BundleType.Collection, Total = 0, Id = "1" };
-        var json = await serializer.SerializeToStringAsync(value);
+        var json = await serializer.SerializeToStringAsync(value).ConfigureAwait(false);
         var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
         {
             RequestMessage = request,

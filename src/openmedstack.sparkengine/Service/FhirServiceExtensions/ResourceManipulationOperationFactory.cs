@@ -48,7 +48,7 @@
 
         private static async Task<ResourceManipulationOperation> CreatePatch(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
         {
-            return new PatchManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken), searchParams);
+            return new PatchManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken).ConfigureAwait(false), searchParams);
         }
 
         public static async Task<ResourceManipulationOperation> CreateDelete(IKey key, ISearchService searchService, SearchParams? searchParams = null, CancellationToken cancellationToken = default)
@@ -63,7 +63,7 @@
 
         private static async Task<ResourceManipulationOperation> CreateGet(Resource resource, IKey key, ISearchService searchService, SearchParams? searchParams, CancellationToken cancellationToken = default)
         {
-            return new GetManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken), searchParams);
+            return new GetManipulationOperation(resource, key, await GetSearchResult(key, searchService, searchParams, cancellationToken).ConfigureAwait(false), searchParams);
         }
 
         public static async Task<ResourceManipulationOperation> GetManipulationOperation(Bundle.EntryComponent entryComponent, ILocalhost localhost, ISearchService searchService, CancellationToken cancellationToken = default)

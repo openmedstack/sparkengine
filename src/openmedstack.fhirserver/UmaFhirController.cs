@@ -18,16 +18,6 @@ using SparkEngine.Core;
 using SparkEngine.Service;
 using SparkEngine.Web.Controllers;
 
-[Route("")]
-public class DefaultFhirController:FhirController
-{
-    /// <inheritdoc />
-    public DefaultFhirController(IFhirService fhirService)
-        : base(fhirService)
-    {
-    }
-}
-
 [Route("uma")]
 public class UmaFhirController : FhirController
 {
@@ -113,17 +103,17 @@ public class UmaFhirController : FhirController
     /// <inheritdoc />
     public override async Task<FhirResponse> Search(string type, CancellationToken cancellationToken)
     {
-        var response = await base.Search(type, cancellationToken);
+        var response = await base.Search(type, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.OK)
         {
             var bundle = (response.Resource as Bundle)!;
             var ids = bundle.GetResources().Select(x => x.HasVersionId ? x.VersionId : x.Id).ToArray();
-            var resourceOptions = await _resourceSetClient.SearchResources(new SearchResourceSet { IdToken = "", Terms = ids }, "", cancellationToken);
+            var resourceOptions = await _resourceSetClient.SearchResources(new SearchResourceSet { IdToken = "", Terms = ids }, "", cancellationToken).ConfigureAwait(false);
             if (resourceOptions is Option<PagedResult<ResourceSetDescription>>.Result resources)
             {
                 var availableIds = new HashSet<string>(
                     (await System.Threading.Tasks.Task.WhenAll(
-                        resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id)))).Where(s => s != null)
+                        resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id))).ConfigureAwait(false)).Where(s => s != null)
                     .Select(s => s!));
                 var entries = bundle.Entry.Where(x => availableIds.Contains(x.Resource.Id));
                 var resultingBundle = new Bundle { Type = bundle.Type, Total = availableIds.Count };

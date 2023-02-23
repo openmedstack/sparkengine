@@ -42,7 +42,7 @@ namespace OpenMedStack.SparkEngine.Service
         {
             foreach (var interaction in interactions)
             {
-                yield return await _import.Internalize(interaction, mapper, cancellationToken);
+                yield return await _import.Internalize(interaction, mapper, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -54,7 +54,7 @@ namespace OpenMedStack.SparkEngine.Service
         /// <inheritdoc />
         public async IAsyncEnumerable<Entry> Externalize(IAsyncEnumerable<Entry> interactions)
         {
-            await foreach (var item in interactions)
+            await foreach (var item in interactions.ConfigureAwait(false))
             {
                 yield return _export.Externalize(item);
             }

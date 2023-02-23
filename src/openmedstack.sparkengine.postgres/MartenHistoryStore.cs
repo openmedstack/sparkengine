@@ -28,7 +28,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         /// <inheritdoc />
         public async Task<Snapshot> History(string typename, HistoryParameters parameters)
         {
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             var query = session.Query<EntryEnvelope>().Where(e => e.ResourceType == typename);
             if (parameters.Since.HasValue)
             {
@@ -53,7 +54,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         public async Task<Snapshot> History(IKey key, HistoryParameters parameters)
         {
             var storageKey = key.ToStorageKey();
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             var query = session.Query<EntryEnvelope>().Where(e => e.ResourceKey == storageKey);
             if (parameters.Since.HasValue)
             {
@@ -78,7 +80,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         /// <inheritdoc />
         public async Task<Snapshot> History(HistoryParameters parameters)
         {
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             IQueryable<EntryEnvelope> query = session.Query<EntryEnvelope>();
             if (parameters.Since.HasValue)
             {

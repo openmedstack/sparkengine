@@ -59,7 +59,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
                 //{
                 // Selecting records page-by-page (page size is defined in app config, default is 100).
                 // This will help to keep memory usage under control.
-                await foreach (var entry in paging)
+                await foreach (var entry in paging.ConfigureAwait(false))
                 {
                     count++;
                     // TODO: use BulkWrite operation for this

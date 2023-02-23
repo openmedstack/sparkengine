@@ -86,21 +86,21 @@ namespace OpenMedStack.SparkEngine.Web.Formatters
 
                 if (response.Resource != null)
                 {
-                    writeBodyString = await _serializer.SerializeToStringAsync(response.Resource, summaryType);
+                    writeBodyString = await _serializer.SerializeToStringAsync(response.Resource, summaryType).ConfigureAwait(false);
                 }
             }
             else if (context.ObjectType == typeof(OperationOutcome) || typeof(Resource).IsAssignableFrom(context.ObjectType))
             {
                 if (context.Object != null)
                 {
-                    writeBodyString = await _serializer.SerializeToStringAsync((context.Object as Resource)!, summaryType);
+                    writeBodyString = await _serializer.SerializeToStringAsync((context.Object as Resource)!, summaryType).ConfigureAwait(false);
                 }
             }
             else if (context.Object is ValidationProblemDetails)
             {
                 var outcome = new OperationOutcome();
                 //outcome.AddValidationProblems(context.HttpContext.GetResourceType(), (HttpStatusCode)context.HttpContext.Response.StatusCode, validationProblems);
-                writeBodyString = await _serializer.SerializeToStringAsync(outcome, summaryType);
+                writeBodyString = await _serializer.SerializeToStringAsync(outcome, summaryType).ConfigureAwait(false);
             }
 
             if (!string.IsNullOrWhiteSpace(writeBodyString))

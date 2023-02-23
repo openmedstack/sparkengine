@@ -59,7 +59,7 @@ namespace OpenMedStack.Linq2Fhir.Provider
         /// <inheritdoc />
         public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            var enumerable = await Provider.ExecuteAsync<T>(Expression, cancellationToken);
+            var enumerable = await Provider.ExecuteAsync<T>(Expression, cancellationToken).ConfigureAwait(false);
             yield return enumerable;
         }
 

@@ -89,7 +89,7 @@ internal class CustomSerializer : ISerializer
     {
         using var streamReader = new StreamReader(stream);
         using var jsonTextReader = new JsonTextReader(streamReader);
-        return JsonConvert.DeserializeObject<T>(await streamReader.ReadToEndAsync(cancellationToken), _settings)!;
+        return JsonConvert.DeserializeObject<T>(await streamReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), _settings)!;
     }
 
     /// <inheritdoc />
@@ -99,7 +99,7 @@ internal class CustomSerializer : ISerializer
         CancellationToken cancellationToken = default)
     {
         using var textReader = reader.GetTextReader(index);
-        var json = await textReader.ReadToEndAsync(cancellationToken);
+        var json = await textReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         return JsonConvert.DeserializeObject<T>(json, _settings)!;
     }
 
@@ -124,7 +124,7 @@ internal class CustomSerializer : ISerializer
     {
         using var streamReader = new StreamReader(stream);
         using var jsonTextReader = new JsonTextReader(streamReader);
-        return JsonConvert.DeserializeObject(await streamReader.ReadToEndAsync(cancellationToken), type, _settings)!;
+        return JsonConvert.DeserializeObject(await streamReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), type, _settings)!;
     }
 
     /// <inheritdoc />
@@ -136,7 +136,7 @@ internal class CustomSerializer : ISerializer
     {
         using var textReader = reader.GetTextReader(index);
         using var jsonTextReader = new JsonTextReader(textReader);
-        return JsonConvert.DeserializeObject(await textReader.ReadToEndAsync(cancellationToken), type, _settings)!;
+        return JsonConvert.DeserializeObject(await textReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), type, _settings)!;
     }
 
     /// <inheritdoc />

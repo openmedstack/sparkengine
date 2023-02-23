@@ -155,7 +155,7 @@ namespace OpenMedStack.SparkEngine.Extensions
 
         /// <summary>
         ///     A storage key is a resource reference string that is ensured to be server wide unique.
-        ///     This way resource can refer to eachother at a database level.
+        ///     This way resource can refer to each other at a database level.
         ///     These references are also used in SearchResult lists.
         ///     The format is "resource/id/_history/vid"
         /// </summary>

@@ -12,6 +12,7 @@ namespace OpenMedStack.SparkEngine.Tests.Service
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
     using Hl7.Fhir.Model;
     using Hl7.Fhir.Serialization;
     using Microsoft.Extensions.Logging;
@@ -147,11 +148,12 @@ namespace OpenMedStack.SparkEngine.Tests.Service
                 }
             };
             var s = new FhirJsonSerializer();
-            await using var stringWriter = new StringWriter();
+            var stringWriter = new StringWriter();
+            await using var _ = stringWriter.ConfigureAwait(false);
             using var jsonTextWriter = new JsonTextWriter(stringWriter);
-            await s.SerializeAsync(g, jsonTextWriter);
-            await jsonTextWriter.FlushAsync();
-            await stringWriter.FlushAsync();
+            await s.SerializeAsync(g, jsonTextWriter).ConfigureAwait(false);
+            await jsonTextWriter.FlushAsync().ConfigureAwait(false);
+            await stringWriter.FlushAsync().ConfigureAwait(false);
             var json = stringWriter.GetStringBuilder().ToString();
         }
 

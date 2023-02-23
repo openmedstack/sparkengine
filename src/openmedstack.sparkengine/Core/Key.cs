@@ -59,7 +59,7 @@ namespace OpenMedStack.SparkEngine.Core
             var indexOfQueryString = path.IndexOf('?');
             if (indexOfQueryString >= 0)
             {
-                path = path.Substring(0, indexOfQueryString);
+                path = path[..indexOfQueryString];
             }
 
             var segments = path.Split('/');

@@ -93,10 +93,10 @@ namespace OpenMedStack.SparkEngine.Web.Controllers
                 var searchValues = searchQueryString.Keys.Cast<string>()
                     .Select(k => new Tuple<string, string?>(k, searchQueryString[k]));
 
-                return await FhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues), cancellationToken);
+                return await FhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues), cancellationToken).ConfigureAwait(false);
             }
 
-            var response = await FhirService.Create(key, resource, cancellationToken);
+            var response = await FhirService.Create(key, resource, cancellationToken).ConfigureAwait(false);
             return response;
         }
 

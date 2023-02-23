@@ -71,7 +71,7 @@ namespace OpenMedStack.SparkEngine.FhirResponseFactory
             Bundle.BundleType bundleType)
         {
             var bundle = new Bundle {Type = bundleType};
-            await foreach (var response in responses)
+            await foreach (var response in responses.ConfigureAwait(false))
             {
                 bundle.Append(response.Item1, response.Item2);
             }

@@ -18,14 +18,13 @@ namespace OpenMedStack.SparkEngine.Postgres
 
     public static class ServiceCollectionExtensions
     {
-        public static void AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
+        public static IServiceCollection AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
         {
             var store = DocumentStore.For(
                 o =>
                 {
                     o.Serializer<CustomSerializer>();
                     o.Connection(settings.ConnectionString);
-                    //o.PLV8Enabled = false;
                     o.Schema.Include<FhirRegistry>();
                 });
             services.AddSingleton<IDocumentStore>(store);
@@ -33,7 +32,7 @@ namespace OpenMedStack.SparkEngine.Postgres
             services.AddTransient<Func<IDocumentSession>>(
                 sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
             services.TryAddTransient<IFhirStore>(
-                provider => new MartenFhirStore(provider.GetRequiredService<Func<IDocumentSession>>()));
+                provider => new MartenFhirStore(provider.GetRequiredService<Func<IDocumentSession>>(), provider.GetService<IResourcePersistence>() ?? NoOpPersistence.Get()));
             services.TryAddTransient<IFhirStorePagedReader>(
                 provider => new MartenFhirStorePagedReader(provider.GetRequiredService<Func<IDocumentSession>>()));
             services.TryAddTransient<IHistoryStore>(
@@ -52,6 +51,7 @@ namespace OpenMedStack.SparkEngine.Postgres
                 sp => new MartenFhirIndex(
                     sp.GetRequiredService<ILogger<MartenFhirIndex>>(),
                     sp.GetRequiredService<Func<IDocumentSession>>()));
+            return services;
         }
     }
 }

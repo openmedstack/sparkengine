@@ -17,6 +17,8 @@
     using OpenMedStack.SparkEngine.Interfaces;
     using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
     using SparkEngine;
+    using SparkEngine.Postgres;
+    using SparkEngine.S3;
     using SparkEngine.Web;
 
     public class ServerStartup
@@ -30,7 +32,7 @@
 
         public void ConfigureServices(IServiceCollection services)
         {
-            const string authority = "https://identity.reimers.dk";
+            var authority = _configuration["AUTHORITY"]!;
             services.AddHttpClient();
             services.AddLogging(
                 l => l.AddJsonConsole(
@@ -46,44 +48,51 @@
                 new SparkSettings
                 {
                     UseAsynchronousIO = true,
-                    Endpoint = new Uri("https://fhir.reimers.dk/fhir"),
-                    FhirRelease = FhirRelease.R4.ToString(),
+                    Endpoint = new Uri(_configuration["FHIR:ROOT"]!),
+                    FhirRelease = FhirRelease.R5.ToString(),
                     ParserSettings = ParserSettings.CreateDefault(),
                     SerializerSettings = SerializerSettings.CreateDefault()
                 });
             var s = _configuration["CONNECTIONSTRING"]!;
-            //services.AddPostgresFhirStore(new StoreSettings(s));
-            services.AddInMemoryPersistence();
-            services.AddSingleton<IGenerator, GuidGenerator>();
-            services.AddSingleton<IPatchService, PatchService>();
-            services.AddSingleton<ITokenClient>(
-                sp => new TokenClient(
-                    TokenCredentials.FromClientCredentials("fhir", "fvnfdjvnfsfhrgfhgre"),
-                    () =>
-                    {
-                        var factory = sp.GetRequiredService<IHttpClientFactory>();
-                        return factory.CreateClient();
-                    },
-                    new Uri(authority)));
-            services.AddSingleton(
-                sp =>
-                {
-                    return new UmaClient(
+            services.AddPostgresFhirStore(new StoreSettings(s))
+                .AddS3Persistence(
+                    new S3PersistenceConfiguration(
+                        _configuration["STORAGE:ACCESSKEY"]!,
+                        _configuration["STORAGE:SECRETKEY"]!,
+                        new Uri(_configuration["STORAGE:STORAGEURL"]!),
+                        true,
+                        true))
+                //services.AddInMemoryPersistence();
+                .AddSingleton<IGenerator, GuidGenerator>()
+                .AddSingleton<IPatchService, PatchService>()
+                .AddSingleton<ITokenClient>(
+                    sp => new TokenClient(
+                        TokenCredentials.FromClientCredentials(_configuration["OAUTH:CLIENTID"]!, _configuration["OAUTH:CLIENTSECRET"]!),
                         () =>
                         {
                             var factory = sp.GetRequiredService<IHttpClientFactory>();
                             return factory.CreateClient();
                         },
-                        new Uri(authority));
-                });
-            services.AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>());
-            services.AddSingleton<IResourceMap>(
-                new StaticResourceMap(
-                    new HashSet<KeyValuePair<string, string>>
+                        new Uri(authority)))
+                .AddSingleton(
+                    sp =>
                     {
-                        KeyValuePair.Create("Patient/123", "7A38B4029C6ACD4AB1FF1A0D1DD8A1AC")
-                    }));
-            services.AddAuthentication(
+                        return new UmaClient(
+                            () =>
+                            {
+                                var factory = sp.GetRequiredService<IHttpClientFactory>();
+                                return factory.CreateClient();
+                            },
+                            new Uri(authority));
+                    })
+                .AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>())
+                .AddSingleton<IResourceMap>(
+                    new StaticResourceMap(
+                        new HashSet<KeyValuePair<string, string>>
+                        {
+                            KeyValuePair.Create("Patient/123", "7A38B4029C6ACD4AB1FF1A0D1DD8A1AC")
+                        }))
+                .AddAuthentication(
                     options =>
                     {
                         options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -93,8 +102,6 @@
                 .AddJwtBearer(
                     options =>
                     {
-                        options.SecurityTokenValidators.Clear();
-                        options.SecurityTokenValidators.Add(new CustomTokenValidator());
                         options.SaveToken = true;
                         options.Authority = authority;
                         options.RequireHttpsMetadata = true;
@@ -114,7 +121,22 @@
                 .UseCors(p => p.AllowAnyOrigin())
                 .UseAuthentication()
                 .UseAuthorization()
-                .UseEndpoints(e => e.MapControllers());
+                .UseEndpoints(e =>
+                {
+                    e.MapControllers();
+                    //e.MapGet(
+                    //    "/",
+                    //    async (HttpContext ctx, Task next) =>
+                    //    {
+                    //        ctx.Response.StatusCode = 200;
+                    //        ctx.Response.ContentType = "text/html";
+                    //        await ctx.Response.WriteAsync(
+                    //                "<html><head><title>FHIR Server</title><head><body><div>OpenMedStack FHIR Server</div></body></html>",
+                    //                Encoding.UTF8)
+                    //            .ConfigureAwait(false);
+                    //        await next.ConfigureAwait(false);
+                    //    });
+                });
         }
     }
 }

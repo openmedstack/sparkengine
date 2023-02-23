@@ -13,6 +13,7 @@ namespace OpenMedStack.SparkEngine.Postgres
     using System.Linq;
     using System.Runtime.CompilerServices;
     using System.Threading;
+    using System.Threading.Tasks;
     using Core;
     using Marten;
     using Marten.Pagination;
@@ -31,7 +32,8 @@ namespace OpenMedStack.SparkEngine.Postgres
         {
             var pagesize = options?.PageSize ?? 100;
             var pageNumber = 0;
-            await using var session = _sessionFunc();
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
             while (true)
             {
                 var data = await session.Query<EntryEnvelope>()

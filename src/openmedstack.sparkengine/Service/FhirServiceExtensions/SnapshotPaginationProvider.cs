@@ -63,7 +63,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
             var bundle = new Bundle { Type = _snapshot!.Type, Total = _snapshot.Count, Id = Guid.NewGuid().ToString() };
 
             var keys = _snapshotPaginationCalculator.GetKeysForPage(_snapshot, start).ToList();
-            var entries = await _fhirStore.Get(keys).ToListAsync();
+            var entries = await _fhirStore.Get(keys).ToListAsync().ConfigureAwait(false);
             if (_snapshot.SortBy != null)
             {
                 entries = entries.Select(e => new { Entry = e, Index = keys.IndexOf(e.Key!) })
@@ -94,13 +94,13 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
         {
             IList<Entry> included = new List<Entry>();
 
-            var latest = await GetIncludesFor(entries, includes).ToListAsync();
+            var latest = await GetIncludesFor(entries, includes).ToListAsync().ConfigureAwait(false);
             int previousCount;
             do
             {
                 previousCount = included.Count;
                 included.AppendDistinct(latest);
-                latest = await GetIncludesFor(latest, includes).ToListAsync();
+                latest = await GetIncludesFor(latest, includes).ToListAsync().ConfigureAwait(false);
             }
             while (included.Count > previousCount);
 
