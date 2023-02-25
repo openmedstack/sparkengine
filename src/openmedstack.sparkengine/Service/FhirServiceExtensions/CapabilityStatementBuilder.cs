@@ -12,7 +12,6 @@ using System;
 using System.Linq;
 using Core;
 using Hl7.Fhir.Model;
-using Hl7.Fhir.Utility;
 
 public static class CapabilityStatementBuilder
 {

@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Extensions;
@@ -52,6 +53,7 @@ public class FhirPropertyIndex
     /// </summary>
     /// <param name="fhirModel">IFhirModel that can provide mapping from resource names to .Net types</param>
     /// <param name="fhirAssembly">The <see cref="Assembly"/> to load types from.</param>
+    [RequiresUnreferencedCode("Loads from external assembly")]
     public FhirPropertyIndex(IFhirModel fhirModel, Assembly fhirAssembly)
         : this(fhirModel, LoadSupportedTypesFromAssembly(fhirAssembly))
     {
@@ -61,11 +63,13 @@ public class FhirPropertyIndex
     ///     Build up an index of properties in the Resource and Element types in Hl7.Fhir.Core.
     /// </summary>
     /// <param name="fhirModel">IFhirModel that can provide mapping from resource names to .Net types</param>
+    [RequiresUnreferencedCode("Load from Fhir types.")]
     public FhirPropertyIndex(IFhirModel fhirModel)
         : this(fhirModel, Assembly.GetAssembly(typeof(Resource))!)
     {
     }
 
+    [RequiresUnreferencedCode("Reflection load types")]
     private static IEnumerable<Type> LoadSupportedTypesFromAssembly(Assembly fhirAssembly)
     {
         return fhirAssembly.GetTypes().Where(fhirType => typeof(Resource).IsAssignableFrom(fhirType) || typeof(Element).IsAssignableFrom(fhirType)).ToList();
@@ -101,7 +105,9 @@ public class FhirPropertyIndex
     /// <param name="fhirType">Type of resource that should contain a property with the supplied name.</param>
     /// <param name="propertyName">Name of the property within the resource type.</param>
     /// <returns><see cref="FhirPropertyInfo" /> for the specified property. Null if not present.</returns>
-    public FhirPropertyInfo? FindPropertyInfo(Type fhirType, string propertyName)
+    public FhirPropertyInfo? FindPropertyInfo(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type fhirType,
+        string propertyName)
     {
         FhirPropertyInfo? propertyInfo;
         if (fhirType.IsGenericType)

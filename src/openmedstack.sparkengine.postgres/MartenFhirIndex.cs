@@ -196,16 +196,16 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         var queryBuilder = new StringBuilder();
-        queryBuilder.AppendFormat(@"where data -> 'Values' ->> 'internal_resource' = '{0}'", resource);
+        queryBuilder.Append($@"where data -> 'Values' ->> 'internal_resource' = '{resource}'");
         queryBuilder = criteria.Aggregate(
             queryBuilder,
-            (sb, c) => sb.AppendFormat(@" and data -> 'Values' {0}", GetComparison(c)));
+            (sb, c) => sb.Append($" and data -> 'Values' {GetComparison(c)}"));
 
         var sql = queryBuilder.ToString();
-        _logger.LogDebug($"Executing query: {sql}");
+        _logger.LogDebug("Executing query: {sql}", sql);
         var result = await session.QueryAsync<IndexEntry>(sql).ConfigureAwait(false);
 
-        return result.SelectMany(iv => iv.Values.Where(v => v.Key == "internal_id" || v.Key == "internal_selflink"))
+        return result.SelectMany(iv => iv.Values.Where(v => v.Key is "internal_id" or "internal_selflink"))
             .Select(v => v.Value as string)
             .Where(x => x is not null)
             .Distinct()

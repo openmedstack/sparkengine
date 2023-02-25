@@ -9,6 +9,7 @@
 namespace OpenMedStack.SparkEngine.Utility;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Hl7.Fhir.Introspection;
@@ -37,7 +38,7 @@ internal static class FhirPathUtil
         return xPathExpression;
     }
 
-    internal static string ResolveToFhirPathExpression(Type resourceType, string expression)
+    internal static string ResolveToFhirPathExpression([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type resourceType, string expression)
     {
         var rootType = resourceType;
         var elements = expression.Split('.');
@@ -59,7 +60,8 @@ internal static class FhirPathUtil
             : $"{rootType.Name}.{fhirPathExpression.TrimEnd('.')}";
     }
 
-    internal static (Type?, string) ResolveElement(Type? root, string element)
+    internal static (Type?, string) ResolveElement(
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? root, string element)
     {
         var pi = root?.GetProperty(element);
         if (pi == null)
@@ -83,7 +85,7 @@ internal static class FhirPathUtil
 
     private static (string, string) GetElementSeparatedFromIndexer(string element)
     {
-        var index = element.LastIndexOf("[");
-        return index > -1 ? (element.Substring(0, index), element[index..]) : (element, string.Empty);
+        var index = element.LastIndexOf("[", StringComparison.OrdinalIgnoreCase);
+        return index > -1 ? (element[..index], element[index..]) : (element, string.Empty);
     }
 }

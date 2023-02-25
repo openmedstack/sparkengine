@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<Import Project="../../shared.projinfo" />
 	<PropertyGroup>
 		<PackageId>openmedstack.sparkengine</PackageId>
 		<Description>FHIR Server Engine</Description>
 		<RootNamespace>OpenMedStack.SparkEngine</RootNamespace>
 	</PropertyGroup>
-	<Import Project="../../shared.projinfo" />
 
 	<ItemGroup>
 		<PackageReference Include="System.Linq.Async" Version="6.0.1" />

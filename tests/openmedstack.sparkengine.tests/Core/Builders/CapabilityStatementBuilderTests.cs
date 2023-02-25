@@ -16,7 +16,6 @@ using Hl7.Fhir.Model;
 using SparkEngine.Core;
 using SparkEngine.Core.Builders;
 using Xunit;
-using Xunit.Abstractions;
 
 public class CapabilityStatementBuilderTests
 {

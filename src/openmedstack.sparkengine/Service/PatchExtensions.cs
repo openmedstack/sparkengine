@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Service;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Hl7.Fhir.Model;
@@ -25,7 +26,7 @@ public static class PatchExtensions
         None
     }
 
-    public static Parameters ToPatch<T>(this T current, T previous) where T : Resource
+    public static Parameters ToPatch<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this T current, T previous) where T : Resource
     {
         var operations = typeof(T).GetProperties()
             .Where(
@@ -53,7 +54,7 @@ public static class PatchExtensions
         return new Parameters { Parameter = operations.ToList() };
     }
 
-    public static Parameters ToPatch<T>(this T resource)
+    public static Parameters ToPatch<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this T resource)
         where T : Resource
     {
         var operations = typeof(T).GetProperties()
@@ -104,7 +105,7 @@ public static class PatchExtensions
         if (currentValue is IEnumerable currentEnumerable)
         {
             var currentArray = currentEnumerable.OfType<DataType>().Select(x => x.ToXml()).ToHashSet();
-            if (previousValue == null || !(previousValue is IEnumerable previousEnumerable))
+            if (previousValue is not IEnumerable previousEnumerable)
             {
                 return (Change.Replace, name, currentValue);
             }

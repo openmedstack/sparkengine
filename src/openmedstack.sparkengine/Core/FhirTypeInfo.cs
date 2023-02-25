@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Hl7.Fhir.Introspection;
@@ -20,7 +21,9 @@ using Hl7.Fhir.Introspection;
 /// </summary>
 public class FhirTypeInfo
 {
-    internal FhirTypeInfo(Type fhirType, Func<PropertyInfo,FhirPropertyInfo> infoMapper)
+    internal FhirTypeInfo(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type fhirType,
+        Func<PropertyInfo, FhirPropertyInfo> infoMapper)
     {
         FhirType = fhirType;
         TypeName = fhirType.GetCustomAttribute<FhirTypeAttribute>(false)?.Name ?? fhirType.Name;
@@ -31,6 +34,7 @@ public class FhirTypeInfo
 
     public string TypeName { get; }
 
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
     public Type FhirType { get; }
 
     public IEnumerable<FhirPropertyInfo>? FindPropertyInfos(Predicate<FhirPropertyInfo> propertyPredicate)

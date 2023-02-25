@@ -8,7 +8,6 @@
 
 namespace OpenMedStack.SparkEngine.Tests.Core;
 
-using System.Linq;
 using Hl7.Fhir.Model;
 using SparkEngine.Core;
 using Xunit;

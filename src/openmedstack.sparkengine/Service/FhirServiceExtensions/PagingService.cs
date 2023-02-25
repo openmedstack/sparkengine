@@ -8,7 +8,6 @@
 
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-using System;
 using System.Threading.Tasks;
 using Core;
 using Store.Interfaces;

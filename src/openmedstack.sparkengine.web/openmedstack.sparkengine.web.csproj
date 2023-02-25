@@ -1,12 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<Import Project="../../shared.projinfo"/>
 	<PropertyGroup>
 		<PackageId>openmedstack.sparkengine.web</PackageId>
 		<RootNamespace>OpenMedStack.SparkEngine.Web</RootNamespace>
 		<Description>FHIR Server Engine Web Engine</Description>
-		<TieredPGO>true</TieredPGO>
 	</PropertyGroup>
-	<Import Project="../../shared.projinfo"/>
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />

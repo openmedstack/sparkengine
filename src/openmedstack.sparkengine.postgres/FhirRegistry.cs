@@ -8,7 +8,6 @@
 
 namespace OpenMedStack.SparkEngine.Postgres;
 
-using System;
 using Marten;
 
 public class FhirRegistry : MartenRegistry

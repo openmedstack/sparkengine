@@ -1,7 +1,6 @@
 ﻿namespace OpenMedStack.FhirServer;
 
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -36,17 +35,17 @@ public class ServerStartup
     public void ConfigureServices(IServiceCollection services)
     {
         var authority = _configuration["AUTHORITY"]!;
-        services.AddHttpClient();
-        services.AddLogging(
+        services.AddHttpClient()
+            .AddLogging(
             l => l.AddJsonConsole(
                 o =>
                 {
                     o.IncludeScopes = true;
                     o.UseUtcTimestamp = true;
                     o.JsonWriterOptions = new JsonWriterOptions { Indented = false };
-                }));
-        services.AddCors();
-        services.AddControllers();
+                }))
+            .AddCors()
+            .AddControllers();
         services.AddFhir<UmaFhirController>(
             new SparkSettings
             {
@@ -89,12 +88,7 @@ public class ServerStartup
                         new Uri(authority));
                 })
             .AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>())
-            .AddSingleton<IResourceMap>(
-                new StaticResourceMap(
-                    new HashSet<KeyValuePair<string, string>>
-                    {
-                        KeyValuePair.Create("Patient/123", "7A38B4029C6ACD4AB1FF1A0D1DD8A1AC")
-                    }))
+            .AddTransient<IResourceMap>(sp=>new DbSourceMap(s))
             .AddAuthentication(
                 options =>
                 {
@@ -127,18 +121,6 @@ public class ServerStartup
             .UseEndpoints(e =>
             {
                 e.MapControllers();
-                e.MapGet(
-                    "/",
-                    async (HttpContext ctx, Task next) =>
-                    {
-                        ctx.Response.StatusCode = 200;
-                        ctx.Response.ContentType = "text/html";
-                        await ctx.Response.WriteAsync(
-                                "<html><head><title>FHIR Server</title><head><body><div>OpenMedStack FHIR Server</div></body></html>",
-                                Encoding.UTF8)
-                            .ConfigureAwait(false);
-                        await next.ConfigureAwait(false);
-                    });
             });
     }
 }

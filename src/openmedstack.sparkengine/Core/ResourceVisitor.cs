@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Hl7.Fhir.Model;
@@ -135,7 +136,8 @@ public class ResourceVisitor
     /// <summary>
     ///     Test if a type derives from IList of T, for any T.
     /// </summary>
-    private bool TestIfGenericList(Type type)
+    private static bool TestIfGenericList(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
         if (type == null)
         {
@@ -149,7 +151,7 @@ public class ResourceVisitor
     }
 
     //TODO: Do not repeat this code. It is also in ElementIndexer (and in ElementQuery, but that will be retired some day soon).
-    private bool TestIfCodedEnum(Type type)
+    private static bool TestIfCodedEnum(Type type)
     {
         if (type == null)
         {

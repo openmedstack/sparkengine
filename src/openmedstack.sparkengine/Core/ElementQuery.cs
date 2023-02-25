@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Core;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -17,7 +18,7 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Validation;
 
-public class ElementQuery
+public partial class ElementQuery
 {
     private readonly List<Chain> _chains = new();
 
@@ -66,7 +67,7 @@ public class ElementQuery
         public object? GetValue(object field) => field == null || Property == null ? null : Property.GetValue(field);
     }
 
-    public class Chain
+    public partial class Chain
     {
         private readonly List<Segment> _segments = new();
 
@@ -92,7 +93,7 @@ public class ElementQuery
             // todo: This whole function can probably be replaced by a single RegExp. --MH
             //var path = path.Replace("[x]", ""); // we won't remove this, and start treating it as a predicate.
 
-            path = Regex.Replace(path, @"\b(\w)", match => match.Value.ToUpper());
+            path = PathRegex().Replace(path, match => match.Value.ToUpper());
             var chain = new List<string>();
 
             // Split on the dots, except when the dot is inside square brackets, because then it is part of a predicate value.
@@ -109,7 +110,7 @@ public class ElementQuery
                 if (firstBracket > -1 && firstBracket < firstDot)
                 {
                     var endBracket = path.IndexOf(']');
-                    chain.Add(path.Substring(0, endBracket + 1)); //+1 to include the bracket itself.
+                    chain.Add(path[..(endBracket + 1)]); //+1 to include the bracket itself.
                     path = path.Remove(
                         0,
                         Math.Min(
@@ -118,7 +119,7 @@ public class ElementQuery
                 }
                 else
                 {
-                    chain.Add(path.Substring(0, firstDot));
+                    chain.Add(path[..firstDot]);
                     path = path.Remove(0, firstDot + 1); //+1 to remove the dot itself.
                 }
             }
@@ -126,15 +127,21 @@ public class ElementQuery
             return chain;
         }
 
+        [UnconditionalSuppressMessage("Safe reflection", "IL2075", Justification = "Loaded from model info")]
         private List<Segment> BuildSegments(string classname, List<string> chain)
         {
             var segments = new List<Segment>();
 
-            var baseType = ModelInfo.FhirTypeToCsType[classname];
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type GetBaseType()
+            {
+                return ModelInfo.FhirTypeToCsType[classname];
+            }
+
+            var baseType = GetBaseType();
             foreach (var linkString in chain)
             {
                 var segment = new Segment();
-                var predicateRegex = new Regex(@"(?<propname>[^\[]*)(\[(?<predicate>.*)\])?");
+                var predicateRegex = PredicateRegex2();
                 var match = predicateRegex.Match(linkString);
                 var predicate = match.Groups["predicate"].Value;
                 segment.Name = match.Groups["propname"].Value;
@@ -204,7 +211,7 @@ public class ElementQuery
         private Predicate<object>? ParsePredicate(string predicate)
         {
             //TODO: CK: Search for 'FhirElement' with the name 'propname' first, just like we do in fillChainLinks above.
-            var predicateRegex = new Regex(@"(?<propname>[^=]*)=(?<filterValue>.*)");
+            var predicateRegex = PredicateRegex();
             var match = predicateRegex.Match(predicate);
             if (!match.Success)
             {
@@ -279,7 +286,8 @@ public class ElementQuery
         /// <summary>
         ///     Test if a type derives from IList of T, for any T.
         /// </summary>
-        private static bool TestIfGenericList(Type type)
+        private static bool TestIfGenericList(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
         {
             if (type == null)
             {
@@ -365,5 +373,12 @@ public class ElementQuery
         {
             return string.Join(".", _segments.Select(l => l.Name));
         }
+
+        [GeneratedRegex("\\b(\\w)")]
+        private static partial Regex PathRegex();
+        [GeneratedRegex("(?<propname>[^=]*)=(?<filterValue>.*)")]
+        private static partial Regex PredicateRegex();
+        [GeneratedRegex("(?<propname>[^\\[]*)(\\[(?<predicate>.*)\\])?")]
+        private static partial Regex PredicateRegex2();
     }
 }

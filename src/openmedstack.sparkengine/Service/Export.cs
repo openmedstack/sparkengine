@@ -9,7 +9,6 @@
 namespace OpenMedStack.SparkEngine.Service;
 
 using System;
-using System.Collections.Generic;
 using System.Xml.Linq;
 using Core;
 using Extensions;

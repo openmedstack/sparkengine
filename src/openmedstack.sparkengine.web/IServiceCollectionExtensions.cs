@@ -27,7 +27,7 @@ using OpenMedStack.SparkEngine.Web.Persistence;
 using Search;
 using Service;
 using Service.FhirServiceExtensions;
-    
+
 [Route("fhir")]
 public class DefaultFhirController : FhirController
 {
@@ -40,7 +40,7 @@ public class DefaultFhirController : FhirController
 
 public static class ServiceCollectionExtensions
 {
-    public static IMvcCoreBuilder AddFhir<T>(
+    public static IServiceCollection AddFhir<T>(
         this IServiceCollection services,
         SparkSettings settings,
         Action<MvcOptions>? setupAction = null)
@@ -50,7 +50,7 @@ public static class ServiceCollectionExtensions
         {
             throw new ArgumentNullException(nameof(settings));
         }
-            
+
         services.RemoveAll(typeof(FhirController));
         services.AddTransient<T>();
         if (typeof(T).GetCustomAttribute<RouteAttribute>()?.Template != "fhir")
@@ -93,12 +93,12 @@ public static class ServiceCollectionExtensions
 
         services.TryAddSingleton<IFhirService, FhirService>();
 
-        var builder = services.AddFhirFormatters(settings, setupAction);
+        services.AddFhirFormatters(settings, setupAction);
 
-        return builder;
+        return services;
     }
 
-    private static IMvcCoreBuilder AddFhirFormatters(
+    private static IServiceCollection AddFhirFormatters(
         this IServiceCollection services,
         SparkSettings settings,
         Action<MvcOptions>? setupAction = null)
@@ -122,7 +122,7 @@ public static class ServiceCollectionExtensions
                     options.RespectBrowserAcceptHeader = true;
 
                     setupAction?.Invoke(options);
-                });
+                }).Services;
     }
 
     public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)

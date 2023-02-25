@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Auxiliary;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Hl7.Fhir.Model;
@@ -36,29 +37,43 @@ public static class ResourceVisitor
         Scan(item, null, Visitor);
     }
 
-    private static bool PropertyFilter(MemberInfo mem, object? arg)
+    private static bool PropertyFilter(
+        MemberInfo mem,
+        object? arg)
     {
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+        static Type GetPropertyType(PropertyInfo propertyInfo)
+        {
+            return propertyInfo.PropertyType;
+        }
         // We prefilter on properties, so this cast is always valid
         var prop = (PropertyInfo)mem;
 
         // Return true if the property is either an Element or an IEnumerable<Element>.
-        var isElementProperty = typeof(Element).IsAssignableFrom(prop.PropertyType);
-        var collectionInterface = prop.PropertyType.GetInterface("IEnumerable`1");
+        var isElementProperty = typeof(Element).IsAssignableFrom(GetPropertyType(prop));
+        var collectionInterface = GetPropertyType(prop).GetInterface("IEnumerable`1");
         var isElementCollection = false;
         var hasIndexParameters = prop.GetIndexParameters().Length > 0;
 
-        if (collectionInterface != null)
+        if (collectionInterface == null)
         {
-            var firstGenericArg = collectionInterface.GetGenericArguments()[0];
-            isElementCollection = typeof(Element).IsAssignableFrom(firstGenericArg);
+            return (isElementProperty || isElementCollection) && hasIndexParameters == false;
         }
+
+        var firstGenericArg = collectionInterface.GetGenericArguments()[0];
+        isElementCollection = typeof(Element).IsAssignableFrom(firstGenericArg);
 
         return (isElementProperty || isElementCollection) && hasIndexParameters == false;
     }
 
     private static string JoinPath(string old, string part) => !string.IsNullOrEmpty(old) ? old + "." + part : part;
 
-    private static void Scan(object? item, string? path, Visitor visitor)
+    private static void
+        Scan<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>(
+            T? item,
+            string? path,
+            Visitor visitor)
+        where T : class
     {
         if (item == null)
         {
@@ -68,8 +83,11 @@ public static class ResourceVisitor
         path ??= string.Empty;
 
         // Scan the object 'item' and find all properties of type Element of IEnumerable<Element>
-        var result = item.GetType()
-            .FindMembers(MemberTypes.Property, BindingFlags.Instance | BindingFlags.Public, PropertyFilter, null);
+        var result = typeof(T).FindMembers(
+            MemberTypes.Property,
+            BindingFlags.Instance | BindingFlags.Public,
+            PropertyFilter,
+            null);
 
         // Do a depth-first traversal of the properties and their contents
         foreach (var property in result.OfType<PropertyInfo>())

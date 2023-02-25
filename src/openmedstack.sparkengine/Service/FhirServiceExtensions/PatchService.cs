@@ -12,6 +12,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -31,6 +32,7 @@ public class PatchService : IPatchService
         _compiler = new FhirPathCompiler();
     }
 
+    [DynamicDependency("Type", typeof(Expression))]
     public Resource Apply(Resource resource, Parameters patch)
     {
         foreach (var component in patch.Parameter.Where(x => x.Name == "operation"))
@@ -43,8 +45,7 @@ public class PatchService : IPatchService
 
             var parameterExpression = Expression.Parameter(resource.GetType(), "x");
             var expression = operationType == "add" ? _compiler.Parse($"{path}.{name}") : _compiler.Parse(path);
-            var result = expression.Accept(
-                new ResourceVisitor(parameterExpression));
+            var result = expression.Accept(new ResourceVisitor(parameterExpression));
             switch (operationType)
             {
                 case "add":
@@ -74,9 +75,16 @@ public class PatchService : IPatchService
         return resource;
     }
 
-    private static Expression CreateValueExpression(Parameters.ParameterComponent? part, Type resultType)
+    private static Expression CreateValueExpression(
+        Parameters.ParameterComponent? part,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type resultType)
     {
-        resultType = part?.Value == null && resultType.IsGenericType ? resultType.GenericTypeArguments[0] : resultType;
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type GetResultTypeGenericTypeArgument()
+        {
+            return resultType.GenericTypeArguments[0];
+        }
+
+        resultType = part?.Value == null && resultType.IsGenericType ? GetResultTypeGenericTypeArgument() : resultType;
         return part?.Value == null
             ? Expression.MemberInit(
                 Expression.New(resultType.GetConstructor(Array.Empty<Type>())!),
@@ -84,16 +92,24 @@ public class PatchService : IPatchService
             : GetConstantExpression(part.Value, resultType);
     }
 
-    private static Expression GetConstantExpression(DataType value, Type valueType)
+    private static Expression GetConstantExpression(
+        DataType value,
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicProperties
+            | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+        Type valueType)
     {
-        Expression FromString(string str, Type targetType)
+        static Expression FromString(
+            string str,
+            [DynamicallyAccessedMembers(
+                DynamicallyAccessedMemberTypes.PublicProperties
+                | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+            Type targetType)
         {
             return targetType.CanBeTreatedAsType(typeof(DataType))
                 ? Expression.MemberInit(
                     Expression.New(targetType.GetConstructor(Array.Empty<Type>())!),
-                    Expression.Bind(
-                        targetType.GetProperty("ObjectValue")!,
-                        Expression.Constant(str)))
+                    Expression.Bind(targetType.GetProperty("ObjectValue")!, Expression.Constant(str)))
                 : Expression.Constant(str);
         }
 
@@ -106,12 +122,14 @@ public class PatchService : IPatchService
         };
     }
 
-    private static IEnumerable<MemberBinding> GetPartsBindings(List<Parameters.ParameterComponent> parts, Type resultType)
+    private static IEnumerable<MemberBinding> GetPartsBindings(
+        List<Parameters.ParameterComponent> parts,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type resultType)
     {
         foreach (var partGroup in parts.GroupBy(x => x.Name))
         {
-            var property = resultType.GetProperties().Single(
-                p => p.GetCustomAttribute<FhirElementAttribute>()?.Name == partGroup.Key);
+            var property = resultType.GetProperties()
+                .Single(p => p.GetCustomAttribute<FhirElementAttribute>()?.Name == partGroup.Key);
             if (property.PropertyType.IsGenericType)
             {
                 var listExpression = GetCollectionExpression(property, partGroup);
@@ -125,10 +143,14 @@ public class PatchService : IPatchService
         }
     }
 
-    private static Expression GetCollectionExpression(PropertyInfo property, IEnumerable<Parameters.ParameterComponent> parts)
+    private static Expression GetCollectionExpression(
+        PropertyInfo property,
+        IEnumerable<Parameters.ParameterComponent> parts)
     {
         var variableExpr = Expression.Variable(property.PropertyType);
-        return Expression.Block(new[] { variableExpr }, GetCollectionCreationExpressions(variableExpr, property, parts));
+        return Expression.Block(
+            new[] { variableExpr },
+            GetCollectionCreationExpressions(variableExpr, property, parts));
     }
 
     private static IEnumerable<Expression> GetCollectionCreationExpressions(
@@ -186,7 +208,10 @@ public class PatchService : IPatchService
                     Expression.IfThen(
                         Expression.Equal(me, Expression.Default(result.Type)),
                         Expression.Throw(Expression.New(typeof(InvalidOperationException)))),
-                    Expression.Call(me, GetMethod(me.Type, "Insert")!, Expression.Constant(insertIndex),
+                    Expression.Call(
+                        me,
+                        GetMethod(me.Type, "Insert")!,
+                        Expression.Constant(insertIndex),
                         valueExpression)),
             _ => result
         };
@@ -196,12 +221,11 @@ public class PatchService : IPatchService
     {
         return result switch
         {
-            MemberExpression { Type.IsGenericType: true } me when GetMethod(me.Type, "Add") != null =>
-                Expression.Block(
-                    Expression.IfThen(
-                        Expression.Equal(me, Expression.Default(result.Type)),
-                        Expression.Throw(Expression.New(typeof(InvalidOperationException)))),
-                    Expression.Call(me, GetMethod(me.Type, "Add")!, value)),
+            MemberExpression { Type.IsGenericType: true } me when GetMethod(me.Type, "Add") != null => Expression.Block(
+                Expression.IfThen(
+                    Expression.Equal(me, Expression.Default(result.Type)),
+                    Expression.Throw(Expression.New(typeof(InvalidOperationException)))),
+                Expression.Call(me, GetMethod(me.Type, "Add")!, value)),
 
             MemberExpression me => Expression.Block(
                 Expression.IfThen(
@@ -221,27 +245,31 @@ public class PatchService : IPatchService
                 indexExpression.Object,
                 GetMethod(indexExpression.Object!.Type, "RemoveAt")!,
                 indexExpression.Arguments),
-            MemberExpression { Type.IsGenericType: true } me when typeof(List<>).IsAssignableFrom(me.Type.GetGenericTypeDefinition()) =>
-                Expression.Call(me, GetMethod(me.Type, "Clear")!),
+            MemberExpression { Type.IsGenericType: true } me when typeof(List<>).IsAssignableFrom(
+                me.Type.GetGenericTypeDefinition()) => Expression.Call(me, GetMethod(me.Type, "Clear")!),
             MemberExpression me => Expression.Assign(me, Expression.Default(me.Type)),
             _ => result
         };
     }
 
-    private static MethodInfo? GetMethod(Type constantType, string methodName)
+    private static MethodInfo? GetMethod(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)] Type constantType,
+        string methodName)
     {
         var propertyInfos = constantType.GetMethods();
-        var property =
-            propertyInfos.FirstOrDefault(p => p.Name.Equals(methodName, StringComparison.OrdinalIgnoreCase));
+        var property = propertyInfos.FirstOrDefault(p => p.Name.Equals(methodName, StringComparison.OrdinalIgnoreCase));
 
         return property;
     }
 
-    private static PropertyInfo? GetProperty(Type constantType, string propertyName)
+    private static PropertyInfo? GetProperty(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type constantType,
+        string propertyName)
     {
         var propertyInfos = constantType.GetProperties();
         var property =
-            propertyInfos.FirstOrDefault(p => p.Name.Equals(propertyName + "Element", StringComparison.OrdinalIgnoreCase))
+            propertyInfos.FirstOrDefault(
+                p => p.Name.Equals(propertyName + "Element", StringComparison.OrdinalIgnoreCase))
             ?? propertyInfos.FirstOrDefault(x => x.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
 
         return property;
@@ -268,40 +296,36 @@ public class PatchService : IPatchService
             {
                 var propertyName = expression.Value.ToString()!;
                 var property = GetProperty(_parameter.Type, propertyName);
-                return property == null
-                    ? _parameter
-                    : Expression.Property(_parameter, property);
+                return property == null ? _parameter : Expression.Property(_parameter, property);
             }
 
             return null!;
         }
 
         /// <inheritdoc />
-        public override Expression VisitFunctionCall(
-            fhirExpression.FunctionCallExpression expression)
+        public override Expression VisitFunctionCall(fhirExpression.FunctionCallExpression expression)
         {
             switch (expression)
             {
                 case fhirExpression.IndexerExpression indexerExpression:
-                {
-                    var index = indexerExpression.Index.Accept(this);
-                    var property = indexerExpression.Focus.Accept(this);
-                    var itemProperty = GetProperty(property.Type, "Item");
-                    return Expression.MakeIndex(property, itemProperty, new[] { index });
-                }
+                    {
+                        var index = indexerExpression.Index.Accept(this);
+                        var property = indexerExpression.Focus.Accept(this);
+                        var itemProperty = GetProperty(property.Type, "Item");
+                        return Expression.MakeIndex(property, itemProperty, new[] { index });
+                    }
                 case fhirExpression.ChildExpression child:
-                {
-                    var focus = child.Focus.Accept(this);
-                    return child.Arguments.First().Accept(new ResourceVisitor(focus));
-                }
+                    {
+                        var focus = child.Focus.Accept(this);
+                        return child.Arguments.First().Accept(new ResourceVisitor(focus));
+                    }
                 default:
                     return _parameter;
             }
         }
 
         /// <inheritdoc />
-        public override Expression VisitNewNodeListInit(
-            fhirExpression.NewNodeListInitExpression expression)
+        public override Expression VisitNewNodeListInit(fhirExpression.NewNodeListInitExpression expression)
         {
             return _parameter;
         }
