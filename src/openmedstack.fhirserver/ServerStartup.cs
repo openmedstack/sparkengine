@@ -2,16 +2,13 @@
 
 using System;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using DotAuth.Client;
 using DotAuth.Uma;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -88,7 +85,7 @@ public class ServerStartup
                         new Uri(authority));
                 })
             .AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>())
-            .AddTransient<IResourceMap>(sp=>new DbSourceMap(s))
+            .AddTransient<IResourceMap>(_=>new DbSourceMap(s))
             .AddAuthentication(
                 options =>
                 {
