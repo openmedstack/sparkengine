@@ -1,15 +1,19 @@
 ﻿namespace OpenMedStack.SparkEngine.Web.Tests;
 
 using System;
+using System.IO;
+using Disk;
 using Hl7.Fhir.Serialization;
 using Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Persistence;
+using Microsoft.IdentityModel.Tokens;
 using SparkEngine.Service.FhirServiceExtensions;
 using Store.Interfaces;
+using Web.Persistence;
 using Xunit.Abstractions;
+using InMemoryHistoryStore = Persistence.InMemoryHistoryStore;
+using InMemorySnapshotStore = Persistence.InMemorySnapshotStore;
 
 public class ServerStartup
 {
@@ -22,8 +26,8 @@ public class ServerStartup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
-        services.AddLogging(l => l.AddXunit(_outputHelper));
+        //services.AddControllers();
+        //services.AddLogging(l => l.AddXunit(_outputHelper));
         services.AddFhir<TestFhirController>(
             new SparkSettings
             {
@@ -38,15 +42,33 @@ public class ServerStartup
         services.AddSingleton<ISnapshotStore, InMemorySnapshotStore>();
         services.AddSingleton<IHistoryStore, InMemoryHistoryStore>();
         services.AddSingleton<IGenerator, GuidGenerator>();
-        services.AddSingleton<IFhirStore, InMemoryFhirStore>();
+        //services.AddSingleton<IFhirStore, InMemoryFhirStore>();
+        services.AddSingleton(new DiskPersistenceConfiguration(Path.Combine(".", "fhir")));
+        services.AddSingleton<IFhirStore, DiskFhirStore>();
         services.AddSingleton<IIndexStore>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
         services.AddSingleton<IPatchService, PatchService>();
+        services.AddCors();
+        services.AddAuthorization()
+            .AddAuthentication()
+            .AddJwtBearer(
+                o =>
+                {
+                    o.Authority = "https://identity.reimers.dk";
+                    o.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        LifetimeValidator = (_, _, _, _) => true,
+                        ValidateAudience = false,
+                        ValidateActor = false,
+                        ValidateIssuer = false,
+                        ValidateLifetime = false,
+                        ValidateIssuerSigningKey = false,
+                        ValidateTokenReplay = false
+                    };
+                });
     }
 
     public void Configure(IApplicationBuilder app)
     {
-        app.UseRouting()
-            //.UseAuthentication().UseAuthorization()
-            .UseEndpoints(e => e.MapControllers());
+        app.UseRouting().UseCors().UseAuthentication().UseAuthorization().UseEndpoints(e => e.MapControllers());
     }
 }

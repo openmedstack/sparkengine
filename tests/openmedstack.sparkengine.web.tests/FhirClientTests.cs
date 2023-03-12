@@ -1,21 +1,39 @@
 ﻿namespace OpenMedStack.SparkEngine.Web.Tests;
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
+using Bogus;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
 using Hl7.Fhir.Serialization;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.Net.Http.Headers;
 using Xunit;
+using Xunit.Abstractions;
 using Task = System.Threading.Tasks.Task;
 
-public class FhirClientTests
+public class FhirClientTests : IDisposable
 {
+    private readonly ITestOutputHelper _outputHelper;
+    private readonly TestFhirServer _server;
+
+    public FhirClientTests(ITestOutputHelper outputHelper)
+    {
+        IdentityModelEventSource.ShowPII = true;
+        _outputHelper = outputHelper;
+        _server = new TestFhirServer(outputHelper, "https://localhost:7266");
+    }
+
     [Theory]
     [InlineData(ResourceFormat.Json)]
-    //[InlineData(ResourceFormat.Xml)]
+    [InlineData(ResourceFormat.Xml)]
     public async Task CanCreatePatientWithDifferentFormats(ResourceFormat format)
     {
-        var hc = new HttpClient
+        using var hc = new HttpClient(_server.Server.CreateHandler())
         {
             DefaultRequestHeaders =
             {
@@ -25,10 +43,8 @@ public class FhirClientTests
                 }
             }
         };
-        var client = new FhirClient(
+        using var client = new FhirClient(
             "https://localhost:7266/fhir",
-            //"https://fhir.reimers.dk/fhir",
-            //"https://localhost:60001/fhir",
             hc,
             new FhirClientSettings
             {
@@ -38,7 +54,8 @@ public class FhirClientTests
                 UseFormatParameter = false,
                 VerifyFhirVersion = false
             });
-        //messageHandler: _server.Server.CreateHandler());
+        client.Settings.ParserSettings!.ExceptionHandler = (_, args) => { _outputHelper.WriteLine($"{args.Severity}: {args.Message}"); };
+
         var patient = new Patient
         {
             Active = true,
@@ -53,15 +70,15 @@ public class FhirClientTests
 
         var result = await client.CreateAsync(patient).ConfigureAwait(false);
 
-        Assert.NotNull(result.Id);
+        Assert.NotNull(result!.Id);
     }
 
     [Theory]
     [InlineData(ResourceFormat.Json)]
-    //[InlineData(ResourceFormat.Xml)]
-    public async Task CanGetPatientWithDifferentFormats(ResourceFormat format)
+    [InlineData(ResourceFormat.Xml)]
+    public async Task CanPerformInsertRetrieveAsLoad(ResourceFormat format)
     {
-        var hc = new HttpClient
+        using var hc = new HttpClient(_server.Server.CreateHandler())
         {
             DefaultRequestHeaders =
             {
@@ -73,8 +90,6 @@ public class FhirClientTests
         };
         var client = new FhirClient(
             "https://localhost:7266/fhir",
-            //"https://fhir.reimers.dk/fhir",
-            //"https://localhost:60001/fhir",
             hc,
             new FhirClientSettings
             {
@@ -84,11 +99,69 @@ public class FhirClientTests
                 UseFormatParameter = false,
                 VerifyFhirVersion = false
             });
-        //messageHandler: _server.Server.CreateHandler());
-           
 
-        var result = await client.ReadAsync<Patient>("2d04ae20df784aeb9ee726dea8927f42").ConfigureAwait(false);
+        var faker = new Faker<Patient>().RuleFor(x => x.Active, true)
+            .RuleFor(
+                x => x.Name,
+                f =>
+                {
+                    var lastName = f.Name.LastName();
+                    var firstName = f.Name.FirstName();
+                    return new List<HumanName>
+                    {
+                        new()
+                        {
+                            Family = lastName,
+                            Given = new[] { firstName },
+                            Text = $"{firstName} {lastName}",
+                            Use = HumanName.NameUse.Usual,
+                            Prefix = new[] { f.Name.Prefix() },
+                            Suffix = new[] { f.Name.Suffix() },
+                            Period = new Period { StartElement = new FhirDateTime() }
+                        }
+                    };
+                })
+            .RuleFor(x => x.BirthDateElement, f => new Date(f.Date.PastDateOnly(75).Year))
+            .RuleFor(x => x.Address,
+                f => new List<Address> { new()
+                {
+                    City = f.Address.City(),
+                    Country = f.Address.Country(),
+                    District = f.Address.County(),
+                    PostalCode = f.Address.ZipCode(),
+                    Use = Address.AddressUse.Home
+                }});
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        const int count = 5000;
+        var tasks = Enumerable.Range(0, count).Select(async _ =>
+        {
+            var patient = faker.Generate();
 
-        Assert.NotNull(result.Id);
+            var inserted = await client.CreateAsync(patient);
+
+            return inserted!.Id;
+        });
+        var ids = await Task.WhenAll(tasks).ConfigureAwait(false);
+        stopwatch.Stop();
+
+        _outputHelper.WriteLine($"Inserted {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        var elapsed = stopwatch.Elapsed;
+        stopwatch.Restart();
+        var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
+        _ = await Task.WhenAll(patientTasks).ConfigureAwait(false);
+        stopwatch.Stop();
+
+        elapsed += stopwatch.Elapsed;
+        _outputHelper.WriteLine($"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        _outputHelper.WriteLine($"Inserting and reading {count} records took {elapsed}.");
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromMinutes(1));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Directory.Delete(Path.GetFullPath(Path.Combine(".", "fhir")), true);
     }
 }

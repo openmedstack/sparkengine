@@ -1,4 +1,4 @@
-namespace openmedstack.sparkengine.postgres.tests;
+namespace OpenMedStack.SparkEngine.Postgres.Tests;
 
 using System.Text;
 using Hl7.Fhir.Model;

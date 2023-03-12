@@ -61,35 +61,33 @@ public static class ServiceCollectionExtensions
         AddFhirHttpSearchParameters();
         services.SetContentTypeAsFhirMediaTypeOnValidationError();
 
-        services.TryAddSingleton(settings);
-        services.TryAddTransient<ElementIndexer>();
-
-        services.TryAddTransient<IReferenceNormalizationService, ReferenceNormalizationService>();
-
-        services.TryAddTransient<IIndexService, IndexService>();
+        services.AddSingleton(settings);
+        services.AddTransient<ElementIndexer>();
+        services.AddTransient<IReferenceNormalizationService, ReferenceNormalizationService>();
+        services.AddTransient<IIndexService, IndexService>();
         services.AddSingleton<ILocalhost>(new Localhost(settings.Endpoint));
         services.AddSingleton<IFhirModel>(new FhirModel(ModelInfo.SearchParameters));
-        services.TryAddTransient(provider => new FhirPropertyIndex(provider.GetRequiredService<IFhirModel>()));
-        services.TryAddTransient<ITransfer, Transfer>();
-        services.TryAddTransient<ConditionalHeaderFhirResponseInterceptor>();
-        services.TryAddTransient(
+        services.AddTransient(provider => new FhirPropertyIndex(provider.GetRequiredService<IFhirModel>()));
+        services.AddTransient<ITransfer, Transfer>();
+        services.AddTransient<ConditionalHeaderFhirResponseInterceptor>();
+        services.AddTransient(
             provider => new IFhirResponseInterceptor[]
             {
                 provider.GetRequiredService<ConditionalHeaderFhirResponseInterceptor>()
             });
-        services.TryAddTransient<IFhirResponseInterceptorRunner, FhirResponseInterceptorRunner>();
-        services.TryAddTransient<IFhirResponseFactory, FhirResponseFactory>();
-        services.TryAddTransient<IIndexRebuildService, IndexRebuildService>();
-        services.TryAddTransient<ISnapshotPaginationProvider, SnapshotPaginationProvider>();
-        services.TryAddTransient<ISnapshotPaginationCalculator, SnapshotPaginationCalculator>();
-        services.TryAddTransient<IServiceListener, SearchService>(); // searchListener
-        services.TryAddTransient(provider => new[] { provider.GetRequiredService<IServiceListener>() });
-        services.TryAddTransient<ISearchService, SearchService>(); // search
-        services.TryAddTransient<ITransactionService, AsyncTransactionService>(); // transaction
-        services.TryAddTransient<IPagingService, PagingService>(); // paging
+        services.AddTransient<IFhirResponseInterceptorRunner, FhirResponseInterceptorRunner>();
+        services.AddTransient<IFhirResponseFactory, FhirResponseFactory>();
+        services.AddTransient<IIndexRebuildService, IndexRebuildService>();
+        services.AddTransient<ISnapshotPaginationProvider, SnapshotPaginationProvider>();
+        services.AddTransient<ISnapshotPaginationCalculator, SnapshotPaginationCalculator>();
+        services.AddTransient<IServiceListener, SearchService>(); // searchListener
+        services.AddTransient(provider => provider.GetServices<IServiceListener>().ToArray());
+        services.AddTransient<ISearchService, SearchService>(); // search
+        services.AddTransient<ITransactionService, AsyncTransactionService>(); // transaction
+        services.AddTransient<IPagingService, PagingService>(); // paging
         services.TryAddTransient<IResourceStorageService, ResourceStorageService>(); // storage
-        services.TryAddTransient<ICapabilityStatementService, CapabilityStatementService>(); // conformance
-        services.TryAddTransient<ICompositeServiceListener, ServiceListener>();
+        services.AddTransient<ICapabilityStatementService, CapabilityStatementService>(); // conformance
+        services.AddTransient<ICompositeServiceListener, ServiceListener>();
 
         services.TryAddSingleton<IFhirService, FhirService>();
 

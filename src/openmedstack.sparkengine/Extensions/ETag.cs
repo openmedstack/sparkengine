@@ -14,7 +14,6 @@ public static class ETag
 {
     public static EntityTagHeaderValue Create(string? value)
     {
-        var tag = value == null ? "" : $"\"{value}\"";
-        return new EntityTagHeaderValue(tag, true);
+        return new EntityTagHeaderValue($"\"{value ?? "0"}\"", true);
     }
 }

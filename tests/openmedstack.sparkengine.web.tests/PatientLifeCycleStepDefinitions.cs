@@ -33,7 +33,6 @@ public class PatientLifeCycleStepDefinitions
             "https://localhost:60001/fhir",
             new FhirClientSettings
             {
-                CompressRequestBody = true,
                 ParserSettings = ParserSettings.CreateDefault(),
                 PreferCompressedResponses = true,
                 PreferredFormat = ResourceFormat.Json,

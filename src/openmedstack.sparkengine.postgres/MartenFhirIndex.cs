@@ -49,7 +49,21 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("{resource} search requested with {searchCommand}", resource, searchCommand.ToUriParamList().ToQueryString());
-        var resources = await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
+        var session = _sessionFunc();
+        await using var _ = session.ConfigureAwait(false);
+        var resourceQuery = session.Query<IndexEntry>()
+            .Where(x => x.ResourceType == resource);
+        foreach (var (key, value) in searchCommand.Parameters)
+        {
+            resourceQuery = resourceQuery.Where(x => x.Values[key].Contains(value));
+        }
+
+        if (searchCommand.Count is > 0)
+        {
+            resourceQuery = resourceQuery.Take(searchCommand.Count.Value);
+        }
+        var resources = await resourceQuery.Select(x => x.Id).ToListAsync(cancellationToken);
+        //var resources = await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
 
         var count = resources.Count;
 
@@ -58,14 +72,14 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
             resources = resources.Take(searchCommand.Count.Value).ToList();
         }
 
-        var keys = resources.ToList();
+        //var keys = resources.ToList();
         var results = new SearchResults
         {
             MatchCount = count,
             UsedCriteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2)).ToList()
         };
 
-        results.AddRange(keys);
+        results.AddRange(resources);
 
         return results;
     }
@@ -94,48 +108,9 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
     {
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        var values = indexValue.IndexValues().ToArray();
-        var id = (StringValue)values.First(x => x.Name == "internal_forResource").Values[0];
-        var resource = (StringValue)values.First(x => x.Name == "internal_resource").Values[0];
-        var canonicalId = (StringValue)values.First(x => x.Name == "internal_id").Values[0];
-        var entry = new IndexEntry(id.Value, canonicalId.Value, resource.Value, new Dictionary<string, object>());
-        foreach (var value in values)
-        {
-            var array = value.Values.Select(GetValue).ToHashSet();
-            var o = array.Count == 1 ? array.First() : array;
-            if (value.Name != null && entry.Values.TryGetValue(value.Name, out var existing))
-            {
-                switch (existing)
-                {
-                    case HashSet<object> l:
-                        switch (o)
-                        {
-                            case HashSet<object> list:
-                                foreach (var item in list)
-                                {
-                                    l.Add(item);
-                                }
+        var entry = indexValue.BuildIndexEntry();
 
-                                break;
-                            default:
-                                l.Add(o);
-                                break;
-                        }
-
-                        entry.Values[value.Name] = l;
-                        break;
-                    case { }:
-                        entry.Values[value.Name] = new HashSet<object> { existing, o };
-                        break;
-                }
-            }
-            else if (value.Name != null)
-            {
-                entry.Values.Add(value.Name, o);
-            }
-        }
-
-        session.DeleteWhere<IndexEntry>(x => x.CanonicalId == canonicalId.Value);
+        session.DeleteWhere<IndexEntry>(x => x.Id == entry.Id);
         session.Store(entry);
         await session.SaveChangesAsync().ConfigureAwait(false);
     }
@@ -143,11 +118,6 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
     /// <inheritdoc />
     public async Task Delete(Entry entry)
     {
-        if (entry.Key == null)
-        {
-            return;
-        }
-
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         session.Delete<IndexEntry>(entry.Key.ToStorageKey());
@@ -162,32 +132,6 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         await using var _ = session.ConfigureAwait(false);
         session.DeleteWhere<IndexEntry>(e => e.Id != "");
         await session.SaveChangesAsync().ConfigureAwait(false);
-    }
-
-    private static object GetValue(Expression expression)
-    {
-        return expression switch
-        {
-            StringValue stringValue => stringValue.Value,
-            IndexValue indexValue => indexValue.Values.Count == 1
-                ? GetValue(indexValue.Values[0])
-                : indexValue.Values.Select(GetValue).ToArray(),
-            CompositeValue compositeValue =>
-                compositeValue.Components.OfType<IndexValue>().All(x => x.Name == "code")
-                    ? compositeValue.Components.OfType<IndexValue>()
-                        .SelectMany(x => x.Values.Select(GetValue))
-                        .First()
-                    : compositeValue.Components.OfType<IndexValue>()
-                        .Where(x => x.Name != null)
-                        .ToDictionary(
-                            component => component.Name!,
-                            component =>
-                            {
-                                var a = component.Values.Select(GetValue).ToArray();
-                                return a.Length == 1 ? a[0] : a;
-                            }),
-            _ => expression.ToString() ?? ""
-        };
     }
 
     private async Task<List<string>> GetIndexValues(string resource, SearchParams searchCommand)
@@ -206,7 +150,7 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         var result = await session.QueryAsync<IndexEntry>(sql).ConfigureAwait(false);
 
         return result.SelectMany(iv => iv.Values.Where(v => v.Key is "internal_id" or "internal_selflink"))
-            .Select(v => v.Value as string)
+            .Select(v => v.Value[0] as string)
             .Where(x => x is not null)
             .Distinct()
             .Select(x => x!)
@@ -217,20 +161,20 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
     {
         return criterium.Operator switch
         {
-            Operator.EQ => $"->> '{criterium.ParamName}' = '{GetValue(criterium.Operand!)}'",
-            Operator.LT => $"->> '{criterium.ParamName}' < '{GetValue(criterium.Operand!)}'",
-            Operator.LTE => $"->> '{criterium.ParamName}' <= '{GetValue(criterium.Operand!)}'",
-            Operator.APPROX => $"->> '{criterium.ParamName}' = '{GetValue(criterium.Operand!)}'",
-            Operator.GTE => $"->> '{criterium.ParamName}' >= '{GetValue(criterium.Operand!)}'",
-            Operator.GT => $"->> '{criterium.ParamName}' > '{GetValue(criterium.Operand!)}'",
+            Operator.EQ => $"->> '{criterium.ParamName}' = '{criterium.Operand!.GetValue()}'",
+            Operator.LT => $"->> '{criterium.ParamName}' < '{criterium.Operand!.GetValue()}'",
+            Operator.LTE => $"->> '{criterium.ParamName}' <= '{criterium.Operand!.GetValue()}'",
+            Operator.APPROX => $"->> '{criterium.ParamName}' = '{criterium.Operand!.GetValue()}'",
+            Operator.GTE => $"->> '{criterium.ParamName}' >= '{criterium.Operand!.GetValue()}'",
+            Operator.GT => $"->> '{criterium.ParamName}' > '{criterium.Operand!.GetValue()}'",
             Operator.ISNULL => $"->'{criterium.ParamName}' IS NULL",
             Operator.NOTNULL => $"-> '{criterium.ParamName}' IS NOT NULL",
-            Operator.IN => $"-> '{criterium.ParamName}' ? {GetValue(criterium.Operand!)}",
+            Operator.IN => $"-> '{criterium.ParamName}' ? {criterium.Operand!.GetValue()}",
             Operator.CHAIN => $"-> {criterium.ParamName} is null",
-            Operator.NOT_EQUAL => $"->> '{criterium.ParamName}' != '{GetValue(criterium.Operand!)}'",
+            Operator.NOT_EQUAL => $"->> '{criterium.ParamName}' != '{criterium.Operand!.GetValue()}'",
             Operator.STARTS_AFTER =>
-                $"-> '{criterium.ParamName}' -> 'start' ->> 0 > '{GetValue(criterium.Operand!)}'",
-            Operator.ENDS_BEFORE => $"-> '{criterium.ParamName}' -> 'end' ->> 0 < '{GetValue(criterium.Operand!)}'",
+                $"-> '{criterium.ParamName}' -> 'start' ->> 0 > '{criterium.Operand!.GetValue()}'",
+            Operator.ENDS_BEFORE => $"-> '{criterium.ParamName}' -> 'end' ->> 0 < '{criterium.Operand!.GetValue()}'",
             _ => throw new ArgumentOutOfRangeException(nameof(criterium))
         };
     }

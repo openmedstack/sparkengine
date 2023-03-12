@@ -64,12 +64,12 @@ public partial class ElementQuery
         public string? Name;
         public PropertyInfo? Property;
 
-        public object? GetValue(object field) => field == null || Property == null ? null : Property.GetValue(field);
+        public object? GetValue(object field) => Property?.GetValue(field);
     }
 
     public partial class Chain
     {
-        private readonly List<Segment> _segments = new();
+        private readonly List<Segment> _segments;
 
         public Chain(string path)
         {
@@ -313,7 +313,7 @@ public partial class ElementQuery
 
         private void Visit(
             object field,
-            IEnumerable<Segment> chain,
+            List<Segment> chain,
             Action<object?> action,
             Predicate<object>? predicate)
         {
@@ -337,34 +337,36 @@ public partial class ElementQuery
             else //single value
             {
                 //Patient.address.city, current field is address
-                if (predicate == null || predicate(field))
+                if (predicate != null && !predicate(field))
                 {
-                    if (chain.Any()) //not at the end of the chain, follow the next link in the chain
+                    return;
+                }
+
+                if (chain.Count > 0) //not at the end of the chain, follow the next link in the chain
+                {
+                    var next = chain[0]; //{ FhirString, "city", (propertyInfo of city), AllowedTypes = null, Filter = null }
+
+                    //if (field.GetType().GetProperty(next.Name) == null)
+                    //    throw new ArgumentException(string.Format("'{0}' is not a valid property for '{1}'", next.Name, field.GetType().Name));
+                    // resolved this issue by using next.GetValue() which may return null -- MH
+
+                    var subfield = next.GetValue(field); //value of city
+                    if (subfield != null
+                        && next.Property != null
+                        && (next.AllowedType == null || next.AllowedType.IsInstanceOfType(subfield)))
                     {
-                        var next = chain
-                            .First(); //{ FhirString, "city", (propertyInfo of city), AllowedTypes = null, Filter = null }
-                        var subchain = chain.Skip(1); //subpath = <empty> (city is the last item)
+                        var subchain = chain.GetRange(1, chain.Count - 1); //subpath = <empty> (city is the last item)
 
-                        //if (field.GetType().GetProperty(next.Name) == null)
-                        //    throw new ArgumentException(string.Format("'{0}' is not a valid property for '{1}'", next.Name, field.GetType().Name));
-                        // resolved this issue by using next.GetValue() which may return null -- MH
-
-                        var subfield = next.GetValue(field); //value of city
-                        if (subfield != null
-                            && next.Property != null
-                            && (next.AllowedType == null || next.AllowedType.IsInstanceOfType(subfield)))
-                        {
-                            Visit(subfield, subchain, action, next.Filter);
-                        }
-                        else
-                        {
-                            action(null);
-                        }
+                        Visit(subfield, subchain, action, next.Filter);
                     }
                     else
                     {
-                        action(field);
+                        action(null);
                     }
+                }
+                else
+                {
+                    action(field);
                 }
             }
         }

@@ -40,13 +40,13 @@ public class IndexServiceTests
     public IndexServiceTests()
     {
         var indexStoreMock = new Mock<IIndexStore>();
-        _examplePatientJson = TextFileHelper.ReadTextFileFromDisk(
+        _examplePatientJson = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}patient-example.json");
-        _exampleAppointmentJson = TextFileHelper.ReadTextFileFromDisk(
+        _exampleAppointmentJson = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}appointment-example2doctors.json");
-        _carePlanWithContainedGoal = TextFileHelper.ReadTextFileFromDisk(
+        _carePlanWithContainedGoal = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}careplan-example-f201-renal.json");
-        _exampleObservationJson = TextFileHelper.ReadTextFileFromDisk(
+        _exampleObservationJson = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}observation-example-bloodpressure.json");
         var spPatientName = new SearchParamDefinition
         {

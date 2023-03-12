@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 public class IndexEntry : IEquatable<IndexEntry>
 {
-    public IndexEntry(string id, string canonicalId, string resourceType, Dictionary<string, object> values)
+    public IndexEntry(string id, string canonicalId, string resourceType, Dictionary<string, object[]> values)
     {
         Id = id;
         CanonicalId = canonicalId;
@@ -27,7 +27,7 @@ public class IndexEntry : IEquatable<IndexEntry>
 
     public string ResourceType { get; }
 
-    public Dictionary<string, object> Values { get; }
+    public Dictionary<string, object[]> Values { get; }
 
     /// <inheritdoc />
     public bool Equals(IndexEntry? other)
@@ -43,14 +43,9 @@ public class IndexEntry : IEquatable<IndexEntry>
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
-        if (obj is null)
-        {
-            return false;
-        }
-
-        return ReferenceEquals(this, obj) || obj.GetType() == GetType() && Equals((IndexEntry) obj);
+        return Equals(obj as IndexEntry);
     }
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(Id, Values);
+    public override int GetHashCode() => HashCode.Combine(Id, ResourceType, Values);
 }

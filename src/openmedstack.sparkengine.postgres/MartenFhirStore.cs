@@ -32,11 +32,11 @@ public class MartenFhirStore : IFhirStore
     }
 
     /// <inheritdoc />
-    public async Task Add(Entry entry, CancellationToken cancellationToken = default)
+    public async Task<Entry> Add(Entry entry, CancellationToken cancellationToken = default)
     {
         if (entry.Key == null || entry.Resource == null)
         {
-            return;
+            return entry;
         }
 
         var session = _sessionFunc();
@@ -73,10 +73,11 @@ public class MartenFhirStore : IFhirStore
         };
         session.Store(entryEnvelope);
         await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return entry;
     }
 
     /// <inheritdoc />
-    public async Task<Entry?> Get(IKey? key, CancellationToken cancellationToken = default)
+    public async Task<Entry?> Get(IKey key, CancellationToken cancellationToken = default)
     {
         if (key == null)
         {
@@ -136,7 +137,7 @@ public class MartenFhirStore : IFhirStore
     }
 
     /// <inheritdoc />
-    public async Task<bool> Exists(IKey? key, CancellationToken cancellationToken = default)
+    public async Task<bool> Exists(IKey key, CancellationToken cancellationToken = default)
     {
         if (key == null)
         {

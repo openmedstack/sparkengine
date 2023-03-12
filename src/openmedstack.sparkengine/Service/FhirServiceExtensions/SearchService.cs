@@ -84,6 +84,7 @@ public class SearchService : ISearchService, IServiceListener
         SearchParams searchCommand,
         CancellationToken cancellationToken)
     {
+        searchCommand.Count = 1;
         var value = (await GetSearchResults(type, searchCommand, cancellationToken).ConfigureAwait(false)).SingleOrDefault();
         return value != null ? Key.ParseOperationPath(value) : null;
     }

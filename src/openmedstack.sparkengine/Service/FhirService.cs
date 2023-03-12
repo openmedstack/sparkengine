@@ -24,7 +24,7 @@ public class FhirService : IFhirService, IInteractionHandler
     private readonly IHistoryStore _historyService;
     private readonly IFhirResponseFactory _responseFactory;
     private readonly IPatchService _patchService;
-    private readonly ICompositeServiceListener? _serviceListener;
+    private readonly ICompositeServiceListener _serviceListener;
 
     public FhirService(
         IResourceStorageService storageService,
@@ -35,7 +35,8 @@ public class FhirService : IFhirService, IInteractionHandler
         IHistoryStore historyService,
         IFhirResponseFactory responseFactory,
         IPatchService patchService,
-        ICompositeServiceListener? serviceListener = null)
+        ILocalhost localhost,
+        IServiceListener[] listeners)
     {
         _storageService = storageService;
         _pagingService = pagingService;
@@ -45,17 +46,19 @@ public class FhirService : IFhirService, IInteractionHandler
         _historyService = historyService;
         _responseFactory = responseFactory;
         _patchService = patchService;
-        _serviceListener = serviceListener;
+        _serviceListener = new ServiceListener(localhost, listeners);
     }
 
     public async Task<FhirResponse> AddMeta(IKey key, Parameters parameters, CancellationToken cancellationToken)
     {
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        if (entry != null && !entry.IsDeleted() && entry.Resource != null)
+        if (entry == null || entry.IsDeleted() || entry.Resource == null)
         {
-            entry.Resource.AffixTags(parameters);
-            await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
+            return _responseFactory.GetMetadataResponse(entry, key);
         }
+
+        entry.Resource.AffixTags(parameters);
+        await Store(entry, cancellationToken).ConfigureAwait(false);
 
         return _responseFactory.GetMetadataResponse(entry, key);
     }
@@ -185,7 +188,7 @@ public class FhirService : IFhirService, IInteractionHandler
     public async Task<FhirResponse> Put(Entry entry, CancellationToken cancellationToken)
     {
         Validate.Key(entry.Key);
-        var entryKey = entry.Key!;
+        var entryKey = entry.Key;
         Validate.ResourceType(entryKey, entry.Resource);
         Validate.HasTypeName(entryKey);
         Validate.HasResourceId(entryKey);
@@ -246,26 +249,26 @@ public class FhirService : IFhirService, IInteractionHandler
     public async Task<FhirResponse> Patch(IKey key, Parameters parameters, CancellationToken cancellationToken)
     {
         var current = await _storageService.Get(key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
-        if (current is { IsPresent: true })
+        if (current is not { IsPresent: true })
         {
-            try
-            {
-                var resource = _patchService.Apply(current.Resource!, parameters);
-                return await Patch(Entry.Patch(current.Key!.WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
-            }
-            catch
-            {
-                return new FhirResponse(HttpStatusCode.BadRequest);
-            }
+            return Respond.WithCode(HttpStatusCode.NotFound);
         }
 
-        return Respond.WithCode(HttpStatusCode.NotFound);
+        try
+        {
+            var resource = _patchService.Apply(current.Resource!, parameters);
+            return await Patch(Entry.Patch(current.Key.WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            return new FhirResponse(HttpStatusCode.BadRequest);
+        }
     }
 
     public async Task<FhirResponse> Patch(Entry entry, CancellationToken cancellationToken)
     {
         Validate.Key(entry.Key);
-        var entryKey = entry.Key!;
+        var entryKey = entry.Key;
         Validate.ResourceType(entryKey, entry.Resource);
         Validate.HasTypeName(entryKey);
         Validate.HasResourceId(entryKey);
@@ -350,23 +353,23 @@ public class FhirService : IFhirService, IInteractionHandler
             case Bundle.HTTPVerb.POST:
                 return await Create(interaction, cancellationToken).ConfigureAwait(false);
             case Bundle.HTTPVerb.DELETE:
-            {
-                var current = await _storageService.Get(interaction.Key!.WithoutVersion(), cancellationToken).ConfigureAwait(false);
-                return current is { IsPresent: true }
-                    ? await Delete(interaction, cancellationToken).ConfigureAwait(false)
-                    : Respond.WithCode(HttpStatusCode.NotFound);
-            }
+                {
+                    var current = await _storageService.Get(interaction.Key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
+                    return current is { IsPresent: true }
+                        ? await Delete(interaction, cancellationToken).ConfigureAwait(false)
+                        : Respond.WithCode(HttpStatusCode.NotFound);
+                }
             case Bundle.HTTPVerb.GET:
                 if (interaction.Key.HasVersionId())
                 {
-                    return await VersionRead(interaction.Key!, cancellationToken).ConfigureAwait(false);
+                    return await VersionRead(interaction.Key, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    return await Read(interaction.Key!, null, cancellationToken).ConfigureAwait(false);
+                    return await Read(interaction.Key, null, cancellationToken).ConfigureAwait(false);
                 }
             case Bundle.HTTPVerb.PATCH:
-                return await Patch(interaction.Key!, (interaction.Resource as Parameters)!, cancellationToken).ConfigureAwait(false);
+                return await Patch(interaction.Key, (interaction.Resource as Parameters)!, cancellationToken).ConfigureAwait(false);
             default:
                 return Respond.Success;
         }
@@ -375,7 +378,7 @@ public class FhirService : IFhirService, IInteractionHandler
     private async Task<FhirResponse> Create(Entry entry, CancellationToken cancellationToken)
     {
         Validate.Key(entry.Key);
-        var entryKey = entry.Key!;
+        var entryKey = entry.Key;
         Validate.HasTypeName(entryKey);
         Validate.ResourceType(entryKey, entry.Resource);
 
@@ -385,21 +388,16 @@ public class FhirService : IFhirService, IInteractionHandler
             Validate.HasNoVersion(entryKey);
         }
 
-        var result = await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
-        if (_serviceListener != null)
-        {
-            await _serviceListener.Inform(entry).ConfigureAwait(false);
-        }
+        var result = await Store(entry, cancellationToken).ConfigureAwait(false);
+
         return Respond.WithResource(HttpStatusCode.Created, result);
     }
-        
+
     private async Task<Entry> Store(Entry entry, CancellationToken cancellationToken)
     {
         var result = await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
-        if (_serviceListener != null)
-        {
-            await _serviceListener.Inform(entry).ConfigureAwait(false);
-        }
+        await _serviceListener.Inform(entry).ConfigureAwait(false);
+
         return result;
     }
     private async Task<FhirResponse> CreateSnapshotResponse(Snapshot snapshot, int pageIndex = 0)

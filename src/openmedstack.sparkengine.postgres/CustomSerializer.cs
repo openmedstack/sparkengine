@@ -57,7 +57,9 @@ internal class CustomSerializer : ISerializer
             DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
             NullValueHandling = NullValueHandling.Ignore,
             DefaultValueHandling = DefaultValueHandling.Ignore,
-            TypeNameHandling = TypeNameHandling.Auto
+            TypeNameHandling = TypeNameHandling.Auto,
+            Formatting = Formatting.None,
+            DateParseHandling = DateParseHandling.DateTimeOffset
         };
         _settings.Converters.Add(new ResourceConverter());
     }
