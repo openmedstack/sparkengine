@@ -1,44 +1,28 @@
-﻿// /*
-//  * Copyright (c) 2014, Furore (info@furore.com) and contributors
-//  * See the file CONTRIBUTORS for details.
-//  *
-//  * This file is licensed under the BSD 3-Clause license
-//  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
-//  */
-
-namespace OpenMedStack.SparkEngine.S3;
+﻿namespace OpenMedStack.SparkEngine.S3;
 
 using System;
 using System.IO;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Amazon.Auth.AccessControlPolicy;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Extensions;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
+using Core;
 using Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Resource = Hl7.Fhir.Model.Resource;
 
-public class S3ResourcePersistence : IResourcePersistence
+public class S3SnapshotStore : ISnapshotStore
 {
-    private readonly AmazonS3Client _client;
     private readonly string _bucket;
-    private readonly FhirJsonSerializer _serializer;
-    private readonly FhirJsonParser _parser;
-    private readonly ILogger<S3ResourcePersistence> _logger;
+    private readonly JsonSerializerSettings _serializerSettings;
+    private readonly ILogger<S3SnapshotStore> _logger;
+    private readonly AmazonS3Client _client;
 
-    public S3ResourcePersistence(
-        S3PersistenceConfiguration configuration,
+    public S3SnapshotStore(S3PersistenceConfiguration configuration,
         string bucket,
-        FhirJsonSerializer serializer,
-        FhirJsonParser parser,
-        ILogger<S3ResourcePersistence> logger)
+        JsonSerializerSettings serializerSettings,
+        ILogger<S3SnapshotStore> logger)
     {
         _client = new AmazonS3Client(
             new BasicAWSCredentials(configuration.AccessKey, configuration.SecretKey),
@@ -49,21 +33,21 @@ public class S3ResourcePersistence : IResourcePersistence
                 ForcePathStyle = configuration.UsePathStyle
             });
         _bucket = bucket;
-        _serializer = serializer;
-        _parser = parser;
+        _serializerSettings = serializerSettings;
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public async Task<bool> Store(Resource resource, CancellationToken cancellationToken)
+    public async Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         try
         {
+            var serializer = JsonSerializer.Create(_serializerSettings);
             using var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
             await using var _ = writer.ConfigureAwait(false);
             using var jsonWriter = new JsonTextWriter(writer);
-            await _serializer.SerializeAsync(resource, jsonWriter).ConfigureAwait(false);
+            serializer.Serialize(jsonWriter, snapshot, typeof(Snapshot));
             await jsonWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
             await writer.FlushAsync().ConfigureAwait(false);
             await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -71,7 +55,7 @@ public class S3ResourcePersistence : IResourcePersistence
                     new PutObjectRequest
                     {
                         AutoResetStreamPosition = false,
-                        Key = resource.ExtractKey().ToStorageKey(),
+                        Key = snapshot.Id,
                         BucketName = _bucket,
                         ContentType = "application/json",
                         InputStream = stream,
@@ -80,29 +64,30 @@ public class S3ResourcePersistence : IResourcePersistence
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
-            return response.HttpStatusCode == HttpStatusCode.OK;
+            //return response.HttpStatusCode == HttpStatusCode.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{error}", ex.Message);
-            return false;
+            //return false;
         }
     }
 
     /// <inheritdoc />
-    async Task<Resource?> IResourcePersistence.Get(IKey key, CancellationToken cancellationToken)
+    public async Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
     {
         try
         {
+            var serializer = JsonSerializer.Create(_serializerSettings);
             var response = await _client.GetObjectAsync(
-                    new GetObjectRequest { Key = key.ToStorageKey(), BucketName = _bucket },
+                    new GetObjectRequest { Key = snapshotId, BucketName = _bucket },
                     cancellationToken)
                 .ConfigureAwait(false);
 
             using var streamReader = new StreamReader(response.ResponseStream);
             using var jsonTextReader = new JsonTextReader(streamReader);
-            var resource = await _parser.ParseAsync<Resource>(jsonTextReader).ConfigureAwait(false);
-            return resource;
+            var snapshot = serializer.Deserialize<Snapshot>(jsonTextReader);
+            return snapshot;
         }
         catch (Exception ex)
         {

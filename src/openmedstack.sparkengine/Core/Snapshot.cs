@@ -69,7 +69,7 @@ public class Snapshot
 
     private static int? NormalizeCount(int? count) => count.HasValue ? (int?)Math.Min(count.Value, MAX_PAGE_SIZE) : null;
 
-    public static string CreateKey() => Guid.NewGuid().ToString();
+    public static string CreateKey() => Guid.NewGuid().ToString("N");
 
     public bool InRange(int index)
     {

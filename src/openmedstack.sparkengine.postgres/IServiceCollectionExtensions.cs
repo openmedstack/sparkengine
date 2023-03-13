@@ -13,22 +13,26 @@ using Interfaces;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Newtonsoft.Json;
 using Weasel.Core;
 
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
     {
-        var store = DocumentStore.For(
+        services.AddSingleton<IDocumentStore>(sp => DocumentStore.For(
             o =>
             {
-                o.Serializer<CustomSerializer>();
+                o.Serializer(sp.GetRequiredService<ISerializer>());
                 o.Connection(settings.ConnectionString);
                 o.Schema.Include<FhirRegistry>();
                 o.AutoCreateSchemaObjects = AutoCreate.CreateOrUpdate;
-            });
-        services.AddSingleton<IDocumentStore>(store);
+            }));
+        services.TryAddTransient<ISerializer>(
+            sp => new CustomSerializer(sp.GetRequiredService<StoreSettings>().SerializerSettings));
         services.TryAddSingleton(settings);
+        services.TryAddTransient(
+            sp => sp.GetRequiredService<StoreSettings>().SerializerSettings);
         services.AddTransient<Func<IDocumentSession>>(
             sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
         services.TryAddTransient<IResourcePersistence>(_ => NoOpPersistence.Get());

@@ -13,6 +13,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 using SparkEngine;
@@ -53,7 +55,17 @@ public class ServerStartup
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
         var s = _configuration["CONNECTIONSTRING"]!;
-        services.AddPostgresFhirStore(new StoreSettings(s))
+        services.AddPostgresFhirStore(new StoreSettings(s, new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.None,
+                DateParseHandling = DateParseHandling.DateTimeOffset
+            }))
             .AddS3Persistence(
                 new S3PersistenceConfiguration(
                     _configuration["STORAGE:ACCESSKEY"]!,

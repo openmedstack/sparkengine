@@ -27,9 +27,9 @@ public interface IFhirService
     Task<FhirResponse> Create(IKey key, Resource resource, CancellationToken cancellationToken);
     Task<FhirResponse> Delete(IKey key, CancellationToken cancellationToken);
     Task<FhirResponse> Delete(Entry entry, CancellationToken cancellationToken);
-    Task<FhirResponse> GetPage(string snapshotKey, int index);
-    Task<FhirResponse> History(HistoryParameters parameters);
-    Task<FhirResponse> History(string type, HistoryParameters parameters);
+    Task<FhirResponse> GetPage(string snapshotKey, int index, CancellationToken cancellationToken);
+    Task<FhirResponse> History(HistoryParameters parameters, CancellationToken cancellationToken);
+    Task<FhirResponse> History(string type, HistoryParameters parameters, CancellationToken cancellationToken);
     Task<FhirResponse> History(IKey key, HistoryParameters parameters, CancellationToken cancellationToken);
     Task<FhirResponse> Put(IKey key, Resource resource, CancellationToken cancellationToken);
     Task<FhirResponse> Put(Entry entry, CancellationToken cancellationToken);

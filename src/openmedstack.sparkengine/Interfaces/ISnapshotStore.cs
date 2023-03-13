@@ -9,12 +9,13 @@
 
 namespace OpenMedStack.SparkEngine.Interfaces;
 
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 
 public interface ISnapshotStore
 {
-    Task AddSnapshot(Snapshot snapshot);
+    Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken);
 
-    Task<Snapshot?> GetSnapshot(string snapshotId);
+    Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken);
 }

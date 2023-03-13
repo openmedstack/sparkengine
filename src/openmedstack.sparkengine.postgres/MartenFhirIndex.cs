@@ -51,6 +51,7 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
 
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
+
         var resourceQuery = session.Query<IndexEntry>()
             .Where(x => x.ResourceType == resource);
 

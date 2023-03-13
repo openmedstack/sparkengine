@@ -24,7 +24,6 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
-using Service;
 using SparkEngine.Extensions;
 using Utility;
 
@@ -163,10 +162,10 @@ public abstract class FhirController : ControllerBase
     }
 
     [HttpGet("{type}/_history")]
-    public virtual Task<FhirResponse> History(string type)
+    public virtual Task<FhirResponse> History(string type, CancellationToken cancellationToken)
     {
         var parameters = GetHistoryParameters(Request);
-        return FhirService.History(type, parameters);
+        return FhirService.History(type, parameters, cancellationToken);
     }
 
     // ============= Whole System Interactions
@@ -192,20 +191,20 @@ public abstract class FhirController : ControllerBase
 
     [HttpGet]
     [Route("_history")]
-    public virtual Task<FhirResponse> History()
+    public virtual Task<FhirResponse> History(CancellationToken cancellationToken)
     {
         var parameters = GetHistoryParameters(Request);
-        return FhirService.History(parameters);
+        return FhirService.History(parameters, cancellationToken);
     }
 
     [HttpGet]
     [Route("_snapshot")]
-    public virtual Task<FhirResponse> Snapshot()
+    public virtual Task<FhirResponse> Snapshot(CancellationToken cancellationToken)
     {
         var snapshot = Request.GetParameter(FhirParameter.SNAPSHOT_ID)
                        ?? throw new ArgumentException("Missing snapshot id");
         var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
-        return FhirService.GetPage(snapshot, start);
+        return FhirService.GetPage(snapshot, start, cancellationToken);
     }
 
     // Operations

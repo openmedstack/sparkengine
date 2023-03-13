@@ -7,13 +7,16 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddDiskPersistence(this IServiceCollection services, DiskPersistenceConfiguration configuration)
     {
-        var serviceDescriptors = services.Where(s => s.ServiceType == typeof(IResourcePersistence)).ToArray();
+        var resourcePersistence = services.Where(s => s.ServiceType == typeof(IResourcePersistence));
+        var snapshotStore = services.Where(s => s.ServiceType == typeof(ISnapshotStore));
+        var serviceDescriptors = resourcePersistence.Concat(snapshotStore).ToArray();
         foreach (var serviceDescriptor in serviceDescriptors)
         {
             services.Remove(serviceDescriptor);
         }
         services.AddSingleton(configuration);
         services.AddSingleton<IFhirStore, DiskFhirStore>();
+        services.AddSingleton<ISnapshotStore, DiskSnapshotStore>();
 
         return services;
     }

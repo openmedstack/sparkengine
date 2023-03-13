@@ -8,11 +8,12 @@
 
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 
 public interface IPagingService
 {
-    Task<ISnapshotPagination> StartPagination(Snapshot snapshot);
-    Task<ISnapshotPagination> StartPagination(string snapshotKey);
+    Task<ISnapshotPagination> StartPagination(Snapshot snapshot, CancellationToken cancellationToken);
+    Task<ISnapshotPagination> StartPagination(string snapshotKey, CancellationToken cancellationToken);
 }

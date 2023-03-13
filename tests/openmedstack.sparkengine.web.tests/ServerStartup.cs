@@ -2,12 +2,15 @@
 
 using System;
 using System.IO;
+using System.Runtime;
 using Disk;
 using Hl7.Fhir.Serialization;
 using Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 using Postgres;
 using SparkEngine.Service.FhirServiceExtensions;
 using Web.Persistence;
@@ -31,14 +34,20 @@ public class ServerStartup
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
         services.AddSingleton<IGenerator, GuidGenerator>();
-        services.AddPostgresFhirStore(new StoreSettings("Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;Pooling=true;"))
+        services.AddPostgresFhirStore(new StoreSettings(
+                "Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;Pooling=true;", 
+                new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                    DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Ignore,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    Formatting = Formatting.None,
+                    DateParseHandling = DateParseHandling.DateTimeOffset
+                } ))
             .AddDiskPersistence(new DiskPersistenceConfiguration(Path.Combine(".", "fhir"), true));
-        //services.AddSingleton<InMemoryFhirIndex>();
-        //services.AddSingleton<IFhirIndex>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
-        //services.AddSingleton<ISnapshotStore, InMemorySnapshotStore>();
-        //services.AddSingleton<IHistoryStore, InMemoryHistoryStore>();
-        ////services.AddSingleton<IFhirStore, InMemoryFhirStore>();
-        //services.AddSingleton<IIndexStore, InMemoryFhirIndex>();
         services.AddSingleton<IPatchService, PatchService>();
         services.AddCors();
         services.AddAuthorization()

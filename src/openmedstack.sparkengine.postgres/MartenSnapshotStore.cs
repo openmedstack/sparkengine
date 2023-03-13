@@ -9,6 +9,7 @@
 namespace OpenMedStack.SparkEngine.Postgres;
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Interfaces;
@@ -27,7 +28,7 @@ public class MartenSnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public async Task AddSnapshot(Snapshot snapshot)
+    public async Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Snapshot added");
         var session = _sessionFunc();
@@ -37,7 +38,7 @@ public class MartenSnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public async Task<Snapshot?> GetSnapshot(string snapshotId)
+    public async Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Returned snapshot " + snapshotId);
         var session = _sessionFunc();

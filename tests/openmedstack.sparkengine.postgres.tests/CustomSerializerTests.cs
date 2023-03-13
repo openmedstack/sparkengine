@@ -2,6 +2,7 @@ namespace OpenMedStack.SparkEngine.Postgres.Tests;
 
 using System.Text;
 using Hl7.Fhir.Model;
+using Newtonsoft.Json;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
 using OpenMedStack.SparkEngine.Postgres;
@@ -12,7 +13,7 @@ public class CustomSerializerTests
 
     public CustomSerializerTests()
     {
-        _serializer = new CustomSerializer();
+        _serializer = new CustomSerializer(new JsonSerializerSettings());
     }
 
     [Fact]

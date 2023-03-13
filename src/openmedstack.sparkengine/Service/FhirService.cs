@@ -143,23 +143,23 @@ public class FhirService : IFhirService, IInteractionHandler
         return Respond.WithCode(HttpStatusCode.NoContent);
     }
 
-    public async Task<FhirResponse> GetPage(string snapshotKey, int index)
+    public async Task<FhirResponse> GetPage(string snapshotKey, int index, CancellationToken cancellationToken)
     {
-        var snapshot = await _pagingService.StartPagination(snapshotKey).ConfigureAwait(false);
+        var snapshot = await _pagingService.StartPagination(snapshotKey, cancellationToken).ConfigureAwait(false);
         var page = await snapshot.GetPage(index).ConfigureAwait(false);
         return _responseFactory.GetFhirResponse(page);
     }
 
-    public async Task<FhirResponse> History(HistoryParameters parameters)
+    public async Task<FhirResponse> History(HistoryParameters parameters, CancellationToken cancellationToken)
     {
         var snapshot = await _historyService.History(parameters).ConfigureAwait(false);
-        return await CreateSnapshotResponse(snapshot).ConfigureAwait(false);
+        return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<FhirResponse> History(string type, HistoryParameters parameters)
+    public async Task<FhirResponse> History(string type, HistoryParameters parameters, CancellationToken cancellationToken)
     {
         var snapshot = await _historyService.History(type, parameters).ConfigureAwait(false);
-        return await CreateSnapshotResponse(snapshot).ConfigureAwait(false);
+        return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> History(
@@ -173,7 +173,7 @@ public class FhirService : IFhirService, IInteractionHandler
         }
 
         var snapshot = await _historyService.History(key, parameters).ConfigureAwait(false);
-        return await CreateSnapshotResponse(snapshot).ConfigureAwait(false);
+        return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<FhirResponse> Mailbox(Bundle bundle, Binary body) => throw new NotImplementedException();
@@ -224,7 +224,7 @@ public class FhirService : IFhirService, IInteractionHandler
         CancellationToken cancellationToken = default)
     {
         var snapshot = await _searchService.GetSnapshot(type, searchCommand, cancellationToken).ConfigureAwait(false);
-        return await CreateSnapshotResponse(snapshot, pageIndex).ConfigureAwait(false);
+        return await CreateSnapshotResponse(snapshot, pageIndex, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> Transaction(IList<Entry> interactions, CancellationToken cancellationToken)
@@ -315,7 +315,7 @@ public class FhirService : IFhirService, IInteractionHandler
     public async Task<FhirResponse> Everything(IKey key, CancellationToken cancellationToken)
     {
         var snapshot = await _searchService.GetSnapshotForEverything(key, cancellationToken).ConfigureAwait(false);
-        return await CreateSnapshotResponse(snapshot).ConfigureAwait(false);
+        return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> Document(IKey key, CancellationToken cancellationToken)
@@ -400,9 +400,9 @@ public class FhirService : IFhirService, IInteractionHandler
 
         return result;
     }
-    private async Task<FhirResponse> CreateSnapshotResponse(Snapshot snapshot, int pageIndex = 0)
+    private async Task<FhirResponse> CreateSnapshotResponse(Snapshot snapshot, int pageIndex, CancellationToken cancellationToken)
     {
-        var pagination = await _pagingService.StartPagination(snapshot).ConfigureAwait(false);
+        var pagination = await _pagingService.StartPagination(snapshot, cancellationToken).ConfigureAwait(false);
         var bundle = await pagination.GetPage(pageIndex).ConfigureAwait(false);
         return _responseFactory.GetFhirResponse(bundle);
     }

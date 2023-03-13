@@ -8,6 +8,7 @@
 
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Interfaces;
@@ -15,24 +16,24 @@ using Interfaces;
 public class PagingService : IPagingService
 {
     private readonly ISnapshotPaginationProvider _paginationProvider;
-    private readonly ISnapshotStore _snapshotstore;
+    private readonly ISnapshotStore _snapshotStore;
 
-    public PagingService(ISnapshotStore snapshotstore, ISnapshotPaginationProvider paginationProvider)
+    public PagingService(ISnapshotStore snapshotStore, ISnapshotPaginationProvider paginationProvider)
     {
-        _snapshotstore = snapshotstore;
+        _snapshotStore = snapshotStore;
         _paginationProvider = paginationProvider;
     }
 
-    public async Task<ISnapshotPagination> StartPagination(Snapshot snapshot)
+    public async Task<ISnapshotPagination> StartPagination(Snapshot snapshot, CancellationToken cancellationToken)
     {
-        await _snapshotstore.AddSnapshot(snapshot).ConfigureAwait(false);
+        await _snapshotStore.AddSnapshot(snapshot, cancellationToken).ConfigureAwait(false);
 
         return _paginationProvider.StartPagination(snapshot);
     }
 
-    public async Task<ISnapshotPagination> StartPagination(string snapshotkey)
+    public async Task<ISnapshotPagination> StartPagination(string snapshotKey, CancellationToken cancellationToken)
     {
-        var snapshot = await _snapshotstore.GetSnapshot(snapshotkey).ConfigureAwait(false);
+        var snapshot = await _snapshotStore.GetSnapshot(snapshotKey, cancellationToken).ConfigureAwait(false);
         return _paginationProvider.StartPagination(snapshot!);
     }
 }

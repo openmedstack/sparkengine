@@ -1,6 +1,7 @@
 ﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
 
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Interfaces;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,7 @@ public class InMemorySnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public Task AddSnapshot(Snapshot snapshot)
+    public Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Snapshot added");
         _snapshots.Add(snapshot);
@@ -25,7 +26,7 @@ public class InMemorySnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public Task<Snapshot?> GetSnapshot(string snapshotId)
+    public Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Returned snapshot {snapshotId}", snapshotId);
         return Task.FromResult(_snapshots.Find(x => x.Id == snapshotId));

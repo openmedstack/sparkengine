@@ -22,7 +22,7 @@ public class DiskFhirStore : IFhirStore
     {
         _serializer = new FhirJsonSerializer();
         _deserializer = new FhirJsonPocoDeserializer();
-        _rootPath = Path.GetFullPath(configuration.RootPath);
+        _rootPath = Path.GetFullPath(Path.Combine(configuration.RootPath, "resources"));
         if (configuration.CreateDirectoryIfNotExists)
         {
             Directory.CreateDirectory(_rootPath);
