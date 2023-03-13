@@ -15,7 +15,7 @@ using Core;
 
 public interface ISnapshotStore
 {
-    Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken);
+    Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken);
 
     Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken);
 }

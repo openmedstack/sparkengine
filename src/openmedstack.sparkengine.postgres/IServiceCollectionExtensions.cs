@@ -13,7 +13,6 @@ using Interfaces;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Newtonsoft.Json;
 using Weasel.Core;
 
 public static class ServiceCollectionExtensions
@@ -26,7 +25,19 @@ public static class ServiceCollectionExtensions
                 o.Serializer(sp.GetRequiredService<ISerializer>());
                 o.Connection(settings.ConnectionString);
                 o.Schema.Include<FhirRegistry>();
-                o.AutoCreateSchemaObjects = AutoCreate.CreateOrUpdate;
+                /*
+                 
+DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
+
+CREATE INDEX IF NOT EXISTS mt_doc_indexentry_idx_data_values
+    ON public.mt_doc_indexentry USING gin
+    ((data -> 'values'::text) jsonb_ops)
+    TABLESPACE pg_default;
+	
+REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
+
+                 */
+                o.AutoCreateSchemaObjects = AutoCreate.CreateOnly;
             }));
         services.TryAddTransient<ISerializer>(
             sp => new CustomSerializer(sp.GetRequiredService<StoreSettings>().SerializerSettings));

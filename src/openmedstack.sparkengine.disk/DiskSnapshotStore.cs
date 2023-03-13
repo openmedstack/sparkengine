@@ -2,16 +2,19 @@
 
 using Core;
 using Interfaces;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 public class DiskSnapshotStore : ISnapshotStore
 {
     private readonly JsonSerializerSettings _serializerSettings;
+    private readonly ILogger<DiskSnapshotStore> _logger;
     private readonly string _rootPath;
 
-    public DiskSnapshotStore(DiskPersistenceConfiguration configuration, JsonSerializerSettings serializerSettings)
+    public DiskSnapshotStore(DiskPersistenceConfiguration configuration, JsonSerializerSettings serializerSettings, ILogger<DiskSnapshotStore> logger)
     {
         _serializerSettings = serializerSettings;
+        _logger = logger;
         _rootPath = Path.Combine(configuration.RootPath, "snapshot");
         if (configuration.CreateDirectoryIfNotExists)
         {
@@ -20,12 +23,16 @@ public class DiskSnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
+    public async Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         var fileName = $"{snapshot.Id}.json";
         var fullPath = Path.GetFullPath(Path.Combine(_rootPath, fileName));
+
+        _logger.LogInformation("Writing snapshot to {path}", fullPath);
+
         var json = JsonConvert.SerializeObject(snapshot, _serializerSettings);
-        return File.WriteAllTextAsync(fullPath, json, cancellationToken);
+        await File.WriteAllTextAsync(fullPath, json, cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     /// <inheritdoc />
@@ -33,6 +40,9 @@ public class DiskSnapshotStore : ISnapshotStore
     {
         var fileName = $"{snapshotId}.json";
         var fullPath = Path.GetFullPath(Path.Combine(_rootPath, fileName));
+        
+        _logger.LogInformation("Reading snapshot from {path}", fullPath);
+
         var json = await File.ReadAllTextAsync(fullPath, cancellationToken);
         return JsonConvert.DeserializeObject<Snapshot>(json, _serializerSettings);
     }

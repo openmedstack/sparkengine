@@ -9,6 +9,7 @@ public record DiskPersistenceConfiguration
     /// Initializes a new instance of the <see cref="DiskPersistenceConfiguration"/> class.
     /// </summary>
     /// <param name="rootPath">The root of the persistence location</param>
+    /// <param name="createDirectoryIfNotExists">Sets whether to create the persistence directory if it doesn't exist.</param>
     public DiskPersistenceConfiguration(string rootPath, bool createDirectoryIfNotExists)
     {
         RootPath = rootPath;

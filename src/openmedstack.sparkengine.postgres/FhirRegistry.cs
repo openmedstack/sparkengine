@@ -31,6 +31,12 @@ public class FhirRegistry : MartenRegistry
             .Identity(x => x.Id)
             .Index(x => x.CanonicalId)
             .Index(x => x.ResourceType)
+            .Index(x => x.Values,
+                idx =>
+                {
+                    idx.Method = IndexMethod.gin;
+                    idx.Mask = "? jsonb_ops";
+                })
             .GinIndexJsonData(
                 idx =>
                 {

@@ -28,13 +28,14 @@ public class MartenSnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public async Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
+    public async Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Snapshot added");
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         session.Store(snapshot);
-        await session.SaveChangesAsync().ConfigureAwait(false);
+        await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     /// <inheritdoc />
@@ -43,7 +44,7 @@ public class MartenSnapshotStore : ISnapshotStore
         _logger.LogDebug("Returned snapshot " + snapshotId);
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        var snapshot = await session.LoadAsync<Snapshot>(snapshotId).ConfigureAwait(false);
+        var snapshot = await session.LoadAsync<Snapshot>(snapshotId, cancellationToken).ConfigureAwait(false);
 
         return snapshot;
     }

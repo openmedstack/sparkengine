@@ -18,11 +18,11 @@ public class InMemorySnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
+    public Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Snapshot added");
         _snapshots.Add(snapshot);
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
     /// <inheritdoc />

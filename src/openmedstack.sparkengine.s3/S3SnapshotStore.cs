@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Runtime;
@@ -19,7 +20,8 @@ public class S3SnapshotStore : ISnapshotStore
     private readonly ILogger<S3SnapshotStore> _logger;
     private readonly AmazonS3Client _client;
 
-    public S3SnapshotStore(S3PersistenceConfiguration configuration,
+    public S3SnapshotStore(
+        S3PersistenceConfiguration configuration,
         string bucket,
         JsonSerializerSettings serializerSettings,
         ILogger<S3SnapshotStore> logger)
@@ -38,12 +40,12 @@ public class S3SnapshotStore : ISnapshotStore
     }
 
     /// <inheritdoc />
-    public async Task AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
+    public async Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
         try
         {
             var serializer = JsonSerializer.Create(_serializerSettings);
-            using var stream = new MemoryStream();
+            await using var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
             await using var _ = writer.ConfigureAwait(false);
             using var jsonWriter = new JsonTextWriter(writer);
@@ -64,12 +66,12 @@ public class S3SnapshotStore : ISnapshotStore
                     },
                     cancellationToken)
                 .ConfigureAwait(false);
-            //return response.HttpStatusCode == HttpStatusCode.OK;
+            return response.HttpStatusCode == HttpStatusCode.OK;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "{error}", ex.Message);
-            //return false;
+            return false;
         }
     }
 
