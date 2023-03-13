@@ -31,7 +31,7 @@ public class ServerStartup
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
         services.AddSingleton<IGenerator, GuidGenerator>();
-        services.AddPostgresFhirStore(new StoreSettings("Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;"))
+        services.AddPostgresFhirStore(new StoreSettings("Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;Pooling=true;"))
             .AddDiskPersistence(new DiskPersistenceConfiguration(Path.Combine(".", "fhir"), true));
         //services.AddSingleton<InMemoryFhirIndex>();
         //services.AddSingleton<IFhirIndex>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
