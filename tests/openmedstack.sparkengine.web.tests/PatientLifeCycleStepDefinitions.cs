@@ -12,7 +12,7 @@ public class PatientLifeCycleStepDefinitions
 {
     private TestFhirServer _server;
     private FhirClient _client;
-    Patient _patient = null!;
+    private Patient _patient = null!;
     
     [Given(@"a running server")]
     public void GivenARunningServer()

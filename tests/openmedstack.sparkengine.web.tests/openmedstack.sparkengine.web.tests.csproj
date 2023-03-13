@@ -22,6 +22,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\openmedstack.sparkengine.disk\openmedstack.sparkengine.disk.csproj" />
+		<ProjectReference Include="..\..\src\openmedstack.sparkengine.postgres\openmedstack.sparkengine.postgres.csproj" />
 		<ProjectReference Include="..\..\src\openmedstack.sparkengine.web\openmedstack.sparkengine.web.csproj" />
 	</ItemGroup>
 

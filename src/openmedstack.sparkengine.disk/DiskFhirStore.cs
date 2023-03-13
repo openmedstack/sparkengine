@@ -23,7 +23,10 @@ public class DiskFhirStore : IFhirStore
         _serializer = new FhirJsonSerializer();
         _deserializer = new FhirJsonPocoDeserializer();
         _rootPath = Path.GetFullPath(configuration.RootPath);
-        Directory.CreateDirectory(_rootPath);
+        if (configuration.CreateDirectoryIfNotExists)
+        {
+            Directory.CreateDirectory(_rootPath);
+        }
     }
 
     /// <inheritdoc />
@@ -38,8 +41,8 @@ public class DiskFhirStore : IFhirStore
         {
             var fileName = $"{Guid.NewGuid():N}.json";
             var fullPath = Path.GetFullPath(Path.Combine(_rootPath, fileName));
-            var json = await _serializer.SerializeToStringAsync(entry.Resource!);
-            await File.WriteAllTextAsync(fullPath, json, cancellationToken);
+            var json = await _serializer.SerializeToStringAsync(entry.Resource!).ConfigureAwait(false);
+            await File.WriteAllTextAsync(fullPath, json, cancellationToken).ConfigureAwait(false);
             _entries.AddOrUpdate(entry.Key.ToOperationPath(), fileName, (_, f) => f);
             _entries.AddOrUpdate(entry.Key.WithoutVersion().ToStorageKey(), fileName, (_, f) => f);
         }

@@ -85,7 +85,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         {
             MatchCount = count,
             UsedCriteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2))
-                .ToList()
+                .ToArray()
         };
 
         results.AddRange(resources);
@@ -141,7 +141,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
                                      && v.Values.OfType<StringValue>().Any(v2 => v2.Value.Equals(kv.Item2)))))
                 .SelectMany(
                     iv => iv.Values.OfType<IndexValue>()
-                        .Where(v => v.Name == "internal_id" || v.Name == "internal_selflink")
+                        .Where(v => v.Name is "internal_id" or "internal_selflink")
                         .Select(v => v.Values.OfType<StringValue>().First().Value))
                 .Distinct();
         }

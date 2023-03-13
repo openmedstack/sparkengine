@@ -101,7 +101,7 @@ public class MartenFhirStore : IFhirStore
         var resource = result?.Resource;
         if (resource == null && result?.StorageKey != null)
         {
-            resource = await _persistence.Get(Key.ParseOperationPath(result.StorageKey), cancellationToken);
+            resource = await _persistence.Get(Key.ParseOperationPath(result.StorageKey), cancellationToken).ConfigureAwait(false);
         }
         return result == null
             ? null
@@ -127,7 +127,7 @@ public class MartenFhirStore : IFhirStore
             var resource = result.Resource;
             if (resource == null && result.StorageKey != null)
             {
-                resource = await _persistence.Get(Key.ParseOperationPath(result.StorageKey), cancellationToken);
+                resource = await _persistence.Get(Key.ParseOperationPath(result.StorageKey), cancellationToken).ConfigureAwait(false);
             }
             yield return Entry.Create(
                 result.Method,

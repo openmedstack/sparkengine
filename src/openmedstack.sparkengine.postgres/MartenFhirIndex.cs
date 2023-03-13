@@ -48,36 +48,32 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("{resource} search requested with {searchCommand}", resource, searchCommand.ToUriParamList().ToQueryString());
+
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         var resourceQuery = session.Query<IndexEntry>()
             .Where(x => x.ResourceType == resource);
+
         resourceQuery = searchCommand.Parameters.Select(tuple => Criterium.Parse(resource, tuple.Item1, tuple.Item2))
-            .Aggregate(
-                resourceQuery,
-                (current, criterium) =>
-                    current.Where(x => x.MatchesSql($"'Values' @? '$[@key] ? ({GetComparison(criterium)})'")));
+            .Select(criterium => $"(data -> 'values') @? '$.{criterium.ParamName} ? ({GetComparison(criterium)})'")
+            .Aggregate(resourceQuery, (current, sql) => current.Where(x => x.MatchesSql(sql)));
 
         if (searchCommand.Count is > 0)
         {
             resourceQuery = resourceQuery.Take(searchCommand.Count.Value);
         }
-        var resources = await resourceQuery.Select(x => x.Id).ToListAsync(cancellationToken);
-        
+        var resources = await resourceQuery.Select(x => new { x.Id, x.CanonicalId })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
         var count = resources.Count;
 
-        if (searchCommand.Count is > 0)
-        {
-            resources = resources.Take(searchCommand.Count.Value).ToList();
-        }
-        
         var results = new SearchResults
         {
             MatchCount = count,
-            UsedCriteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2)).ToList()
+            UsedCriteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2)).ToArray()
         };
 
-        results.AddRange(resources);
+        results.AddRange(resources.SelectMany(x => new[] { x.Id, x.CanonicalId }).Where(x => x != null).Distinct());
 
         return results;
     }
@@ -135,44 +131,21 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         await session.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    //private async Task<List<string>> GetIndexValues(string resource, SearchParams searchCommand)
-    //{
-    //    var criteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2));
-    //    var session = _sessionFunc();
-    //    await using var _ = session.ConfigureAwait(false);
-    //    var queryBuilder = new StringBuilder();
-    //    queryBuilder.Append($@"where data -> 'Values' ->> 'internal_resource' = '{resource}'");
-    //    queryBuilder = criteria.Aggregate(
-    //        queryBuilder,
-    //        (sb, c) => sb.Append($" and data -> 'Values' {GetComparison(c)}"));
-
-    //    var sql = queryBuilder.ToString();
-    //    _logger.LogDebug("Executing query: {sql}", sql);
-    //    var result = await session.QueryAsync<IndexEntry>(sql).ConfigureAwait(false);
-
-    //    return result.SelectMany(iv => iv.Values.Where(v => v.Key is "internal_id" or "internal_selflink"))
-    //        .Select(v => v.Value[0] as string)
-    //        .Where(x => x is not null)
-    //        .Distinct()
-    //        .Select(x => x!)
-    //        .ToList();
-    //}
-
     private static string GetComparison(Criterium criterium)
     {
         return criterium.Operator switch
         {
-            Operator.EQ => $"@ = '{criterium.Operand!.GetValue()}'",
-            Operator.LT => $"@ < '{criterium.Operand!.GetValue()}'",
-            Operator.LTE => $"@ <= '{criterium.Operand!.GetValue()}'",
-            Operator.APPROX => $"@ = '{criterium.Operand!.GetValue()}'",
-            Operator.GTE => $"@ >= '{criterium.Operand!.GetValue()}'",
-            Operator.GT => $"@ > '{criterium.Operand!.GetValue()}'",
+            Operator.EQ => $"@ == \"{criterium.Operand!.GetValue()}\"",
+            Operator.LT => $"@ < {criterium.Operand!.GetValue()}",
+            Operator.LTE => $"@ <= {criterium.Operand!.GetValue()}",
+            Operator.APPROX => $"@ == \"{criterium.Operand!.GetValue()}\"",
+            Operator.GTE => $"@ >= {criterium.Operand!.GetValue()}",
+            Operator.GT => $"@ > {criterium.Operand!.GetValue()}",
             Operator.ISNULL => "@ IS NULL",
             Operator.NOTNULL => "@ IS NOT NULL",
             Operator.IN => $"@ ? {criterium.Operand!.GetValue()}",
             Operator.CHAIN => "@ is null",
-            Operator.NOT_EQUAL => $"@ != '{criterium.Operand!.GetValue()}'",
+            Operator.NOT_EQUAL => $"@ != \"{criterium.Operand!.GetValue()}\"",
             Operator.STARTS_AFTER =>
                 $"@.start[0] > {criterium.Operand!.GetValue()}",
             Operator.ENDS_BEFORE => $"@.end[0] < {criterium.Operand!.GetValue()}",

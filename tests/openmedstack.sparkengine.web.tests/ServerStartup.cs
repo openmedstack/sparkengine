@@ -8,6 +8,7 @@ using Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Postgres;
 using SparkEngine.Service.FhirServiceExtensions;
 using Web.Persistence;
 using Xunit.Abstractions;
@@ -29,15 +30,15 @@ public class ServerStartup
                 ParserSettings = ParserSettings.CreateDefault(),
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
-        services.AddSingleton<InMemoryFhirIndex>();
-        services.AddSingleton<IFhirIndex>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
-        services.AddSingleton<ISnapshotStore, InMemorySnapshotStore>();
-        services.AddSingleton<IHistoryStore, InMemoryHistoryStore>();
         services.AddSingleton<IGenerator, GuidGenerator>();
-        //services.AddSingleton<IFhirStore, InMemoryFhirStore>();
-        services.AddSingleton(new DiskPersistenceConfiguration(Path.Combine(".", "fhir")));
-        services.AddSingleton<IFhirStore, DiskFhirStore>();
-        services.AddSingleton<IIndexStore>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
+        services.AddPostgresFhirStore(new StoreSettings("Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;"))
+            .AddDiskPersistence(new DiskPersistenceConfiguration(Path.Combine(".", "fhir"), true));
+        //services.AddSingleton<InMemoryFhirIndex>();
+        //services.AddSingleton<IFhirIndex>(sp => sp.GetRequiredService<InMemoryFhirIndex>());
+        //services.AddSingleton<ISnapshotStore, InMemorySnapshotStore>();
+        //services.AddSingleton<IHistoryStore, InMemoryHistoryStore>();
+        ////services.AddSingleton<IFhirStore, InMemoryFhirStore>();
+        //services.AddSingleton<IIndexStore, InMemoryFhirIndex>();
         services.AddSingleton<IPatchService, PatchService>();
         services.AddCors();
         services.AddAuthorization()

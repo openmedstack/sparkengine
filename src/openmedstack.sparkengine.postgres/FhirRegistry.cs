@@ -9,6 +9,9 @@
 namespace OpenMedStack.SparkEngine.Postgres;
 
 using Marten;
+using Marten.Schema;
+using Marten.Schema.Indexing.Unique;
+using Weasel.Postgresql.Tables;
 
 public class FhirRegistry : MartenRegistry
 {
@@ -17,8 +20,8 @@ public class FhirRegistry : MartenRegistry
         For<EntryEnvelope>()
             .Index(x => x.Id)
             .Duplicate(x => x.ResourceType)
-            .Duplicate(x => x.ResourceId!)
-            .Duplicate(x => x.VersionId!)
+            .Duplicate(x => x.ResourceId!, notNull: false)
+            .Duplicate(x => x.VersionId!, notNull: false)
             .Duplicate(x => x.ResourceKey)
             .Duplicate(x => x.Deleted)
             .Duplicate(x => x.IsPresent)
@@ -26,8 +29,12 @@ public class FhirRegistry : MartenRegistry
             .GinIndexJsonData();
         For<IndexEntry>()
             .Identity(x => x.Id)
-            .Index(x => x.Id)
-            .Duplicate(x => x.ResourceType)
-            .GinIndexJsonData();
+            .Index(x => x.CanonicalId)
+            .Index(x => x.ResourceType)
+            .GinIndexJsonData(
+                idx =>
+                {
+                    idx.Mask = "? jsonb_ops";
+                });
     }
 }

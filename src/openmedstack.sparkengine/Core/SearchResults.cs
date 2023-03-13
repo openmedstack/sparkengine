@@ -15,27 +15,17 @@ using Search.ValueExpressionTypes;
 
 public class SearchResults : List<string>
 {
-    private readonly OperationOutcome _outcome;
+    private readonly OperationOutcome _outcome = new() { Issue = new List<OperationOutcome.IssueComponent>() };
 
+    public required Criterium[] UsedCriteria { get; init; }
 
-    // todo: I think OperationOutcome logic should be on a higher level or at least not SearchResults specific -mh
-    public SearchResults()
-    {
-        UsedCriteria = new List<Criterium>();
-        MatchCount = 0;
-        _outcome = new OperationOutcome { Issue = new List<OperationOutcome.IssueComponent>() };
-    }
+    public required int MatchCount { get; init; }
 
-    public List<Criterium> UsedCriteria { get; init; }
-    public int MatchCount { get; init; }
     public OperationOutcome? Outcome => _outcome.Issue.Any() ? _outcome : null;
 
     public bool HasErrors
     {
-        get
-        {
-            return Outcome != null && Outcome.Issue.Any(i => i.Severity <= OperationOutcome.IssueSeverity.Error);
-        }
+        get { return Outcome != null && Outcome.Issue.Any(i => i.Severity <= OperationOutcome.IssueSeverity.Error); }
     }
 
     public string UsedParameters

@@ -13,7 +13,7 @@ using Interfaces;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
+using Weasel.Core;
 
 public static class ServiceCollectionExtensions
 {
@@ -25,31 +25,20 @@ public static class ServiceCollectionExtensions
                 o.Serializer<CustomSerializer>();
                 o.Connection(settings.ConnectionString);
                 o.Schema.Include<FhirRegistry>();
+                o.AutoCreateSchemaObjects = AutoCreate.CreateOrUpdate;
             });
         services.AddSingleton<IDocumentStore>(store);
         services.TryAddSingleton(settings);
         services.AddTransient<Func<IDocumentSession>>(
             sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
-        services.TryAddTransient<IFhirStore>(
-            provider => new MartenFhirStore(provider.GetRequiredService<Func<IDocumentSession>>(), provider.GetService<IResourcePersistence>() ?? NoOpPersistence.Get()));
-        services.TryAddTransient<IFhirStorePagedReader>(
-            provider => new MartenFhirStorePagedReader(provider.GetRequiredService<Func<IDocumentSession>>()));
-        services.TryAddTransient<IHistoryStore>(
-            provider => new MartenHistoryStore(provider.GetRequiredService<Func<IDocumentSession>>()));
-        services.TryAddTransient<ISnapshotStore>(
-            provider => new MartenSnapshotStore(
-                provider.GetRequiredService<Func<IDocumentSession>>(),
-                provider.GetRequiredService<ILogger<MartenSnapshotStore>>()));
-        services.TryAddTransient<IFhirStoreAdministration>(
-            provider => new MartenFhirStoreAdministration(provider.GetRequiredService<Func<IDocumentSession>>()));
-        services.TryAddTransient<IIndexStore>(
-            sp => new MartenFhirIndex(
-                sp.GetRequiredService<ILogger<MartenFhirIndex>>(),
-                sp.GetRequiredService<Func<IDocumentSession>>()));
-        services.TryAddTransient<IFhirIndex>(
-            sp => new MartenFhirIndex(
-                sp.GetRequiredService<ILogger<MartenFhirIndex>>(),
-                sp.GetRequiredService<Func<IDocumentSession>>()));
+        services.TryAddTransient<IResourcePersistence>(_ => NoOpPersistence.Get());
+        services.TryAddTransient<IFhirStore, MartenFhirStore>();
+        services.TryAddTransient<IFhirStorePagedReader, MartenFhirStorePagedReader>();
+        services.TryAddTransient<IHistoryStore, MartenHistoryStore>();
+        services.TryAddTransient<ISnapshotStore, MartenSnapshotStore>();
+        services.TryAddTransient<IFhirStoreAdministration, MartenFhirStoreAdministration>();
+        services.TryAddTransient<IIndexStore, MartenFhirIndex>();
+        services.TryAddTransient<IFhirIndex, MartenFhirIndex>();
         return services;
     }
 }
