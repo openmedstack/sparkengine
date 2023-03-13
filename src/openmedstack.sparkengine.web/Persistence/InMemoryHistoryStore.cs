@@ -2,8 +2,8 @@
 
 using System;
 using System.Threading.Tasks;
+using Interfaces;
 using OpenMedStack.SparkEngine.Core;
-using OpenMedStack.SparkEngine.Store.Interfaces;
 
 public class InMemoryHistoryStore : IHistoryStore
 {

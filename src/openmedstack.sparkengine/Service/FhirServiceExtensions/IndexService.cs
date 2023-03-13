@@ -15,11 +15,11 @@ using Core;
 using Extensions;
 using Hl7.Fhir.FhirPath;
 using Hl7.Fhir.Model;
+using Interfaces;
 using Model;
 using Search;
 using Search.Model;
 using Search.ValueExpressionTypes;
-using Store.Interfaces;
 using Task = System.Threading.Tasks.Task;
 
 public class IndexService : IIndexService

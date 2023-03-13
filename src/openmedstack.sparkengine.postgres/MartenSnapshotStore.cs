@@ -11,9 +11,9 @@ namespace OpenMedStack.SparkEngine.Postgres;
 using System;
 using System.Threading.Tasks;
 using Core;
+using Interfaces;
 using Marten;
 using Microsoft.Extensions.Logging;
-using Store.Interfaces;
 
 public class MartenSnapshotStore : ISnapshotStore
 {

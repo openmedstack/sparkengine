@@ -11,7 +11,7 @@ using FhirResponseFactory;
 using FhirServiceExtensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
-using Store.Interfaces;
+using Interfaces;
 using Task = System.Threading.Tasks.Task;
 
 public class FhirService : IFhirService, IInteractionHandler

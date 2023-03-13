@@ -1,4 +1,4 @@
-﻿// /*
+// /*
 //  * Copyright (c) 2014, Furore (info@furore.com) and contributors
 //  * See the file CONTRIBUTORS for details.
 //  *
@@ -6,14 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System.Threading.Tasks;
 using Core;
 
-public interface ICompositeServiceListener : IServiceListener
+public interface IHistoryStore
 {
-    void Add(IServiceListener listener);
-    void Clear();
-    Task Inform(Entry interaction);
+    Task<Snapshot> History(string typename, HistoryParameters parameters);
+    Task<Snapshot> History(IKey key, HistoryParameters parameters);
+    Task<Snapshot> History(HistoryParameters parameters);
 }

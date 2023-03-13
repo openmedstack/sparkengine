@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using Core;
 using Extensions;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 /// <summary>
 ///     Import can map id's and references  that are local to the Spark Server to absolute id's and references in outgoing

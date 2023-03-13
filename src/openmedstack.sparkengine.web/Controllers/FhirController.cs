@@ -18,6 +18,7 @@ using Core;
 using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
+using Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;

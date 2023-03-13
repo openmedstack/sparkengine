@@ -3,6 +3,7 @@
 using System;
 using Extensions;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 public class Entry
 {

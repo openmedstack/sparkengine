@@ -10,20 +10,14 @@ using Xunit.Abstractions;
 [Binding]
 public class PatientLifeCycleStepDefinitions
 {
-    private readonly ITestOutputHelper _outputHelper;
     private TestFhirServer _server;
     private FhirClient _client;
     Patient _patient = null!;
-
-    public PatientLifeCycleStepDefinitions(ITestOutputHelper outputHelper)
-    {
-        _outputHelper = outputHelper;
-    }
-
+    
     [Given(@"a running server")]
     public void GivenARunningServer()
     {
-        _server = new TestFhirServer(_outputHelper, "https://localhost:60001");
+        _server = new TestFhirServer("https://localhost:60001");
     }
 
     [Given(@"a FHIR client")]

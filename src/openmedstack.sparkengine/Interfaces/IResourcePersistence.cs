@@ -1,4 +1,4 @@
-namespace OpenMedStack.SparkEngine.Store.Interfaces;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System.Threading;
 using System.Threading.Tasks;

@@ -6,12 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
-public interface IKey
+using System.Threading.Tasks;
+using Core;
+
+public interface ICompositeServiceListener : IServiceListener
 {
-    string? Base { get; }
-    string? TypeName { get; }
-    string? ResourceId { get; }
-    string? VersionId { get; }
+    void Add(IServiceListener listener);
+    void Clear();
+    Task Inform(Entry interaction);
 }

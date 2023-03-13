@@ -6,7 +6,7 @@
  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Core;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System;
 

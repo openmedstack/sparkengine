@@ -9,6 +9,7 @@
 namespace OpenMedStack.SparkEngine.Core;
 
 using System;
+using Interfaces;
 
 public class Localhost : ILocalhost
 {

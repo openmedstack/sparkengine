@@ -2,14 +2,13 @@
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Xunit.Abstractions;
 
 public class TestFhirServer
 {
     public TestServer Server { get; }
-    public TestFhirServer(ITestOutputHelper outputHelper, params string[] urls)
+    public TestFhirServer(params string[] urls)
     {
-        var startup = new ServerStartup(outputHelper);
+        var startup = new ServerStartup();
         Server = new TestServer(
             new WebHostBuilder().UseUrls(urls)
                 .ConfigureServices(

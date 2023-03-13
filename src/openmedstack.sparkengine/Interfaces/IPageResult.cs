@@ -6,13 +6,15 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
-using System;
-using System.Threading.Tasks;
-using Core;
+using System.Collections.Generic;
 
-public interface IServiceListener
+public interface IPageResult<out T>
 {
-    Task Inform(Uri location, Entry interaction);
+    long TotalRecords { get; }
+
+    long TotalPages { get; }
+
+    IAsyncEnumerable<T> IterateAllPages();
 }

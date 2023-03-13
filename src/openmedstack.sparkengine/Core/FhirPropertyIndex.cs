@@ -17,6 +17,7 @@ using Extensions;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Validation;
+using Interfaces;
 
 /// <summary>
 ///     Singleton class to hold a reference to every property of every type of resource that may be of interest in

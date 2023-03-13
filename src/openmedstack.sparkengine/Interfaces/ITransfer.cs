@@ -6,12 +6,13 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
+using Service;
 
 public interface ITransfer
 {

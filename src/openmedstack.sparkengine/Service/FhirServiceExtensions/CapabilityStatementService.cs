@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
 using Core;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 public class CapabilityStatementService : ICapabilityStatementService
 {

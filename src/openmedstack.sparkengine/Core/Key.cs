@@ -9,6 +9,7 @@
 namespace OpenMedStack.SparkEngine.Core;
 
 using Extensions;
+using Interfaces;
 
 // BALLOT: ResourceId is in the standard called "Logical Id" but this term doesn't have a lot of meaning. I propose "Technical Id" or "Surrogate key"
 // http://en.wikipedia.org/wiki/Surrogate_key

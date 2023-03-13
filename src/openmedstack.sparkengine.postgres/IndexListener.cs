@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Postgres;
 using System;
 using System.Threading.Tasks;
 using Core;
+using Interfaces;
 using Service;
 
 public class IndexListener : IServiceListener

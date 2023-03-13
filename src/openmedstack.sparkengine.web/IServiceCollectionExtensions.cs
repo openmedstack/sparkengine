@@ -22,7 +22,6 @@ using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenMedStack.SparkEngine.Store.Interfaces;
 using OpenMedStack.SparkEngine.Web.Persistence;
 using Search;
 using Service;

@@ -12,6 +12,7 @@ using System;
 using System.Linq;
 using Core;
 using Extensions;
+using Interfaces;
 using ValueExpressionTypes;
 
 public class ReferenceNormalizationService : IReferenceNormalizationService

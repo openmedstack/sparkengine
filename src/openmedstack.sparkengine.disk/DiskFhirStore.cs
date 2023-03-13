@@ -7,7 +7,7 @@ using Core;
 using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
-using Store.Interfaces;
+using Interfaces;
 using Task = System.Threading.Tasks.Task;
 
 public class DiskFhirStore : IFhirStore

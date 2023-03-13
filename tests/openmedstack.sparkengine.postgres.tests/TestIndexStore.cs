@@ -1,8 +1,8 @@
 namespace OpenMedStack.SparkEngine.Postgres.Tests;
 
+using Interfaces;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Model;
-using OpenMedStack.SparkEngine.Store.Interfaces;
 
 internal class TestIndexStore : IIndexStore
 {

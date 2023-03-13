@@ -6,8 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Core;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
+using Core;
 using Task = System.Threading.Tasks.Task;
 
 public interface IIndexService

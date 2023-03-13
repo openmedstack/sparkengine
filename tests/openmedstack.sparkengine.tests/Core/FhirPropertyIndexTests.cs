@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Tests.Core;
 using System;
 using System.Collections.Generic;
 using Hl7.Fhir.Model;
+using Interfaces;
 using SparkEngine.Core;
 using Xunit;
 

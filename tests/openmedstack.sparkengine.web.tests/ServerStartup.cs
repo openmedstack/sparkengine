@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using SparkEngine.Service.FhirServiceExtensions;
-using Store.Interfaces;
 using Web.Persistence;
 using Xunit.Abstractions;
 using InMemoryHistoryStore = Persistence.InMemoryHistoryStore;
@@ -17,13 +16,6 @@ using InMemorySnapshotStore = Persistence.InMemorySnapshotStore;
 
 public class ServerStartup
 {
-    private readonly ITestOutputHelper _outputHelper;
-
-    public ServerStartup(ITestOutputHelper outputHelper)
-    {
-        _outputHelper = outputHelper;
-    }
-
     public void ConfigureServices(IServiceCollection services)
     {
         //services.AddControllers();

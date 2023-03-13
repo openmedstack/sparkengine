@@ -15,6 +15,7 @@ using System.Linq;
 using Core;
 using Extensions;
 using Hl7.Fhir.Model;
+using Interfaces;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.Extensions.Logging;
 using SparkEngine.Model;

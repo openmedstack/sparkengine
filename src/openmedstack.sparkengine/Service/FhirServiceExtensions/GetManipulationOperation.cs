@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Core;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
+using Interfaces;
 
 public class GetManipulationOperation : ResourceManipulationOperation
 {

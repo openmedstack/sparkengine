@@ -8,6 +8,7 @@ using System.Linq;
 using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
+using Interfaces;
 using Model;
 
 public class FhirModel : IFhirModel

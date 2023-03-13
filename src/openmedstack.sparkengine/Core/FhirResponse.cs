@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Core;
 
 using System.Net;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 public class FhirResponse
 {

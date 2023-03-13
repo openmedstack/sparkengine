@@ -7,7 +7,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System.Collections.Generic;
 using System.Threading;

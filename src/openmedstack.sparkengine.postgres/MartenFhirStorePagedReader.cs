@@ -15,9 +15,9 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
+using Interfaces;
 using Marten;
 using Marten.Pagination;
-using Store.Interfaces;
 
 public class MartenFhirStorePagedReader : IFhirStorePagedReader
 {

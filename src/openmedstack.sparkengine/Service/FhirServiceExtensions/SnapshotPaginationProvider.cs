@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using Core;
 using Extensions;
 using Hl7.Fhir.Model;
-using Store.Interfaces;
+using Interfaces;
 
 public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshotPagination
 {

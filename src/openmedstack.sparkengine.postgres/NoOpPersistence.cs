@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Hl7.Fhir.Model;
-using Store.Interfaces;
+using Interfaces;
 using Task = System.Threading.Tasks.Task;
 
 public class NoOpPersistence : IResourcePersistence

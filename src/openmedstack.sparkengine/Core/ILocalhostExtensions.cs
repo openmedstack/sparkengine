@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Core;
 using System;
 using Extensions;
 using Hl7.Fhir.Rest;
+using Interfaces;
 
 public static class LocalhostExtensions
 {

@@ -12,7 +12,6 @@ using OpenMedStack.SparkEngine.Extensions;
 using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Model;
 using OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
-using OpenMedStack.SparkEngine.Store.Interfaces;
 
 public class InMemoryFhirIndex : IFhirIndex, IIndexStore
 {

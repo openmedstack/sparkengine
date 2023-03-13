@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 public static class EntryExtensions
 {

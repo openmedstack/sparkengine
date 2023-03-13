@@ -20,10 +20,9 @@ using Core;
 using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Store.Interfaces;
-
 
 public class S3ResourcePersistence : IResourcePersistence
 {

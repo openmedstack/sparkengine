@@ -11,8 +11,8 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 using System;
 using System.Threading.Tasks;
 using Core;
+using Interfaces;
 using Maintenance;
-using Store.Interfaces;
 
 public class IndexRebuildService : IIndexRebuildService
 {

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 public interface IFhirResponseFactory
 {

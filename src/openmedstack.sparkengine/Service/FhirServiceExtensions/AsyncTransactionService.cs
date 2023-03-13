@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using Core;
 using Extensions;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 public class AsyncTransactionService : ITransactionService
 {

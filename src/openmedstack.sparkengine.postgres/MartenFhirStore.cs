@@ -15,9 +15,9 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
+using Interfaces;
 using Marten;
 using SparkEngine.Extensions;
-using Store.Interfaces;
 using Task = System.Threading.Tasks.Task;
 
 public class MartenFhirStore : IFhirStore

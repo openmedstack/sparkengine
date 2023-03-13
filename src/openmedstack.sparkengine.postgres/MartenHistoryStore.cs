@@ -15,9 +15,9 @@ using System.Threading.Tasks;
 using Core;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
+using Interfaces;
 using Marten;
 using SparkEngine.Extensions;
-using Store.Interfaces;
 
 public class MartenHistoryStore : IHistoryStore
 {

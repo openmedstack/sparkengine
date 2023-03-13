@@ -1,4 +1,4 @@
-// /*
+﻿// /*
 //  * Copyright (c) 2014, Furore (info@furore.com) and contributors
 //  * See the file CONTRIBUTORS for details.
 //  *
@@ -6,17 +6,13 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Threading;
 using Core;
-using Model;
 
-public interface IIndexStore
+public interface IFhirStorePagedReader
 {
-    Task Save(IndexValue indexValue);
-
-    Task Delete(Entry entry);
-
-    Task Clean();
+    IAsyncEnumerable<Entry> Read(FhirStorePageReaderOptions? options = null, CancellationToken cancellationToken = default);
 }

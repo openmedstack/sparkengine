@@ -9,6 +9,7 @@ using Core;
 using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
+using Interfaces;
 
 public static partial class ResourceManipulationOperationFactory
 {

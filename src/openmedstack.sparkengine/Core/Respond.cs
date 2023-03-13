@@ -11,6 +11,7 @@ namespace OpenMedStack.SparkEngine.Core;
 using System.Net;
 using Extensions;
 using Hl7.Fhir.Model;
+using Interfaces;
 
 // This class serves instances of "Response"
 public static class Respond

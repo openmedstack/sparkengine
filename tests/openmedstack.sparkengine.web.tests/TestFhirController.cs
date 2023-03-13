@@ -1,6 +1,7 @@
 ﻿namespace OpenMedStack.SparkEngine.Web.Tests;
 
 using Controllers;
+using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using SparkEngine.Service;
 

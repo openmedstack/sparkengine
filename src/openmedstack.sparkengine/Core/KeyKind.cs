@@ -8,6 +8,8 @@
 
 namespace OpenMedStack.SparkEngine.Core;
 
+using Interfaces;
+
 /// <summary>
 ///     Any <see cref="IKey" /> will be triaged by an <see cref="ILocalhost" /> as one of these.
 /// </summary>

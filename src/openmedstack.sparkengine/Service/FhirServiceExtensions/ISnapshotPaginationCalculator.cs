@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
 using System.Collections.Generic;
 using Core;
+using Interfaces;
 
 public interface ISnapshotPaginationCalculator
 {

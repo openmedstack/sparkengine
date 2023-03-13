@@ -14,7 +14,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
-using Store.Interfaces;
+using Interfaces;
 
 public class ResourceStorageService : IResourceStorageService
 {

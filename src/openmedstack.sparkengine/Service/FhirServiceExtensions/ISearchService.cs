@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Hl7.Fhir.Rest;
+using Interfaces;
 
 public interface ISearchService
 {

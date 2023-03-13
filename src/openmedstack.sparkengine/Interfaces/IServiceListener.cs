@@ -6,13 +6,13 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Store.Interfaces;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
-using System.Collections.Generic;
-using System.Threading;
+using System;
+using System.Threading.Tasks;
 using Core;
 
-public interface IFhirStorePagedReader
+public interface IServiceListener
 {
-    IAsyncEnumerable<Entry> Read(FhirStorePageReaderOptions? options = null, CancellationToken cancellationToken = default);
+    Task Inform(Uri location, Entry interaction);
 }

@@ -2,9 +2,9 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenMedStack.SparkEngine.Core;
-using OpenMedStack.SparkEngine.Store.Interfaces;
 
 public class InMemorySnapshotStore : ISnapshotStore
 {
