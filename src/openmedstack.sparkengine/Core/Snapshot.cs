@@ -13,15 +13,22 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Hl7.Fhir.Model;
+using Newtonsoft.Json;
 
 public class Snapshot
 {
-    private Snapshot(string id)
+    [JsonConstructor]
+    private Snapshot()
     {
-        Id = id;
+        Id = CreateKey();
         Keys = Enumerable.Empty<string>();
         Includes = new Collection<string>();
         ReverseIncludes = new Collection<string>();
+    }
+
+    private Snapshot(string id) : this()
+    {
+        Id = id;
     }
 
     //public const int NOCOUNT = -1;
@@ -29,24 +36,24 @@ public class Snapshot
 
     public ICollection<string> Includes { get; set; }
 
-    public string Id { get; }
-    public Bundle.BundleType Type { get; private init; }
+    public string Id { get; init; }
+    public Bundle.BundleType Type { get; init; }
 
-    public IEnumerable<string> Keys { get; init; }
+    public IEnumerable<string> Keys { get; set; }
 
     //public string FeedTitle { get; set; }
     public string FeedSelfLink { get; init; } = null!;
-    public int Count { get; private init; }
-    public int? CountParam { get; private init; }
+    public int Count { get; init; }
+    public int? CountParam { get; init; }
     public DateTimeOffset WhenCreated { get; set; }
-    public string? SortBy { get; private init; }
+    public string? SortBy { get; init; }
     public ICollection<string> ReverseIncludes { get; set; }
 
     public static Snapshot Create(
         Bundle.BundleType type,
-        Uri selflink,
+        Uri selfLink,
         IList<string> keys,
-        string? sortby,
+        string? sortBy,
         int? count,
         IList<string> includes,
         IList<string> reverseIncludes)
@@ -55,13 +62,13 @@ public class Snapshot
         {
             Type = type,
             WhenCreated = DateTimeOffset.UtcNow,
-            FeedSelfLink = selflink.ToString(),
+            FeedSelfLink = selfLink.ToString(),
             Includes = includes,
             ReverseIncludes = reverseIncludes,
             Keys = keys,
             Count = keys.Count,
             CountParam = NormalizeCount(count),
-            SortBy = sortby
+            SortBy = sortBy
         };
 
         return snapshot;

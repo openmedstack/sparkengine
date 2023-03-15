@@ -34,7 +34,7 @@ public class MartenFhirStore : IFhirStore
     /// <inheritdoc />
     public async Task<Entry> Add(Entry entry, CancellationToken cancellationToken = default)
     {
-        if (entry.Key == null || entry.Resource == null)
+        if (entry.Resource == null)
         {
             return entry;
         }

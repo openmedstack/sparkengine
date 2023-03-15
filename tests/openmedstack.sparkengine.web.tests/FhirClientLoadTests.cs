@@ -145,6 +145,7 @@ public class FhirClientLoadTests : IDisposable
         stopwatch.Start();
 
         var searchParams = new SearchParams("name", "Roxane") { Sort = { ("name", SortOrder.Descending) } };
+        var u = searchParams.ToUriParamList();
         var queryResult = await client.SearchAsync(searchParams, "Patient").ConfigureAwait(false);
         Assert.True(queryResult.Total > 0);
 
