@@ -6,50 +6,49 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
+namespace OpenMedStack.SparkEngine.Service;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Mapper<TKey, TValue> where TKey : notnull
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
+    private readonly Dictionary<TKey, TValue> _mapping = new();
 
-    public class Mapper<TKey, TValue> where TKey : notnull
+    public TValue? TryGet(TKey key)
     {
-        private readonly Dictionary<TKey, TValue> _mapping = new();
+        return _mapping.TryGetValue(key, out var value) ? value : default;
+    }
 
-        public TValue? TryGet(TKey key)
+    public bool Exists(TKey key)
+    {
+        return _mapping.Any(item => item.Key.Equals(key));
+    }
+
+    public void Remap(TKey key, TValue value)
+    {
+        if (Exists(key))
         {
-            return _mapping.TryGetValue(key, out var value) ? value : default;
+            _mapping[key] = value;
         }
-
-        public bool Exists(TKey key)
+        else
         {
-            return _mapping.Any(item => item.Key.Equals(key));
+            _mapping.Add(key, value);
         }
+    }
 
-        public void Remap(TKey key, TValue value)
+    public void Merge(Mapper<TKey, TValue> mapper)
+    {
+        foreach (var (key, value) in mapper._mapping)
         {
-            if (Exists(key))
-            {
-                _mapping[key] = value;
-            }
-            else
+            if (!Exists(key))
             {
                 _mapping.Add(key, value);
             }
-        }
-
-        public void Merge(Mapper<TKey, TValue> mapper)
-        {
-            foreach (var (key, value) in mapper._mapping)
+            else if (Exists(key) && TryGet(key)?.Equals(value) == false)
             {
-                if (!Exists(key))
-                {
-                    _mapping.Add(key, value);
-                }
-                else if (Exists(key) && TryGet(key)?.Equals(value) == false)
-                {
-                    throw new InvalidOperationException("Incompatible mappings");
-                }
+                throw new InvalidOperationException("Incompatible mappings");
             }
         }
     }

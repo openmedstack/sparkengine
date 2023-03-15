@@ -6,12 +6,11 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Maintenance
+namespace OpenMedStack.SparkEngine.Maintenance;
+
+internal enum MaintenanceLockMode
 {
-    internal enum MaintenanceLockMode
-    {
-        None = 0,
-        Write = 1,
-        Full = 2
-    }
+    None = 0,
+    Write = 1,
+    Full = 2
 }

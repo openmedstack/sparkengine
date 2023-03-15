@@ -6,21 +6,20 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+public abstract class ValueExpression : Expression
 {
-    public abstract class ValueExpression : Expression
+    public string ToUnescapedString()
     {
-        public string ToUnescapedString()
+        ValueExpression value = this;
+        if (value is UntypedValue untyped)
         {
-            ValueExpression value = this;
-            if (value is UntypedValue untyped)
-            {
-                value = untyped.AsStringValue();
+            value = untyped.AsStringValue();
 
-                return StringValue.UnescapeString(value.ToString()!);
-            }
-
-            return value.ToString()!;
+            return StringValue.UnescapeString(value.ToString()!);
         }
+
+        return value.ToString()!;
     }
 }

@@ -6,11 +6,10 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.Support
+namespace OpenMedStack.SparkEngine.Search.Support;
+
+public interface IPostitionInfo
 {
-    public interface IPostitionInfo
-    {
-        int LineNumber { get; }
-        int LinePosition { get; }
-    }
+    int LineNumber { get; }
+    int LinePosition { get; }
 }

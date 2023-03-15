@@ -6,69 +6,68 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Auxiliary
+namespace OpenMedStack.SparkEngine.Auxiliary;
+
+using System;
+using System.IO;
+
+public class LimitedStream : Stream
 {
-    using System;
-    using System.IO;
+    private readonly Stream _innerStream;
 
-    public class LimitedStream : Stream
+    /// <summary>
+    ///     Creates a write limit on the underlying <paramref name="stream" /> of <paramref name="sizeLimitInBytes" />, which
+    ///     has a default of 2048 (2kB).
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <param name="sizeLimitInBytes"></param>
+    public LimitedStream(Stream stream, long sizeLimitInBytes = 2048)
     {
-        private readonly Stream _innerStream;
+        _innerStream = stream ?? throw new ArgumentNullException(nameof(stream), "stream cannot be null");
+        SizeLimitInBytes = sizeLimitInBytes;
+    }
 
-        /// <summary>
-        ///     Creates a write limit on the underlying <paramref name="stream" /> of <paramref name="sizeLimitInBytes" />, which
-        ///     has a default of 2048 (2kB).
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <param name="sizeLimitInBytes"></param>
-        public LimitedStream(Stream stream, long sizeLimitInBytes = 2048)
+    public long SizeLimitInBytes { get; }
+
+    public override bool CanRead => _innerStream.CanRead;
+
+    public override bool CanSeek => _innerStream.CanSeek;
+
+    public override bool CanWrite => _innerStream.CanWrite && _innerStream.Length < SizeLimitInBytes;
+
+    public override long Length => _innerStream.Length;
+
+    public override long Position
+    {
+        get => _innerStream.Position;
+
+        set => _innerStream.Position = value;
+    }
+
+    public override void Flush()
+    {
+        _innerStream.Flush();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) => _innerStream.Read(buffer, offset, count);
+
+    public override long Seek(long offset, SeekOrigin origin) => _innerStream.Seek(offset, origin);
+
+    public override void SetLength(long value)
+    {
+        _innerStream.SetLength(value);
+    }
+
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        var bytesToBeAdded = Math.Min(buffer.Length - offset, count);
+        if (Length + bytesToBeAdded > SizeLimitInBytes)
         {
-            _innerStream = stream ?? throw new ArgumentNullException(nameof(stream), "stream cannot be null");
-            SizeLimitInBytes = sizeLimitInBytes;
+            throw new ArgumentOutOfRangeException(
+                nameof(buffer),
+                $"Adding {bytesToBeAdded} bytes to the stream would exceed the size limit of {SizeLimitInBytes} bytes.");
         }
 
-        public long SizeLimitInBytes { get; }
-
-        public override bool CanRead => _innerStream.CanRead;
-
-        public override bool CanSeek => _innerStream.CanSeek;
-
-        public override bool CanWrite => _innerStream.CanWrite && _innerStream.Length < SizeLimitInBytes;
-
-        public override long Length => _innerStream.Length;
-
-        public override long Position
-        {
-            get => _innerStream.Position;
-
-            set => _innerStream.Position = value;
-        }
-
-        public override void Flush()
-        {
-            _innerStream.Flush();
-        }
-
-        public override int Read(byte[] buffer, int offset, int count) => _innerStream.Read(buffer, offset, count);
-
-        public override long Seek(long offset, SeekOrigin origin) => _innerStream.Seek(offset, origin);
-
-        public override void SetLength(long value)
-        {
-            _innerStream.SetLength(value);
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            var bytesToBeAdded = Math.Min(buffer.Length - offset, count);
-            if (Length + bytesToBeAdded > SizeLimitInBytes)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(buffer),
-                    $"Adding {bytesToBeAdded} bytes to the stream would exceed the size limit of {SizeLimitInBytes} bytes.");
-            }
-
-            _innerStream.Write(buffer, offset, count);
-        }
+        _innerStream.Write(buffer, offset, count);
     }
 }

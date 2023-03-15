@@ -7,61 +7,67 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Interfaces;
+
+public class ResourceStorageService : IResourceStorageService
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Core;
-    using Store.Interfaces;
+    private readonly IFhirStore _fhirStore;
+    private readonly ITransfer _transfer;
 
-    public class ResourceStorageService : IResourceStorageService
+
+    public ResourceStorageService(ITransfer transfer, IFhirStore fhirStore)
     {
-        private readonly IFhirStore _fhirStore;
-        private readonly ITransfer _transfer;
+        _transfer = transfer;
+        _fhirStore = fhirStore;
+    }
 
+    /// <inheritdoc />
+    public Task<bool> Exists(IKey key, CancellationToken cancellationToken) => _fhirStore.Exists(key);
 
-        public ResourceStorageService(ITransfer transfer, IFhirStore fhirStore)
+    public async Task<Entry?> Get(IKey key, CancellationToken cancellationToken)
+    {
+        var entry = await _fhirStore.Get(key, cancellationToken).ConfigureAwait(false);
+        if (entry != null)
         {
-            _transfer = transfer;
-            _fhirStore = fhirStore;
+            _transfer.Externalize(entry);
         }
 
-        /// <inheritdoc />
-        public Task<bool> Exists(IKey key) => _fhirStore.Exists(key);
+        return entry;
+    }
 
-        public async Task<Entry?> Get(IKey key)
+    public async Task<Entry> Add(Entry entry, CancellationToken cancellationToken)
+    {
+        if (entry.State != EntryState.Internal)
         {
-            var entry = await _fhirStore.Get(key).ConfigureAwait(false);
-            if (entry != null)
-            {
-                _transfer.Externalize(entry);
-            }
-
-            return entry;
+            await _transfer.Internalize(entry, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<Entry> Add(Entry entry)
+        await _fhirStore.Add(entry, cancellationToken).ConfigureAwait(false);
+        var result = entry.IsDelete
+            ? entry
+            : await _fhirStore.Get(entry.Key, cancellationToken).ConfigureAwait(false);
+
+        if (result != null)
         {
-            if (entry.State != EntryState.Internal)
-            {
-                await _transfer.Internalize(entry).ConfigureAwait(false);
-            }
-
-            await _fhirStore.Add(entry).ConfigureAwait(false);
-            var result = entry.IsDelete ? entry : await _fhirStore.Get(entry.Key).ConfigureAwait(false);
-
-            if (result != null)
-            {
-                _transfer.Externalize(result);
-            }
-
-            return result ?? entry;
+            _transfer.Externalize(result);
         }
 
-        public IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null)
-        {
-            return _transfer.Externalize(_fhirStore.Get(localIdentifiers.Select(k => (IKey)Key.ParseOperationPath(k))));
-        }
+        return result ?? entry;
+    }
+
+    public IAsyncEnumerable<Entry> Get(
+        IEnumerable<string> localIdentifiers,
+        string? sortBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _transfer.Externalize(
+            _fhirStore.Get(localIdentifiers.Select(k => (IKey)Key.ParseOperationPath(k)), cancellationToken));
     }
 }

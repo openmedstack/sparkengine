@@ -6,55 +6,54 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
-{
-    using System;
-    using Interfaces;
-    using Marten;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
-    using Microsoft.Extensions.Logging;
-    using Service;
-    using Service.FhirServiceExtensions;
-    using Store.Interfaces;
+namespace OpenMedStack.SparkEngine.Postgres;
 
-    public static class ServiceCollectionExtensions
+using System;
+using Interfaces;
+using Marten;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Weasel.Core;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
     {
-        public static IServiceCollection AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
-        {
-            var store = DocumentStore.For(
-                o =>
-                {
-                    o.Serializer<CustomSerializer>();
-                    o.Connection(settings.ConnectionString);
-                    //o.PLV8Enabled = false;
-                    o.Schema.Include<FhirRegistry>();
-                });
-            services.AddSingleton<IDocumentStore>(store);
-            services.TryAddSingleton(settings);
-            services.AddTransient<Func<IDocumentSession>>(
-                sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
-            services.TryAddTransient<IFhirStore>(
-                provider => new MartenFhirStore(provider.GetRequiredService<Func<IDocumentSession>>()));
-            services.TryAddTransient<IFhirStorePagedReader>(
-                provider => new MartenFhirStorePagedReader(provider.GetRequiredService<Func<IDocumentSession>>()));
-            services.TryAddTransient<IHistoryStore>(
-                provider => new MartenHistoryStore(provider.GetRequiredService<Func<IDocumentSession>>()));
-            services.TryAddTransient<ISnapshotStore>(
-                provider => new MartenSnapshotStore(
-                    provider.GetRequiredService<Func<IDocumentSession>>(),
-                    provider.GetRequiredService<ILogger<MartenSnapshotStore>>()));
-            services.TryAddTransient<IFhirStoreAdministration>(
-                provider => new MartenFhirStoreAdministration(provider.GetRequiredService<Func<IDocumentSession>>()));
-            services.TryAddTransient<IIndexStore>(
-                sp => new MartenFhirIndex(
-                    sp.GetRequiredService<ILogger<MartenFhirIndex>>(),
-                    sp.GetRequiredService<Func<IDocumentSession>>()));
-            services.TryAddTransient<IFhirIndex>(
-                sp => new MartenFhirIndex(
-                    sp.GetRequiredService<ILogger<MartenFhirIndex>>(),
-                    sp.GetRequiredService<Func<IDocumentSession>>()));
-            return services;
-        }
+        services.AddSingleton<IDocumentStore>(sp => DocumentStore.For(
+            o =>
+            {
+                o.Serializer(sp.GetRequiredService<ISerializer>());
+                o.Connection(settings.ConnectionString);
+                o.Schema.Include<FhirRegistry>();
+                /*
+                 
+DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
+
+CREATE INDEX IF NOT EXISTS mt_doc_indexentry_idx_data_values
+    ON public.mt_doc_indexentry USING gin
+    ((data -> 'values'::text) jsonb_ops)
+    TABLESPACE pg_default;
+	
+REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
+
+                 */
+                o.AutoCreateSchemaObjects = AutoCreate.None;
+            }));
+        services.TryAddSingleton(settings);
+        services.TryAddTransient<ISerializer>(
+            sp => new CustomSerializer(sp.GetRequiredService<StoreSettings>().SerializerSettings));
+        services.TryAddTransient(
+            sp => sp.GetRequiredService<StoreSettings>().SerializerSettings);
+        services.AddTransient<Func<IDocumentSession>>(
+            sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
+        services.TryAddTransient<IResourcePersistence>(_ => NoOpPersistence.Get());
+        services.TryAddTransient<IFhirStore, MartenFhirStore>();
+        services.TryAddTransient<IFhirStorePagedReader, MartenFhirStorePagedReader>();
+        services.TryAddTransient<IHistoryStore, MartenHistoryStore>();
+        services.TryAddTransient<ISnapshotStore, MartenSnapshotStore>();
+        services.TryAddTransient<IFhirStoreAdministration, MartenFhirStoreAdministration>();
+        services.TryAddTransient<IIndexStore, MartenFhirIndex>();
+        services.TryAddTransient<IFhirIndex, MartenFhirIndex>();
+        return services;
     }
 }

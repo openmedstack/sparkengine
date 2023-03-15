@@ -7,201 +7,201 @@
  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
  */
 
-namespace OpenMedStack.SparkEngine.Service
+namespace OpenMedStack.SparkEngine.Service;
+
+using System;
+using System.Linq;
+using System.Net;
+using Core;
+using Extensions;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Utility;
+using Interfaces;
+using Error = Core.Error;
+
+public static class Validate
 {
-    using System;
-    using System.Linq;
-    using System.Net;
-    using Core;
-    using Extensions;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Utility;
-    using Error = Core.Error;
-
-    public static class Validate
+    public static void TypeName(string name)
     {
-        public static void TypeName(string name)
+        if (ModelInfo.SupportedResources.Contains(name))
         {
-            if (ModelInfo.SupportedResources.Contains(name))
-            {
-                return;
-            }
-
-            //  Test for the most common mistake first: wrong casing of the resource name
-            var correct =
-                ModelInfo.SupportedResources.FirstOrDefault(s => s.ToUpperInvariant() == name.ToUpperInvariant());
-            if (correct != null)
-            {
-                throw Error.NotFound("Wrong casing of collection name, try '{0}' instead", correct);
-            }
-
-            throw Error.NotFound("Unknown resource collection '{0}'", name);
+            return;
         }
 
-        public static void ResourceType(IKey key, Resource? resource)
+        //  Test for the most common mistake first: wrong casing of the resource name
+        var correct =
+            ModelInfo.SupportedResources.FirstOrDefault(s => s.ToUpperInvariant() == name.ToUpperInvariant());
+        if (correct != null)
         {
-            if (resource == null)
-            {
-                throw Error.BadRequest("Request did not contain a body");
-            }
-
-            if (key.TypeName != resource.TypeName)
-            {
-                throw Error.BadRequest(
-                    "Received a body with a '{0}' resource, which does not match the indicated collection '{1}' in the url.",
-                    resource.TypeName,
-                    key.TypeName ?? "unknown");
-            }
+            throw Error.NotFound("Wrong casing of collection name, try '{0}' instead", correct);
         }
 
-        public static void ValidateKey(IKey key, bool withVersion = false)
+        throw Error.NotFound("Unknown resource collection '{0}'", name);
+    }
+
+    public static void ResourceType(IKey key, Resource? resource)
+    {
+        if (resource == null)
         {
-            Validate.HasTypeName(key);
-            Validate.HasResourceId(key);
-            if (withVersion)
-            {
-                Validate.HasVersion(key);
-            }
-            else
-            {
-                Validate.HasNoVersion(key);
-            }
+            throw Error.BadRequest("Request did not contain a body");
         }
 
-        public static void Key(IKey? key)
+        if (key.TypeName != resource.TypeName)
         {
-            if (key.HasResourceId())
-            {
-                ResourceId(key!.ResourceId!);
-            }
+            throw Error.BadRequest(
+                "Received a body with a '{0}' resource, which does not match the indicated collection '{1}' in the url.",
+                resource.TypeName,
+                key.TypeName ?? "unknown");
+        }
+    }
 
-            if (key.HasVersionId())
-            {
-                VersionId(key!.VersionId!);
-            }
+    public static void ValidateKey(IKey key, bool withVersion = false)
+    {
+        Validate.HasTypeName(key);
+        Validate.HasResourceId(key);
+        if (withVersion)
+        {
+            Validate.HasVersion(key);
+        }
+        else
+        {
+            Validate.HasNoVersion(key);
+        }
+    }
 
-            if (!string.IsNullOrEmpty(key?.TypeName))
-            {
-                TypeName(key.TypeName);
-            }
+    public static void Key(IKey? key)
+    {
+        if (key.HasResourceId())
+        {
+            ResourceId(key!.ResourceId!);
         }
 
-        public static void HasTypeName(IKey key)
+        if (key.HasVersionId())
         {
-            if (string.IsNullOrEmpty(key.TypeName))
-            {
-                throw Error.BadRequest("Resource type is missing: {0}", key);
-            }
+            VersionId(key!.VersionId!);
         }
 
-        public static void HasResourceId(IKey key)
+        if (!string.IsNullOrEmpty(key?.TypeName))
         {
-            if (key.HasResourceId())
-            {
-                ResourceId(key.ResourceId!);
-            }
-            else
-            {
-                throw Error.BadRequest("The request should have a resource id.");
-            }
+            TypeName(key.TypeName);
+        }
+    }
+
+    public static void HasTypeName(IKey key)
+    {
+        if (string.IsNullOrEmpty(key.TypeName))
+        {
+            throw Error.BadRequest("Resource type is missing: {0}", key);
+        }
+    }
+
+    public static void HasResourceId(IKey key)
+    {
+        if (key.HasResourceId())
+        {
+            ResourceId(key.ResourceId!);
+        }
+        else
+        {
+            throw Error.BadRequest("The request should have a resource id.");
+        }
+    }
+
+    public static void HasResourceId(Resource resource)
+    {
+        if (string.IsNullOrEmpty(resource.Id))
+        {
+            throw Error.BadRequest("The resource MUST contain an Id.");
+        }
+    }
+
+    public static void IsResourceIdEqual(IKey key, Resource resource)
+    {
+        if (key.ResourceId != resource.Id)
+        {
+            throw Error.BadRequest(
+                "The Id in the request '{0}' is not the same is the Id in the resource '{1}'.",
+                key.ResourceId ?? "null",
+                resource.Id);
+        }
+    }
+
+    public static void HasVersion(IKey key)
+    {
+        if (key.HasVersionId())
+        {
+            VersionId(key.VersionId!);
+        }
+        else
+        {
+            throw Error.BadRequest("The request should contain a version id.");
+        }
+    }
+
+    public static void HasNoVersion(IKey key)
+    {
+        if (key.HasVersionId())
+        {
+            throw Error.BadRequest("Resource should not contain a version.");
+        }
+    }
+
+    public static void HasNoResourceId(IKey key)
+    {
+        if (key.HasResourceId())
+        {
+            throw Error.BadRequest("The request should not contain an id");
+        }
+    }
+
+    public static void VersionId(string versionId)
+    {
+        if (string.IsNullOrEmpty(versionId))
+        {
+            throw Error.BadRequest("Must pass history id in url.");
+        }
+    }
+
+    public static void ResourceId(string resourceId)
+    {
+        if (string.IsNullOrEmpty(resourceId))
+        {
+            throw Error.BadRequest("Logical ID is empty");
         }
 
-        public static void HasResourceId(Resource resource)
+        if (!Id.IsValidValue(resourceId))
         {
-            if (string.IsNullOrEmpty(resource.Id))
-            {
-                throw Error.BadRequest("The resource MUST contain an Id.");
-            }
+            throw Error.BadRequest($"{resourceId} is not a valid value for an id");
         }
 
-        public static void IsResourceIdEqual(IKey key, Resource resource)
+        if (resourceId.Length > 64)
         {
-            if (key.ResourceId != resource.Id)
-            {
-                throw Error.BadRequest(
-                    "The Id in the request '{0}' is not the same is the Id in the resource '{1}'.",
-                    key.ResourceId ?? "null",
-                    resource.Id);
-            }
+            throw Error.BadRequest("Logical ID is too long.");
         }
+    }
 
-        public static void HasVersion(IKey key)
+    public static void IsSameVersion(IKey? original, IKey? replacement)
+    {
+        if (original?.VersionId != replacement?.VersionId)
         {
-            if (key.HasVersionId())
-            {
-                VersionId(key.VersionId!);
-            }
-            else
-            {
-                throw Error.BadRequest("The request should contain a version id.");
-            }
+            throw Error.Create(
+                HttpStatusCode.Conflict,
+                "The current resource on this server '{0}' doesn't match the required version '{1}'",
+                original?.VersionId ?? "null",
+                replacement?.VersionId ?? "null");
         }
+    }
 
-        public static void HasNoVersion(IKey key)
+    public static OperationOutcome? AgainstSchema(Resource resource) =>
+        throw
+            //var result = new OperationOutcome {Issue = new List<OperationOutcome.IssueComponent>()};
+            new NotImplementedException();
+
+    public static void HasResourceType(IKey key, ResourceType type)
+    {
+        if (key.TypeName != EnumUtility.GetLiteral(type))
         {
-            if (key.HasVersionId())
-            {
-                throw Error.BadRequest("Resource should not contain a version.");
-            }
-        }
-
-        public static void HasNoResourceId(IKey key)
-        {
-            if (key.HasResourceId())
-            {
-                throw Error.BadRequest("The request should not contain an id");
-            }
-        }
-
-        public static void VersionId(string versionId)
-        {
-            if (string.IsNullOrEmpty(versionId))
-            {
-                throw Error.BadRequest("Must pass history id in url.");
-            }
-        }
-
-        public static void ResourceId(string resourceId)
-        {
-            if (string.IsNullOrEmpty(resourceId))
-            {
-                throw Error.BadRequest("Logical ID is empty");
-            }
-
-            if (!Id.IsValidValue(resourceId))
-            {
-                throw Error.BadRequest($"{resourceId} is not a valid value for an id");
-            }
-
-            if (resourceId.Length > 64)
-            {
-                throw Error.BadRequest("Logical ID is too long.");
-            }
-        }
-
-        public static void IsSameVersion(IKey? original, IKey? replacement)
-        {
-            if (original?.VersionId != replacement?.VersionId)
-            {
-                throw Error.Create(
-                    HttpStatusCode.Conflict,
-                    "The current resource on this server '{0}' doesn't match the required version '{1}'",
-                    original?.VersionId ?? "null",
-                    replacement?.VersionId ?? "null");
-            }
-        }
-
-        public static OperationOutcome AgainstSchema(Resource resource) =>
-            throw
-                //var result = new OperationOutcome {Issue = new List<OperationOutcome.IssueComponent>()};
-                new NotImplementedException();
-
-        public static void HasResourceType(IKey key, ResourceType type)
-        {
-            if (key.TypeName != EnumUtility.GetLiteral(type))
-            {
-                throw Error.BadRequest("Operation only valid for {0} resource type");
-            }
+            throw Error.BadRequest("Operation only valid for {0} resource type");
         }
     }
 }

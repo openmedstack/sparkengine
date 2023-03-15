@@ -6,9 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Auxiliary
-{
-    using Hl7.Fhir.Model;
+namespace OpenMedStack.SparkEngine.Auxiliary;
 
-    public delegate void Visitor(Element element, string path);
-}
+using Hl7.Fhir.Model;
+
+public delegate void Visitor(Element element, string path);

@@ -6,40 +6,40 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System.Net;
+using Hl7.Fhir.Model;
+using Interfaces;
+
+public class FhirResponse
 {
-    using System.Net;
-    using Hl7.Fhir.Model;
+    public IKey? Key { get; }
+    public Resource? Resource { get; }
+    public HttpStatusCode StatusCode { get; }
 
-    public class FhirResponse
+    public FhirResponse(HttpStatusCode code, IKey? key = null, Resource? resource = null)
     {
-        public IKey? Key { get; }
-        public Resource? Resource { get; }
-        public HttpStatusCode StatusCode { get; }
+        StatusCode = code;
+        Key = key;
+        Resource = resource;
+    }
 
-        public FhirResponse(HttpStatusCode code, IKey? key = null, Resource? resource = null)
+    public bool IsValid
+    {
+        get
         {
-            StatusCode = code;
-            Key = key;
-            Resource = resource;
+            var code = (int)StatusCode;
+            return code <= 300;
         }
+    }
 
-        public bool IsValid
-        {
-            get
-            {
-                var code = (int)StatusCode;
-                return code <= 300;
-            }
-        }
+    public bool HasBody => Resource != null;
 
-        public bool HasBody => Resource != null;
-
-        public override string ToString()
-        {
-            var details = Resource != null ? $"({Resource.TypeName})" : null;
-            var location = Key?.ToString();
-            return $"{(int)StatusCode}: {StatusCode} {details} ({location})";
-        }
+    public override string ToString()
+    {
+        var details = Resource != null ? $"({Resource.TypeName})" : null;
+        var location = Key?.ToString();
+        return $"{(int)StatusCode}: {StatusCode} {details} ({location})";
     }
 }

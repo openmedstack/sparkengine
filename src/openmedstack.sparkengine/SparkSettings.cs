@@ -6,33 +6,32 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine
+namespace OpenMedStack.SparkEngine;
+
+using System;
+using System.Diagnostics;
+using System.Reflection;
+using Hl7.Fhir.Serialization;
+using Search;
+
+public class SparkSettings
 {
-    using System;
-    using System.Diagnostics;
-    using System.Reflection;
-    using Hl7.Fhir.Serialization;
-    using Search;
+    public Uri Endpoint { get; init; } = null!;
+    public bool UseAsynchronousIO { get; set; }
+    public ParserSettings? ParserSettings { get; set; }
+    public SerializerSettings? SerializerSettings { get; set; }
+    public ExportSettings? ExportSettings { get; set; }
+    public IndexSettings? IndexSettings { get; set; }
+    public SearchSettings? Search { get; set; }
+    public string FhirRelease { get; set; } = "R4";
 
-    public class SparkSettings
+    public static string Version
     {
-        public Uri Endpoint { get; init; } = null!;
-        public bool UseAsynchronousIO { get; set; }
-        public ParserSettings? ParserSettings { get; set; }
-        public SerializerSettings? SerializerSettings { get; set; }
-        public ExportSettings? ExportSettings { get; set; }
-        public IndexSettings? IndexSettings { get; set; }
-        public SearchSettings? Search { get; set; }
-        public string FhirRelease { get; set; } = "R4";
-
-        public static string Version
+        get
         {
-            get
-            {
-                var asm = Assembly.GetExecutingAssembly();
-                var version = FileVersionInfo.GetVersionInfo(asm.Location);
-                return $"{version.ProductMajorPart}.{version.ProductMinorPart}";
-            }
+            var asm = Assembly.GetExecutingAssembly();
+            var version = FileVersionInfo.GetVersionInfo(asm.Location);
+            return $"{version.ProductMajorPart}.{version.ProductMinorPart}";
         }
     }
 }

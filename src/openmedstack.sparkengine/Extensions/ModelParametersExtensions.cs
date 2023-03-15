@@ -6,22 +6,21 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Extensions
-{
-    using System.Collections.Generic;
-    using System.Linq;
-    using Hl7.Fhir.Model;
+namespace OpenMedStack.SparkEngine.Extensions;
 
-    public static class ModelParametersExtensions
+using System.Collections.Generic;
+using System.Linq;
+using Hl7.Fhir.Model;
+
+public static class ModelParametersExtensions
+{
+    public static IEnumerable<Meta> ExtractMeta(this Parameters parameters)
     {
-        public static IEnumerable<Meta> ExtractMeta(this Parameters parameters)
+        foreach (var parameter in parameters.Parameter.Where(p => p.Name == "meta"))
         {
-            foreach (var parameter in parameters.Parameter.Where(p => p.Name == "meta"))
+            if (parameter.Value is Meta meta)
             {
-                if (parameter.Value is Meta meta)
-                {
-                    yield return meta;
-                }
+                yield return meta;
             }
         }
     }

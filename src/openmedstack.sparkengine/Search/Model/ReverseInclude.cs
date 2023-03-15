@@ -6,47 +6,46 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.Model
+namespace OpenMedStack.SparkEngine.Search.Model;
+
+using System;
+using System.Text.RegularExpressions;
+
+public class ReverseInclude
 {
-    using System;
-    using System.Text.RegularExpressions;
+    private static readonly Regex Pattern = new(@"(?<resourcetype>[^\.]+)\.(?<searchpath>.*)");
 
-    public class ReverseInclude
+    public string ResourceType { get; private set; } = null!;
+    public string? SearchPath { get; private set; }
+
+    /// <summary>
+    ///     Expected format: ResourceType.searchParameter[.searchParameter]*
+    /// </summary>
+    /// <param name="reverseInclude"></param>
+    /// <returns>
+    ///     ReverseInclude instance with ResourceType is everything before the first dot, and SearchPath everything after
+    ///     it.
+    /// </returns>
+    public static ReverseInclude Parse(string reverseInclude)
     {
-        private static readonly Regex Pattern = new(@"(?<resourcetype>[^\.]+)\.(?<searchpath>.*)");
-
-        public string ResourceType { get; private set; } = null!;
-        public string? SearchPath { get; private set; }
-
-        /// <summary>
-        ///     Expected format: ResourceType.searchParameter[.searchParameter]*
-        /// </summary>
-        /// <param name="reverseInclude"></param>
-        /// <returns>
-        ///     ReverseInclude instance with ResourceType is everything before the first dot, and SearchPath everything after
-        ///     it.
-        /// </returns>
-        public static ReverseInclude Parse(string reverseInclude)
+        //_revinclude should have the following format: ResourceType.searchParameter[.searchParameter]*
+        //so we simply split in on the first dot.
+        if (reverseInclude == null)
         {
-            //_revinclude should have the following format: ResourceType.searchParameter[.searchParameter]*
-            //so we simply split in on the first dot.
-            if (reverseInclude == null)
-            {
-                throw new ArgumentNullException(nameof(reverseInclude), "reverseInclude cannot be null");
-            }
-
-            var result = new ReverseInclude();
-            var match = Pattern.Match(reverseInclude);
-            if (match.Groups.Count < 2)
-            {
-                throw new ArgumentException(
-                    $"reverseInclude '{reverseInclude}' does not adhere to the format 'ResourceType.searchParameter[.searchParameter]*'");
-            }
-
-            result.ResourceType = match.Groups["resourcetype"].Captures[0].Value;
-            result.SearchPath = match.Groups["searchpath"].Captures[0].Value;
-
-            return result;
+            throw new ArgumentNullException(nameof(reverseInclude), "reverseInclude cannot be null");
         }
+
+        var result = new ReverseInclude();
+        var match = Pattern.Match(reverseInclude);
+        if (match.Groups.Count < 2)
+        {
+            throw new ArgumentException(
+                $"reverseInclude '{reverseInclude}' does not adhere to the format 'ResourceType.searchParameter[.searchParameter]*'");
+        }
+
+        result.ResourceType = match.Groups["resourcetype"].Captures[0].Value;
+        result.SearchPath = match.Groups["searchpath"].Captures[0].Value;
+
+        return result;
     }
 }

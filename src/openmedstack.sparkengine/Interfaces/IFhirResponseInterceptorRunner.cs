@@ -6,13 +6,12 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Interfaces
-{
-    using System.Collections.Generic;
-    using Core;
+namespace OpenMedStack.SparkEngine.Interfaces;
 
-    public interface IFhirResponseInterceptorRunner
-    {
-        FhirResponse? RunInterceptors(Entry entry, IEnumerable<object> parameters);
-    }
+using System.Collections.Generic;
+using Core;
+
+public interface IFhirResponseInterceptorRunner
+{
+    FhirResponse? RunInterceptors(Entry entry, IEnumerable<object> parameters);
 }

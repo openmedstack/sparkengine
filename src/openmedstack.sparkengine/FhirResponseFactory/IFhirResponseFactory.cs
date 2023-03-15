@@ -6,23 +6,23 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.FhirResponseFactory
+namespace OpenMedStack.SparkEngine.FhirResponseFactory;
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Core;
+using Hl7.Fhir.Model;
+using Interfaces;
+
+public interface IFhirResponseFactory
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using Core;
-    using Hl7.Fhir.Model;
+    FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, IEnumerable<object>? parameters = null);
+    FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, params object[] parameters);
+    FhirResponse GetMetadataResponse(Entry? entry, IKey? key = null);
+    FhirResponse GetFhirResponse(Bundle? bundle);
 
-    public interface IFhirResponseFactory
-    {
-        FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, IEnumerable<object>? parameters = null);
-        FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, params object[] parameters);
-        FhirResponse GetMetadataResponse(Entry? entry, IKey? key = null);
-        FhirResponse GetFhirResponse(Bundle? bundle);
-
-        Task<FhirResponse> GetFhirResponse(
-            IAsyncEnumerable<Tuple<Entry, FhirResponse>> responses,
-            Bundle.BundleType bundleType);
-    }
+    Task<FhirResponse> GetFhirResponse(
+        IAsyncEnumerable<Tuple<Entry, FhirResponse>> responses,
+        Bundle.BundleType bundleType);
 }

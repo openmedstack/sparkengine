@@ -6,50 +6,49 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web.Tests.Formatters
+namespace OpenMedStack.SparkEngine.Web.Tests.Formatters;
+
+using System;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+
+public class FormatterTestBase
 {
-    using System;
-    using System.IO;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Mvc.Formatters;
-    using Microsoft.AspNetCore.Mvc.ModelBinding;
-
-    public class FormatterTestBase
+    protected string GetResourceFromFileAsString(string path)
     {
-        protected string GetResourceFromFileAsString(string path)
-        {
-            using TextReader reader = new StreamReader(path);
-            return reader.ReadToEnd();
-        }
+        using TextReader reader = new StreamReader(path);
+        return reader.ReadToEnd();
+    }
 
-        protected static HttpContext GetHttpContext(byte[] contentBytes, string contentType) =>
-            GetHttpContext(new MemoryStream(contentBytes), contentType);
+    protected static HttpContext GetHttpContext(byte[] contentBytes, string contentType) =>
+        GetHttpContext(new MemoryStream(contentBytes), contentType);
 
-        protected static HttpContext GetHttpContext(Stream requestStream, string contentType)
-        {
-            var httpContext = new DefaultHttpContext();
-            httpContext.Request.Body = requestStream;
-            httpContext.Request.ContentType = contentType;
+    protected static HttpContext GetHttpContext(Stream requestStream, string contentType)
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Body = requestStream;
+        httpContext.Request.ContentType = contentType;
 
-            return httpContext;
-        }
+        return httpContext;
+    }
 
-        protected static InputFormatterContext CreateInputFormatterContext(
-            Type modelType,
-            HttpContext httpContext,
-            string modelName = null,
-            bool treatEmptyInputAsDefaultValue = false)
-        {
-            var provider = new EmptyModelMetadataProvider();
-            var metadata = provider.GetMetadataForType(modelType);
+    protected static InputFormatterContext CreateInputFormatterContext(
+        Type modelType,
+        HttpContext httpContext,
+        string modelName = null,
+        bool treatEmptyInputAsDefaultValue = false)
+    {
+        var provider = new EmptyModelMetadataProvider();
+        var metadata = provider.GetMetadataForType(modelType);
 
-            return new InputFormatterContext(
-                httpContext,
-                modelName ?? string.Empty,
-                new ModelStateDictionary(),
-                metadata,
-                new TestHttpRequestStreamReaderFactory().CreateReader,
-                treatEmptyInputAsDefaultValue);
-        }
+        return new InputFormatterContext(
+            httpContext,
+            modelName ?? string.Empty,
+            new ModelStateDictionary(),
+            metadata,
+            new TestHttpRequestStreamReaderFactory().CreateReader,
+            treatEmptyInputAsDefaultValue);
     }
 }

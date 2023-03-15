@@ -1,0 +1,21 @@
+/* 
+ * Copyright (c) 2014, Furore (info@furore.com) and contributors
+ * Copyright (c) 2021, Incendi (info@incendi.no) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
+ */
+
+namespace OpenMedStack.SparkEngine.Interfaces;
+
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+
+public interface ISnapshotStore
+{
+    Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken);
+
+    Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken);
+}

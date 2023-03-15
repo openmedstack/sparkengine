@@ -6,14 +6,13 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Interfaces
+namespace OpenMedStack.SparkEngine.Interfaces;
+
+using Core;
+
+public interface IFhirResponseInterceptor
 {
-    using Core;
+    FhirResponse? GetFhirResponse(Entry entry, object input);
 
-    public interface IFhirResponseInterceptor
-    {
-        FhirResponse? GetFhirResponse(Entry entry, object input);
-
-        bool CanHandle(object input);
-    }
+    bool CanHandle(object input);
 }

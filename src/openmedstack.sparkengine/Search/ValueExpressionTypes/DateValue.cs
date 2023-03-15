@@ -6,42 +6,41 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+using System;
+using Hl7.Fhir.Model;
+using Support;
+
+public class DateValue : ValueExpression
 {
-    using System;
-    using Hl7.Fhir.Model;
-    using Support;
+    public DateValue(DateTimeOffset value) =>
+        // The DateValue datatype is not interested in any time related
+        // components, so we must strip those off before converting to the string
+        // value
+        Value = value.Date.ToString("yyyy-MM-dd");
 
-    public class DateValue : ValueExpression
+    public DateValue(string date)
     {
-        public DateValue(DateTimeOffset value) =>
-            // The DateValue datatype is not interested in any time related
-            // components, so we must strip those off before converting to the string
-            // value
-            Value = value.Date.ToString("yyyy-MM-dd");
-
-        public DateValue(string date)
+        if (!Date.IsValidValue(date))
         {
-            if (!Date.IsValidValue(date))
+            if (!FhirDateTime.IsValidValue(date))
             {
-                if (!FhirDateTime.IsValidValue(date))
-                {
-                    throw Error.Argument(
-                        "date",
-                        "The string [" + date + "] is not a valid FHIR date string and isn't a FHIR datetime either");
-                }
-
-                // This was a time, so we can just use the date portion of this
-                date = new FhirDateTime(date).ToDateTimeOffset(TimeSpan.Zero).Date.ToString("yyyy-MM-dd");
+                throw Error.Argument(
+                    "date",
+                    "The string [" + date + "] is not a valid FHIR date string and isn't a FHIR datetime either");
             }
 
-            Value = date;
+            // This was a time, so we can just use the date portion of this
+            date = new FhirDateTime(date).ToDateTimeOffset(TimeSpan.Zero).Date.ToString("yyyy-MM-dd");
         }
 
-        public string Value { get; }
-
-        public override string ToString() => Value;
-
-        public static DateValue Parse(string text) => new(text);
+        Value = date;
     }
+
+    public string Value { get; }
+
+    public override string ToString() => Value;
+
+    public static DateValue Parse(string text) => new(text);
 }

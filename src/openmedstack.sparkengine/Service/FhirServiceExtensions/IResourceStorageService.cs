@@ -6,20 +6,21 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Interfaces;
+
+public interface IResourceStorageService
 {
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using Core;
+    Task<bool> Exists(IKey key, CancellationToken cancellationToken);
 
-    public interface IResourceStorageService
-    {
-        Task<bool> Exists(IKey key);
+    Task<Entry?> Get(IKey key, CancellationToken cancellationToken);
 
-        Task<Entry?> Get(IKey key);
+    Task<Entry> Add(Entry entry, CancellationToken cancellationToken);
 
-        Task<Entry> Add(Entry entry);
-
-        IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null);
-    }
+    IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null, CancellationToken cancellationToken = default);
 }

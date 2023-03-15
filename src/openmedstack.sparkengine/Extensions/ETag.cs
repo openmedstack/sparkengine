@@ -6,16 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Extensions
-{
-    using System.Net.Http.Headers;
+namespace OpenMedStack.SparkEngine.Extensions;
 
-    public static class ETag
+using System.Net.Http.Headers;
+
+public static class ETag
+{
+    public static EntityTagHeaderValue Create(string? value)
     {
-        public static EntityTagHeaderValue Create(string? value)
-        {
-            var tag = value == null ? "" : $"\"{value}\"";
-            return new EntityTagHeaderValue(tag, true);
-        }
+        return new EntityTagHeaderValue($"\"{value ?? "0"}\"", true);
     }
 }

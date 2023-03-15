@@ -6,63 +6,62 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Core
+namespace OpenMedStack.SparkEngine.Tests.Core;
+
+using System.Collections.Generic;
+using System.Linq;
+using Hl7.Fhir.Model;
+using SparkEngine.Core;
+using Xunit;
+
+public class ElementQueryTests
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Hl7.Fhir.Model;
-    using SparkEngine.Core;
-    using Xunit;
-
-    public class ElementQueryTests
+    [Fact]
+    public void TestVisitOnePathZeroMatch()
     {
-        [Fact]
-        public void TestVisitOnePathZeroMatch()
-        {
-            var sut = new ElementQuery("Patient.name");
+        var sut = new ElementQuery("Patient.name");
 
-            var testPatient = new Patient();
-            var result = new List<object>();
+        var testPatient = new Patient();
+        var result = new List<object>();
 
-            sut.Visit(testPatient, fd => result.Add(fd));
+        sut.Visit(testPatient, fd => result.Add(fd));
 
-            Assert.Equal(testPatient.Name.Count, result.Count(ob => ob != null));
-        }
+        Assert.Equal(testPatient.Name.Count, result.Count(ob => ob != null));
+    }
 
-        [Fact]
-        public void TestVisitOnePathOneMatch()
-        {
-            var sut = new ElementQuery("Patient.name");
+    [Fact]
+    public void TestVisitOnePathOneMatch()
+    {
+        var sut = new ElementQuery("Patient.name");
 
-            var testPatient = new Patient();
-            var hn = new HumanName().WithGiven("Sjors").AndFamily("Jansen");
-            testPatient.Name = new List<HumanName> {hn};
+        var testPatient = new Patient();
+        var hn = new HumanName().WithGiven("Sjors").AndFamily("Jansen");
+        testPatient.Name = new List<HumanName> {hn};
 
-            var result = new List<object>();
+        var result = new List<object>();
 
-            sut.Visit(testPatient, fd => result.Add(fd));
+        sut.Visit(testPatient, fd => result.Add(fd));
 
-            Assert.Equal(testPatient.Name.Count, result.Count(ob => ob != null));
-            Assert.Contains(hn, result);
-        }
+        Assert.Equal(testPatient.Name.Count, result.Count(ob => ob != null));
+        Assert.Contains(hn, result);
+    }
 
-        [Fact]
-        public void TestVisitOnePathTwoMatches()
-        {
-            var sut = new ElementQuery("Patient.name");
+    [Fact]
+    public void TestVisitOnePathTwoMatches()
+    {
+        var sut = new ElementQuery("Patient.name");
 
-            var testPatient = new Patient();
-            var hn1 = new HumanName().WithGiven("A").AndFamily("B");
-            var hn2 = new HumanName().WithGiven("Y").AndFamily("Z");
-            testPatient.Name = new List<HumanName> {hn1, hn2};
+        var testPatient = new Patient();
+        var hn1 = new HumanName().WithGiven("A").AndFamily("B");
+        var hn2 = new HumanName().WithGiven("Y").AndFamily("Z");
+        testPatient.Name = new List<HumanName> {hn1, hn2};
 
-            var result = new List<object>();
+        var result = new List<object>();
 
-            sut.Visit(testPatient, fd => result.Add(fd));
+        sut.Visit(testPatient, fd => result.Add(fd));
 
-            Assert.Equal(testPatient.Name.Count, result.Count(ob => ob != null));
-            Assert.Contains(hn1, result);
-            Assert.Contains(hn2, result);
-        }
+        Assert.Equal(testPatient.Name.Count, result.Count(ob => ob != null));
+        Assert.Contains(hn1, result);
+        Assert.Contains(hn2, result);
     }
 }

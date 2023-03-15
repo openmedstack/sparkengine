@@ -1,17 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
+	<Import Project="../../shared.projinfo" />
 	<PropertyGroup>
 		<RootNamespace>OpenMedStack.FhirServer</RootNamespace>
 		<TieredPGO>true</TieredPGO>
 	</PropertyGroup>
-	<Import Project="../../shared.projinfo" />
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.3" />
+		<PackageReference Include="dotauth.uma.web" Version="1.2.1" />
+		<TrimmerRootAssembly Include="openmedstack.sparkengine"/>
+		<TrimmerRootAssembly Include="openmedstack.sparkengine.web"/>
+		<TrimmerRootAssembly Include="Hl7.Fhir.R5"/>
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\openmedstack.sparkengine.postgres\openmedstack.sparkengine.postgres.csproj" />
+		<ProjectReference Include="..\openmedstack.sparkengine.s3\openmedstack.sparkengine.s3.csproj" />
 		<ProjectReference Include="..\openmedstack.sparkengine.web\openmedstack.sparkengine.web.csproj" />
 	</ItemGroup>
 

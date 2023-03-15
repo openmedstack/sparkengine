@@ -1,93 +1,135 @@
-﻿namespace OpenMedStack.FhirServer
+﻿namespace OpenMedStack.FhirServer;
+
+using System;
+using System.Net.Http;
+using System.Text.Json;
+using DotAuth.Client;
+using DotAuth.Uma;
+using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Specification;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using OpenMedStack.SparkEngine.Interfaces;
+using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+using SparkEngine;
+using SparkEngine.Postgres;
+using SparkEngine.S3;
+using SparkEngine.Web;
+
+public class ServerStartup
 {
-    using System;
-    using System.Text.Json;
-    using Hl7.Fhir.Serialization;
-    using Hl7.Fhir.Specification;
-    using Microsoft.AspNetCore.Authentication.JwtBearer;
-    using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
-    using Microsoft.IdentityModel.Tokens;
-    using OpenMedStack.SparkEngine.Interfaces;
-    using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
-    using SparkEngine;
-    using SparkEngine.Postgres;
-    using SparkEngine.Web;
-    using SparkEngine.Web.Controllers;
+    private readonly IConfiguration _configuration;
 
-    public class ServerStartup
+    public ServerStartup(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
+        _configuration = configuration;
+    }
 
-        public ServerStartup(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            const string authority = "https://identity.reimers.dk";
-            services.AddCors()
-                .AddLogging(
-                    l => l.AddJsonConsole(
-                        o =>
+    public void ConfigureServices(IServiceCollection services)
+    {
+        var authority = _configuration["AUTHORITY"]!;
+        services.AddHttpClient()
+            .AddLogging(
+            l => l.AddJsonConsole(
+                o =>
+                {
+                    o.IncludeScopes = true;
+                    o.UseUtcTimestamp = true;
+                    o.JsonWriterOptions = new JsonWriterOptions { Indented = false };
+                }))
+            .AddCors()
+            .AddControllers();
+        services.AddFhir<UmaFhirController>(
+            new SparkSettings
+            {
+                UseAsynchronousIO = true,
+                Endpoint = new Uri(_configuration["FHIR:ROOT"]!),
+                FhirRelease = FhirRelease.R5.ToString(),
+                ParserSettings = ParserSettings.CreateDefault(),
+                SerializerSettings = SerializerSettings.CreateDefault()
+            });
+        var s = _configuration["CONNECTIONSTRING"]!;
+        services.AddPostgresFhirStore(new StoreSettings(
+                s,
+                new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.None,
+                DateParseHandling = DateParseHandling.DateTimeOffset
+            }))
+            .AddS3Persistence(new S3PersistenceConfiguration(
+                _configuration["STORAGE:ACCESSKEY"]!,
+                _configuration["STORAGE:SECRETKEY"]!,
+                new Uri(_configuration["STORAGE:STORAGEURL"]!),
+                true,
+                true))
+            .AddSingleton<IGenerator, GuidGenerator>()
+            .AddSingleton<IPatchService, PatchService>()
+            .AddSingleton<ITokenClient>(
+                sp => new TokenClient(
+                    TokenCredentials.FromClientCredentials(_configuration["OAUTH:CLIENTID"]!, _configuration["OAUTH:CLIENTSECRET"]!),
+                    () =>
+                    {
+                        var factory = sp.GetRequiredService<IHttpClientFactory>();
+                        return factory.CreateClient();
+                    },
+                    new Uri(authority)))
+            .AddSingleton(
+                sp =>
+                {
+                    return new UmaClient(
+                        () =>
                         {
-                            o.IncludeScopes = true;
-                            o.UseUtcTimestamp = true;
-                            o.JsonWriterOptions = new JsonWriterOptions { Indented = false };
-                        }))
-                .AddControllers()
-                .Services.AddTransient<FhirController>()
-                .AddTransient<ControllerBase, FhirController>()
-                .AddFhir(
-                    new SparkSettings
+                            var factory = sp.GetRequiredService<IHttpClientFactory>();
+                            return factory.CreateClient();
+                        },
+                        new Uri(authority));
+                })
+            .AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>())
+            .AddTransient<IResourceMap>(_=>new DbSourceMap(s))
+            .AddAuthentication(
+                options =>
+                {
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+            .AddJwtBearer(
+                options =>
+                {
+                    options.SaveToken = true;
+                    options.Authority = authority;
+                    options.RequireHttpsMetadata = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        UseAsynchronousIO = true,
-                        Endpoint = new Uri("https://fhir.reimers.dk/fhir"),
-                        FhirRelease = FhirRelease.R4.ToString(),
-                        ParserSettings = ParserSettings.CreateDefault(),
-                        SerializerSettings = SerializerSettings.CreateDefault()
-                    });
-            //services.AddInMemoryPersistence();
-            var s = _configuration["CONNECTIONSTRING"]!;
-            services.AddPostgresFhirStore(new StoreSettings(s))
-                .AddSingleton<IGenerator, GuidGenerator>()
-                .AddSingleton<IPatchService, PatchService>()
-                .AddAuthentication(
-                    options =>
-                    {
-                        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    })
-                .AddJwtBearer(
-                    options =>
-                    {
-                        options.SecurityTokenValidators.Clear();
-                        options.SecurityTokenValidators.Add(new CustomTokenValidator());
-                        options.SaveToken = true;
-                        options.Authority = authority;
-                        options.RequireHttpsMetadata = true;
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateAudience = false,
-                            ValidateIssuer = false,
-                            ValidateIssuerSigningKey = false,
-                            ValidIssuers = new[] { authority }
-                        };
-                    });
-        }
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateIssuerSigningKey = false,
+                        ValidIssuers = new[] { authority }
+                    };
+                });
+    }
 
-        public void Configure(IApplicationBuilder app)
-        {
-            app.UseRouting()
-                .UseCors(p => p.AllowAnyOrigin())
-                .UseAuthentication()
-                .UseAuthorization()
-                .UseEndpoints(e => e.MapControllers());
-        }
+    public void Configure(IApplicationBuilder app)
+    {
+        app.UseRouting()
+            .UseCors(p => p.AllowAnyOrigin())
+            .UseAuthentication()
+            .UseAuthorization()
+            .UseEndpoints(e =>
+            {
+                e.MapControllers();
+            });
     }
 }

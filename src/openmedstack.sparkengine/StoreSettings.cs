@@ -6,7 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine
-{
-    public record StoreSettings(string ConnectionString);
-}
+namespace OpenMedStack.SparkEngine;
+
+using Newtonsoft.Json;
+
+public record StoreSettings(string ConnectionString, JsonSerializerSettings SerializerSettings);

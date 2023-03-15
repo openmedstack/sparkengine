@@ -6,31 +6,41 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
-{
-    using System;
-    using Marten;
+namespace OpenMedStack.SparkEngine.Postgres;
 
-    public class FhirRegistry : MartenRegistry
+using Marten;
+using Marten.Schema;
+using Marten.Schema.Indexing.Unique;
+using Weasel.Postgresql.Tables;
+
+public class FhirRegistry : MartenRegistry
+{
+    public FhirRegistry()
     {
-        public FhirRegistry()
-        {
-            For<EntryEnvelope>()
-                .Index(x => x.Id)
-                .Duplicate(x => x.ResourceType)
-                .Duplicate(x => x.ResourceId!)
-                .Duplicate(x => x.VersionId!)
-                .Duplicate(x => x.ResourceKey)
-                .Duplicate(x => x.Deleted)
-                .Duplicate(x => x.IsPresent)
-                .Index(x => x.When)
-                .GinIndexJsonData();
-            For<IndexEntry>()
-                .Identity(x => x.Id)
-                .Index(x => x.Id)
-                .Duplicate(x => x.CanonicalId)
-                .Duplicate(x => x.ResourceType)
-                .GinIndexJsonData();
-        }
+        For<EntryEnvelope>()
+            .Index(x => x.Id)
+            .Duplicate(x => x.ResourceType)
+            .Duplicate(x => x.ResourceId!, notNull: false)
+            .Duplicate(x => x.VersionId!, notNull: false)
+            .Duplicate(x => x.ResourceKey)
+            .Duplicate(x => x.Deleted)
+            .Duplicate(x => x.IsPresent)
+            .Index(x => x.When)
+            .GinIndexJsonData();
+        For<IndexEntry>()
+            .Identity(x => x.Id)
+            .Index(x => x.CanonicalId)
+            .Index(x => x.ResourceType)
+            .Index(x => x.Values,
+                idx =>
+                {
+                    idx.Method = IndexMethod.gin;
+                    idx.Mask = "? jsonb_ops";
+                })
+            .GinIndexJsonData(
+                idx =>
+                {
+                    idx.Mask = "? jsonb_ops";
+                });
     }
 }

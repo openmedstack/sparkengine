@@ -6,41 +6,40 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System;
+
+public static class UriHelper
 {
-    using System;
+    public static bool IsTemporaryUri(this Uri uri) => uri != null && IsTemporaryUri(uri.ToString());
 
-    public static class UriHelper
+    public static bool IsTemporaryUri(string uri) =>
+        uri.StartsWith("urn:uuid:") || uri.StartsWith("urn:guid:") || uri.StartsWith("cid:");
+
+    /// <summary>
+    ///     Determines whether the uri contains a hash (#) fragment.
+    /// </summary>
+    public static bool HasFragment(this Uri uri)
     {
-        public static bool IsTemporaryUri(this Uri uri) => uri != null && IsTemporaryUri(uri.ToString());
-
-        public static bool IsTemporaryUri(string uri) =>
-            uri.StartsWith("urn:uuid:") || uri.StartsWith("urn:guid:") || uri.StartsWith("cid:");
-
-        /// <summary>
-        ///     Determines whether the uri contains a hash (#) fragment.
-        /// </summary>
-        public static bool HasFragment(this Uri uri)
+        if (uri.IsAbsoluteUri)
         {
-            if (uri.IsAbsoluteUri)
-            {
-                var fragment = uri.Fragment;
-                return !string.IsNullOrEmpty(fragment);
-            }
-
-            var s = uri.ToString();
-            return s.StartsWith("#");
+            var fragment = uri.Fragment;
+            return !string.IsNullOrEmpty(fragment);
         }
 
-        /// <summary>
-        ///     Bug fixed_IsBaseOf is a fix for Uri.IsBaseOf which has a bug
-        /// </summary>
-        public static bool IsBaseOf(this Uri @base, Uri uri)
-        {
-            var b = @base.ToString().ToLowerInvariant();
-            var u = uri.ToString().ToLowerInvariant();
+        var s = uri.ToString();
+        return s.StartsWith("#");
+    }
 
-            return u.StartsWith(b);
-        }
+    /// <summary>
+    ///     Bug fixed_IsBaseOf is a fix for Uri.IsBaseOf which has a bug
+    /// </summary>
+    public static bool IsBaseOf(this Uri @base, Uri uri)
+    {
+        var b = @base.ToString().ToLowerInvariant();
+        var u = uri.ToString().ToLowerInvariant();
+
+        return u.StartsWith(b);
     }
 }

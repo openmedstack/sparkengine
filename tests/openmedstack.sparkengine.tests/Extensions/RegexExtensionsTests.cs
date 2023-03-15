@@ -6,46 +6,45 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Extensions
+namespace OpenMedStack.SparkEngine.Tests.Extensions;
+
+using System.Text.RegularExpressions;
+using SparkEngine.Extensions;
+using Xunit;
+
+public class RegexExtensionsTests
 {
-    using System.Text.RegularExpressions;
-    using SparkEngine.Extensions;
-    using Xunit;
+    public static readonly Regex Sut = new(@"[^a]*(?<alpha>a)[^a]*");
 
-    public class RegexExtensionsTests
+    [Fact]
+    public void TestReplaceNamedGroupNoSuchGroup()
     {
-        public static readonly Regex Sut = new(@"[^a]*(?<alpha>a)[^a]*");
+        var input = @"bababa";
+        var result = Sut.ReplaceGroup(input, "blabla", "c");
+        Assert.Equal(@"bababa", result);
+    }
 
-        [Fact]
-        public void TestReplaceNamedGroupNoSuchGroup()
-        {
-            var input = @"bababa";
-            var result = Sut.ReplaceGroup(input, "blabla", "c");
-            Assert.Equal(@"bababa", result);
-        }
+    [Fact]
+    public void TestReplaceNamedGroupNoCaptures()
+    {
+        var input = @"bbbbbb";
+        var result = Sut.ReplaceGroup(input, "alpha", "c");
+        Assert.Equal(@"bbbbbb", result);
+    }
 
-        [Fact]
-        public void TestReplaceNamedGroupNoCaptures()
-        {
-            var input = @"bbbbbb";
-            var result = Sut.ReplaceGroup(input, "alpha", "c");
-            Assert.Equal(@"bbbbbb", result);
-        }
+    [Fact]
+    public void TestReplaceNamedGroupSingleCapture()
+    {
+        var input = @"babbbb";
+        var result = Sut.ReplaceGroup(input, "alpha", "c");
+        Assert.Equal(@"bcbbbb", result);
+    }
 
-        [Fact]
-        public void TestReplaceNamedGroupSingleCapture()
-        {
-            var input = @"babbbb";
-            var result = Sut.ReplaceGroup(input, "alpha", "c");
-            Assert.Equal(@"bcbbbb", result);
-        }
-
-        [Fact]
-        public void TestReplaceNamedGroupMultipleCaptures()
-        {
-            var input = @"bababa";
-            var result = Sut.ReplaceGroup(input, "alpha", "c");
-            Assert.Equal(@"bcbcbc", result);
-        }
+    [Fact]
+    public void TestReplaceNamedGroupMultipleCaptures()
+    {
+        var input = @"bababa";
+        var result = Sut.ReplaceGroup(input, "alpha", "c");
+        Assert.Equal(@"bcbcbc", result);
     }
 }

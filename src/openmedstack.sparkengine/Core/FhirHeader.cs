@@ -7,10 +7,9 @@
  */
 
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+public static class FhirHeader
 {
-    public static class FhirHeader
-    {
-        public const string CATEGORY = "Category";
-    }
+    public const string CATEGORY = "Category";
 }

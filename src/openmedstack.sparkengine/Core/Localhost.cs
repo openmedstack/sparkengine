@@ -6,29 +6,29 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Core
+namespace OpenMedStack.SparkEngine.Core;
+
+using System;
+using Interfaces;
+
+public class Localhost : ILocalhost
 {
-    using System;
+    public Localhost(Uri baseuri) => DefaultBase = baseuri;
 
-    public class Localhost : ILocalhost
+    public Uri DefaultBase { get; set; }
+
+    public Uri Absolute(Uri uri)
     {
-        public Localhost(Uri baseuri) => DefaultBase = baseuri;
-
-        public Uri DefaultBase { get; set; }
-
-        public Uri Absolute(Uri uri)
+        if (uri.IsAbsoluteUri)
         {
-            if (uri.IsAbsoluteUri)
-            {
-                return uri;
-            }
-
-            var @base = DefaultBase.ToString().TrimEnd('/') + "/";
-            return new Uri(@base + uri);
+            return uri;
         }
 
-        public bool IsBaseOf(Uri uri) => uri.IsAbsoluteUri && UriHelper.IsBaseOf(DefaultBase, uri);
-
-        public Uri? GetBaseOf(Uri uri) => IsBaseOf(uri) ? DefaultBase : null;
+        var @base = DefaultBase.ToString().TrimEnd('/') + "/";
+        return new Uri(@base + uri);
     }
+
+    public bool IsBaseOf(Uri uri) => uri.IsAbsoluteUri && UriHelper.IsBaseOf(DefaultBase, uri);
+
+    public Uri? GetBaseOf(Uri uri) => IsBaseOf(uri) ? DefaultBase : null;
 }

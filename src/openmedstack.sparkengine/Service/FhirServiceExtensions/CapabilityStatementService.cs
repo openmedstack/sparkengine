@@ -6,18 +6,18 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+
+using Core;
+using Hl7.Fhir.Model;
+using Interfaces;
+
+public class CapabilityStatementService : ICapabilityStatementService
 {
-    using Core;
-    using Hl7.Fhir.Model;
+    private readonly ILocalhost _localhost;
 
-    public class CapabilityStatementService : ICapabilityStatementService
-    {
-        private readonly ILocalhost _localhost;
+    public CapabilityStatementService(ILocalhost localhost) => _localhost = localhost;
 
-        public CapabilityStatementService(ILocalhost localhost) => _localhost = localhost;
-
-        public CapabilityStatement GetSparkCapabilityStatement(string sparkVersion) =>
-            CapabilityStatementBuilder.GetSparkCapabilityStatement(sparkVersion, _localhost);
-    }
+    public CapabilityStatement GetSparkCapabilityStatement(string sparkVersion) =>
+        CapabilityStatementBuilder.GetSparkCapabilityStatement(sparkVersion, _localhost);
 }

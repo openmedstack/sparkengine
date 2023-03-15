@@ -8,211 +8,210 @@
 
 using static Hl7.Fhir.Model.CapabilityStatement;
 
-namespace OpenMedStack.SparkEngine.Core.Builders
+namespace OpenMedStack.SparkEngine.Core.Builders;
+
+using System;
+using System.Collections.Generic;
+using Hl7.Fhir.Model;
+
+public class RestComponentBuilder
 {
-    using System;
-    using System.Collections.Generic;
-    using Hl7.Fhir.Model;
+    private Code<RestfulCapabilityMode>? _mode;
+    private Markdown? _documentation;
+    private SecurityComponent? _security;
+    private readonly List<ResourceComponent> _resource = new();
+    private readonly List<SystemInteractionComponent> _interaction = new();
+    private readonly List<SearchParamComponent> _searchParam = new();
+    private readonly List<OperationComponent> _operation = new();
+    private readonly List<Canonical> _compartment = new();
 
-    public class RestComponentBuilder
+    public RestComponent Build()
     {
-        private Code<RestfulCapabilityMode>? _mode;
-        private Markdown? _documentation;
-        private SecurityComponent? _security;
-        private readonly List<ResourceComponent> _resource = new();
-        private readonly List<SystemInteractionComponent> _interaction = new();
-        private readonly List<SearchParamComponent> _searchParam = new();
-        private readonly List<OperationComponent> _operation = new();
-        private readonly List<Canonical> _compartment = new();
-
-        public RestComponent Build()
+        var rest = new RestComponent();
+        if (_mode != null)
         {
-            var rest = new RestComponent();
-            if (_mode != null)
-            {
-                rest.ModeElement = _mode;
-            }
-
-            if (_documentation != null)
-            {
-                rest.Documentation = _documentation;
-            }
-
-            if (_security != null)
-            {
-                rest.Security = _security;
-            }
-
-            if (_resource.Count > 0)
-            {
-                rest.Resource = _resource;
-            }
-
-            if (_interaction.Count > 0)
-            {
-                rest.Interaction = _interaction;
-            }
-
-            if (_searchParam.Count > 0)
-            {
-                rest.SearchParam = _searchParam;
-            }
-
-            if (_operation.Count > 0)
-            {
-                rest.Operation = _operation;
-            }
-
-            if (_compartment.Count > 0)
-            {
-                rest.CompartmentElement = _compartment;
-            }
-
-            return rest;
+            rest.ModeElement = _mode;
         }
 
-        public RestComponentBuilder WithMode(RestfulCapabilityMode mode)
+        if (_documentation != null)
         {
-            return WithMode(new Code<RestfulCapabilityMode>(mode));
+            rest.Documentation = _documentation;
         }
 
-        public RestComponentBuilder WithMode(Code<RestfulCapabilityMode> mode)
+        if (_security != null)
         {
-            _mode = mode;
-            return this;
+            rest.Security = _security;
         }
 
-        public RestComponentBuilder WithDocumentation(string documentation)
+        if (_resource.Count > 0)
         {
-            return WithDocumentation(!string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null);
+            rest.Resource = _resource;
         }
 
-        public RestComponentBuilder WithDocumentation(Markdown? documentation)
+        if (_interaction.Count > 0)
         {
-            _documentation = documentation;
-            return this;
+            rest.Interaction = _interaction;
         }
 
-        public RestComponentBuilder WithSecurity(bool cors, string? description = null, List<CodeableConcept>? service = null)
+        if (_searchParam.Count > 0)
         {
-            return WithSecurity(
-                new FhirBoolean(cors),
-                !string.IsNullOrEmpty(description) ? new Markdown(description) : null,
-                service
-            );
+            rest.SearchParam = _searchParam;
         }
 
-        public RestComponentBuilder WithSecurity(FhirBoolean cors, Markdown? description = null, List<CodeableConcept>? service = null)
+        if (_operation.Count > 0)
         {
-            return WithSecurity(new SecurityComponent
-            {
-                CorsElement = cors,
-                Description = description,
-                Service = service is { Count: > 0 } ? service : null,
-            });
+            rest.Operation = _operation;
         }
 
-        public RestComponentBuilder WithSecurity(SecurityComponent security)
+        if (_compartment.Count > 0)
         {
-            _security = security;
-            return this;
+            rest.CompartmentElement = _compartment;
         }
 
-        public RestComponentBuilder WithResource(Func<ResourceComponent> configure)
-        {
-            return WithResource(configure());
-        }
+        return rest;
+    }
 
-        public RestComponentBuilder WithResource(ResourceComponent resource)
-        {
-            _resource.Add(resource);
+    public RestComponentBuilder WithMode(RestfulCapabilityMode mode)
+    {
+        return WithMode(new Code<RestfulCapabilityMode>(mode));
+    }
 
-            return this;
-        }
+    public RestComponentBuilder WithMode(Code<RestfulCapabilityMode> mode)
+    {
+        _mode = mode;
+        return this;
+    }
 
-        public RestComponentBuilder WithInteraction(SystemRestfulInteraction code, string? documentation = null)
-        {
-            return WithInteraction(
-                new Code<SystemRestfulInteraction>(code),
-                !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null
-            );
-        }
+    public RestComponentBuilder WithDocumentation(string documentation)
+    {
+        return WithDocumentation(!string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null);
+    }
 
-        public RestComponentBuilder WithInteraction(Code<SystemRestfulInteraction> code, Markdown? documentation = null)
-        {
-            return WithInteraction(new SystemInteractionComponent
-            {
-                CodeElement = code,
-                Documentation = documentation,
-            });
-        }
+    public RestComponentBuilder WithDocumentation(Markdown? documentation)
+    {
+        _documentation = documentation;
+        return this;
+    }
 
-        public RestComponentBuilder WithInteraction(SystemInteractionComponent interaction)
-        {
-            _interaction.Add(interaction);
-            return this;
-        }
+    public RestComponentBuilder WithSecurity(bool cors, string? description = null, List<CodeableConcept>? service = null)
+    {
+        return WithSecurity(
+            new FhirBoolean(cors),
+            !string.IsNullOrEmpty(description) ? new Markdown(description) : null,
+            service
+        );
+    }
 
-        public RestComponentBuilder WithSearchParam(string name, SearchParamType type, string? defintion = null, string? documentation = null)
+    public RestComponentBuilder WithSecurity(FhirBoolean cors, Markdown? description = null, List<CodeableConcept>? service = null)
+    {
+        return WithSecurity(new SecurityComponent
         {
-            return WithSearchParam(
-                !string.IsNullOrWhiteSpace(name) ? new FhirString(name) : null,
-                new Code<SearchParamType>(type),
-                !string.IsNullOrWhiteSpace(defintion) ? new Canonical(defintion) : null,
-                !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null
-                );
-        }
+            CorsElement = cors,
+            Description = description,
+            Service = service is { Count: > 0 } ? service : null,
+        });
+    }
 
-        public RestComponentBuilder WithSearchParam(FhirString? name, Code<SearchParamType> type, Canonical? defintion = null, Markdown? documentation = null)
-        {
-            var searchParam = new SearchParamComponent
-            {
-                NameElement = name,
-                TypeElement = type,
-                DefinitionElement = defintion,
-                Documentation = documentation,
-            };
-            _searchParam.Add(searchParam);
-            return this;
-        }
+    public RestComponentBuilder WithSecurity(SecurityComponent security)
+    {
+        _security = security;
+        return this;
+    }
 
-        public RestComponentBuilder WithSearchParam(SearchParamComponent searchParam)
-        {
-            _searchParam.Add(searchParam);
-            return this;
-        }
+    public RestComponentBuilder WithResource(Func<ResourceComponent> configure)
+    {
+        return WithResource(configure());
+    }
 
-        public RestComponentBuilder WithOperation(string name, string? defintion = null)
-        {
-            return WithOperation(
-                !string.IsNullOrWhiteSpace(name) ? new FhirString(name) : null,
-                !string.IsNullOrWhiteSpace(defintion) ? new Canonical(defintion) : null);
-        }
+    public RestComponentBuilder WithResource(ResourceComponent resource)
+    {
+        _resource.Add(resource);
 
-        public RestComponentBuilder WithOperation(FhirString? name, Canonical? defintion = null)
-        {
-            return WithOperation(new OperationComponent
-            {
-                NameElement = name,
-                DefinitionElement = defintion
-            });
-        }
+        return this;
+    }
 
-        public RestComponentBuilder WithOperation(OperationComponent operation)
-        {
-            _operation.Add(operation);
-            return this;
-        }
+    public RestComponentBuilder WithInteraction(SystemRestfulInteraction code, string? documentation = null)
+    {
+        return WithInteraction(
+            new Code<SystemRestfulInteraction>(code),
+            !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null
+        );
+    }
 
-        public RestComponentBuilder WithCompartment(string compartment)
+    public RestComponentBuilder WithInteraction(Code<SystemRestfulInteraction> code, Markdown? documentation = null)
+    {
+        return WithInteraction(new SystemInteractionComponent
         {
-            return WithCompartment(new Canonical(compartment));
-        }
+            CodeElement = code,
+            Documentation = documentation,
+        });
+    }
 
-        public RestComponentBuilder WithCompartment(Canonical compartment)
+    public RestComponentBuilder WithInteraction(SystemInteractionComponent interaction)
+    {
+        _interaction.Add(interaction);
+        return this;
+    }
+
+    public RestComponentBuilder WithSearchParam(string name, SearchParamType type, string? defintion = null, string? documentation = null)
+    {
+        return WithSearchParam(
+            !string.IsNullOrWhiteSpace(name) ? new FhirString(name) : null,
+            new Code<SearchParamType>(type),
+            !string.IsNullOrWhiteSpace(defintion) ? new Canonical(defintion) : null,
+            !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null
+        );
+    }
+
+    public RestComponentBuilder WithSearchParam(FhirString? name, Code<SearchParamType> type, Canonical? defintion = null, Markdown? documentation = null)
+    {
+        var searchParam = new SearchParamComponent
         {
-            _compartment.Add(compartment);
-            return this;
-        }
+            NameElement = name,
+            TypeElement = type,
+            DefinitionElement = defintion,
+            Documentation = documentation,
+        };
+        _searchParam.Add(searchParam);
+        return this;
+    }
+
+    public RestComponentBuilder WithSearchParam(SearchParamComponent searchParam)
+    {
+        _searchParam.Add(searchParam);
+        return this;
+    }
+
+    public RestComponentBuilder WithOperation(string name, string? defintion = null)
+    {
+        return WithOperation(
+            !string.IsNullOrWhiteSpace(name) ? new FhirString(name) : null,
+            !string.IsNullOrWhiteSpace(defintion) ? new Canonical(defintion) : null);
+    }
+
+    public RestComponentBuilder WithOperation(FhirString? name, Canonical? defintion = null)
+    {
+        return WithOperation(new OperationComponent
+        {
+            NameElement = name,
+            DefinitionElement = defintion
+        });
+    }
+
+    public RestComponentBuilder WithOperation(OperationComponent operation)
+    {
+        _operation.Add(operation);
+        return this;
+    }
+
+    public RestComponentBuilder WithCompartment(string compartment)
+    {
+        return WithCompartment(new Canonical(compartment));
+    }
+
+    public RestComponentBuilder WithCompartment(Canonical compartment)
+    {
+        _compartment.Add(compartment);
+        return this;
     }
 }

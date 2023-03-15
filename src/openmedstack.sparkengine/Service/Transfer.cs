@@ -6,61 +6,62 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service
+namespace OpenMedStack.SparkEngine.Service;
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Interfaces;
+
+/// <summary>
+///     Transfer maps between local id's and references and absolute id's and references upon incoming or outgoing
+///     Interactions.
+///     It uses an Import or Export to do de actual work for incoming or outgoing Interactions respectively.
+/// </summary>
+public class Transfer : ITransfer
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Core;
-    using Interfaces;
+    private readonly Export _export;
+    private readonly Import _import;
 
-    /// <summary>
-    ///     Transfer maps between local id's and references and absolute id's and references upon incoming or outgoing
-    ///     Interactions.
-    ///     It uses an Import or Export to do de actual work for incoming or outgoing Interactions respectively.
-    /// </summary>
-    public class Transfer : ITransfer
+    public Transfer(IGenerator generator, ILocalhost localhost, SparkSettings? sparkSettings = null)
     {
-        private readonly Export _export;
-        private readonly Import _import;
+        _export = new(localhost, sparkSettings?.ExportSettings ?? new ExportSettings());
+        _import = new(localhost, generator);
+    }
 
-        public Transfer(IGenerator generator, ILocalhost localhost, SparkSettings? sparkSettings = null)
+    public Task Internalize(Entry entry, CancellationToken cancellationToken)
+    {
+        return _import.Internalize(entry, null, cancellationToken);
+    }
+
+
+    public async IAsyncEnumerable<Entry> Internalize(IEnumerable<Entry> interactions, Mapper<string, IKey>? mapper, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (var interaction in interactions)
         {
-            _export = new(localhost, sparkSettings?.ExportSettings ?? new ExportSettings());
-            _import = new(localhost, generator);
+            yield return await _import.Internalize(interaction, mapper, cancellationToken).ConfigureAwait(false);
         }
+    }
 
-        public Task Internalize(Entry entry)
+    public Entry Externalize(Entry interaction)
+    {
+        return _export.Externalize(interaction);
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<Entry> Externalize(IAsyncEnumerable<Entry> interactions)
+    {
+        await foreach (var item in interactions.ConfigureAwait(false))
         {
-            return _import.Internalize(entry);
+            yield return _export.Externalize(item);
         }
+    }
 
-
-        public async IAsyncEnumerable<Entry> Internalize(IEnumerable<Entry> interactions, Mapper<string, IKey>? mapper)
-        {
-            foreach (var interaction in interactions)
-            {
-                yield return await _import.Internalize(interaction, mapper);
-            }
-        }
-
-        public Entry Externalize(Entry interaction)
-        {
-            return _export.Externalize(interaction);
-        }
-
-        /// <inheritdoc />
-        public async IAsyncEnumerable<Entry> Externalize(IAsyncEnumerable<Entry> interactions)
-        {
-            await foreach (var item in interactions)
-            {
-                yield return _export.Externalize(item);
-            }
-        }
-
-        public IEnumerable<Entry> Externalize(IEnumerable<Entry> interactions)
-        {
-           return interactions.Select(_export.Externalize);
-        }
+    public IEnumerable<Entry> Externalize(IEnumerable<Entry> interactions)
+    {
+        return interactions.Select(_export.Externalize);
     }
 }

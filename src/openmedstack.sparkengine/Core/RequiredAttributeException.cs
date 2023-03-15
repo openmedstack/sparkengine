@@ -1,25 +1,24 @@
-﻿namespace OpenMedStack.SparkEngine.Core
+﻿namespace OpenMedStack.SparkEngine.Core;
+
+using System;
+using System.Runtime.Serialization;
+
+[Serializable]
+internal class RequiredAttributeException : Exception
 {
-    using System;
-    using System.Runtime.Serialization;
-
-    [Serializable]
-    internal class RequiredAttributeException : Exception
+    public RequiredAttributeException()
     {
-        public RequiredAttributeException()
-        {
-        }
+    }
 
-        public RequiredAttributeException(string message) : base(message)
-        {
-        }
+    public RequiredAttributeException(string message) : base(message)
+    {
+    }
 
-        public RequiredAttributeException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
+    public RequiredAttributeException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 
-        protected RequiredAttributeException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
+    protected RequiredAttributeException(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
     }
 }

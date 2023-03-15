@@ -6,16 +6,16 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
-{
-    using System.Collections.Generic;
-    using Core;
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-    public interface ISnapshotPaginationCalculator
-    {
-        IEnumerable<IKey> GetKeysForPage(Snapshot snapshot, int? start = null);
-        int GetIndexForLastPage(Snapshot snapshot);
-        int? GetIndexForNextPage(Snapshot snapshot, int? start = null);
-        int? GetIndexForPreviousPage(Snapshot snapshot, int? start = null);
-    }
+using System.Collections.Generic;
+using Core;
+using Interfaces;
+
+public interface ISnapshotPaginationCalculator
+{
+    IEnumerable<IKey> GetKeysForPage(Snapshot snapshot, int? start = null);
+    int GetIndexForLastPage(Snapshot snapshot);
+    int? GetIndexForNextPage(Snapshot snapshot, int? start = null);
+    int? GetIndexForPreviousPage(Snapshot snapshot, int? start = null);
 }

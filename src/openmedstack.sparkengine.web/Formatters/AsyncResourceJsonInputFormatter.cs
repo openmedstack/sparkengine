@@ -6,77 +6,76 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web.Formatters
+namespace OpenMedStack.SparkEngine.Web.Formatters;
+
+using System;
+using System.IO;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+using Core;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
+using Microsoft.AspNetCore.Mvc.Formatters;
+
+public class AsyncResourceJsonInputFormatter : TextInputFormatter
 {
-    using System;
-    using System.IO;
-    using System.Net.Http.Headers;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Core;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Serialization;
-    using Microsoft.AspNetCore.Mvc.Formatters;
+    private readonly FhirJsonParser _parser;
 
-    public class AsyncResourceJsonInputFormatter : TextInputFormatter
+    public AsyncResourceJsonInputFormatter(FhirJsonParser parser)
     {
-        private readonly FhirJsonParser _parser;
+        _parser = parser ?? throw new ArgumentNullException(nameof(parser));
 
-        public AsyncResourceJsonInputFormatter(FhirJsonParser parser)
+        SupportedEncodings.Clear();
+        SupportedEncodings.Add(Encoding.UTF8);
+
+        foreach (var mediaType in FhirMediaType.JsonMimeTypes)
         {
-            _parser = parser ?? throw new ArgumentNullException(nameof(parser));
+            SupportedMediaTypes.Add(mediaType);
+        }
+    }
 
-            SupportedEncodings.Clear();
-            SupportedEncodings.Add(Encoding.UTF8);
+    protected override bool CanReadType(Type type)
+    {
+        return typeof(Resource).IsAssignableFrom(type);
+    }
 
-            foreach (var mediaType in FhirMediaType.JsonMimeTypes)
-            {
-                SupportedMediaTypes.Add(mediaType);
-            }
+    /// <inheritdoc />
+    public override bool CanRead(InputFormatterContext context)
+    {
+        var result = MediaTypeHeaderValue.TryParse(context.HttpContext.Request.ContentType, out var mediaType);
+        return result && mediaType?.MediaType != null && SupportedMediaTypes.Contains(mediaType.MediaType) && base.CanRead(context);
+    }
+
+    public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
+    {
+        if (context == null)
+        {
+            throw new ArgumentNullException(nameof(context));
         }
 
-        protected override bool CanReadType(Type type)
+        if (encoding == null)
         {
-            return typeof(Resource).IsAssignableFrom(type);
+            throw new ArgumentNullException(nameof(encoding));
         }
 
-        /// <inheritdoc />
-        public override bool CanRead(InputFormatterContext context)
+        if (!encoding.Equals(Encoding.UTF8))
         {
-            var result = MediaTypeHeaderValue.TryParse(context.HttpContext.Request.ContentType, out var mediaType);
-            return result && mediaType?.MediaType != null && SupportedMediaTypes.Contains(mediaType.MediaType) && base.CanRead(context);
+            throw Error.BadRequest("FHIR supports UTF-8 encoding exclusively, not " + encoding.WebName);
         }
 
-        public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
+        try
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
+            using var reader = new StreamReader(context.HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
+            var body = await reader.ReadToEndAsync().ConfigureAwait(false);
+            var resource = _parser.Parse<Resource>(body);
+            context.HttpContext.AddResourceType(resource.GetType());
 
-            if (encoding == null)
-            {
-                throw new ArgumentNullException(nameof(encoding));
-            }
-
-            if (!encoding.Equals(Encoding.UTF8))
-            {
-                throw Error.BadRequest("FHIR supports UTF-8 encoding exclusively, not " + encoding.WebName);
-            }
-
-            try
-            {
-                using var reader = new StreamReader(context.HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
-                var body = await reader.ReadToEndAsync().ConfigureAwait(false);
-                var resource = _parser.Parse<Resource>(body);
-                context.HttpContext.AddResourceType(resource.GetType());
-
-                return await InputFormatterResult.SuccessAsync(resource).ConfigureAwait(false);
-            }
-            catch (FormatException exception)
-            {
-                throw Error.BadRequest($"Body parsing failed: {exception.Message}");
-            }
+            return await InputFormatterResult.SuccessAsync(resource).ConfigureAwait(false);
+        }
+        catch (FormatException exception)
+        {
+            throw Error.BadRequest($"Body parsing failed: {exception.Message}");
         }
     }
 }

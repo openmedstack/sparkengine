@@ -6,29 +6,28 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Web
+namespace OpenMedStack.SparkEngine.Web;
+
+using System;
+using Handlers;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+
+public static class ApplicationBuilderExtensions
 {
-    using System;
-    using Handlers;
-    using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Routing;
-
-    public static class ApplicationBuilderExtensions
+    public static void UseFhir(this IApplicationBuilder app, Action<IRouteBuilder>? configureRoutes = null)
     {
-        public static void UseFhir(this IApplicationBuilder app, Action<IRouteBuilder>? configureRoutes = null)
-        {
-            app.UseMiddleware<ErrorHandler>();
-            app.UseMiddleware<FormatTypeHandler>();
-            app.UseMiddleware<MaintenanceModeHandler>();
+        app.UseMiddleware<ErrorHandler>();
+        app.UseMiddleware<FormatTypeHandler>();
+        app.UseMiddleware<MaintenanceModeHandler>();
 
-            if (configureRoutes == null)
-            {
-                app.UseMvc();
-            }
-            else
-            {
-                app.UseMvc(configureRoutes);
-            }
+        if (configureRoutes == null)
+        {
+            app.UseMvc();
+        }
+        else
+        {
+            app.UseMvc(configureRoutes);
         }
     }
 }

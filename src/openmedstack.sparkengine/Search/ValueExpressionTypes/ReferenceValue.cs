@@ -6,33 +6,32 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+using System;
+using Hl7.Fhir.Model;
+using Support;
+
+public class ReferenceValue : ValueExpression
 {
-    using System;
-    using Hl7.Fhir.Model;
-    using Support;
-
-    public class ReferenceValue : ValueExpression
+    public ReferenceValue(string value)
     {
-        public ReferenceValue(string value)
+        if (!Uri.IsWellFormedUriString(value, UriKind.Absolute) && !Id.IsValidValue(value))
         {
-            if (!Uri.IsWellFormedUriString(value, UriKind.Absolute) && !Id.IsValidValue(value))
-            {
-                throw Error.Argument("text", "Reference is not a valid Id nor a valid absolute Url");
-            }
-
-            Value = value;
+            throw Error.Argument("text", "Reference is not a valid Id nor a valid absolute Url");
         }
 
-        public string Value { get; }
+        Value = value;
+    }
 
-        public override string ToString() => StringValue.EscapeString(Value);
+    public string Value { get; }
 
-        public static ReferenceValue Parse(string text)
-        {
-            var value = StringValue.UnescapeString(text);
+    public override string ToString() => StringValue.EscapeString(Value);
 
-            return new ReferenceValue(value);
-        }
+    public static ReferenceValue Parse(string text)
+    {
+        var value = StringValue.UnescapeString(text);
+
+        return new ReferenceValue(value);
     }
 }

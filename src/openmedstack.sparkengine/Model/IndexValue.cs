@@ -6,36 +6,35 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Model
+namespace OpenMedStack.SparkEngine.Model;
+
+using System.Collections.Generic;
+using System.Linq;
+using Search.ValueExpressionTypes;
+
+public class IndexValue : ValueExpression
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Search.ValueExpressionTypes;
+    private readonly List<Expression> _values;
 
-    public class IndexValue : ValueExpression
+    private IndexValue() => _values = new List<Expression>();
+
+    public IndexValue(string name)
+        : this() =>
+        Name = name;
+
+    public IndexValue(string name, List<Expression> values)
+        : this(name) =>
+        Values = values;
+
+    public IndexValue(string name, params Expression[] values)
+        : this(name) =>
+        Values = values.ToList();
+
+    public string? Name { get; }
+
+    public List<Expression> Values
     {
-        private readonly List<Expression> _values;
-
-        private IndexValue() => _values = new List<Expression>();
-
-        public IndexValue(string name)
-            : this() =>
-            Name = name;
-
-        public IndexValue(string name, List<Expression> values)
-            : this(name) =>
-            Values = values;
-
-        public IndexValue(string name, params Expression[] values)
-            : this(name) =>
-            Values = values.ToList();
-
-        public string? Name { get; }
-
-        public List<Expression> Values
-        {
-            get => _values;
-            private init => _values.AddRange(value);
-        }
+        get => _values;
+        private init => _values.AddRange(value);
     }
 }

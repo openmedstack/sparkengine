@@ -6,30 +6,29 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+using Hl7.Fhir.Model;
+
+public class UntypedValue : ValueExpression
 {
-    using Hl7.Fhir.Model;
+    public UntypedValue(string value) => Value = value;
 
-    public class UntypedValue : ValueExpression
-    {
-        public UntypedValue(string value) => Value = value;
+    public string Value { get; }
 
-        public string Value { get; }
+    public override string ToString() => Value;
 
-        public override string ToString() => Value;
+    public NumberValue AsNumberValue() => NumberValue.Parse(Value);
 
-        public NumberValue AsNumberValue() => NumberValue.Parse(Value);
+    public DateValue AsDateValue() => DateValue.Parse(Value);
 
-        public DateValue AsDateValue() => DateValue.Parse(Value);
+    public FhirDateTime AsDateTimeValue() => new(Value);
 
-        public FhirDateTime AsDateTimeValue() => new(Value);
+    public StringValue AsStringValue() => StringValue.Parse(Value);
 
-        public StringValue AsStringValue() => StringValue.Parse(Value);
+    public TokenValue AsTokenValue() => TokenValue.Parse(Value);
 
-        public TokenValue AsTokenValue() => TokenValue.Parse(Value);
+    public QuantityValue AsQuantityValue() => QuantityValue.Parse(Value);
 
-        public QuantityValue AsQuantityValue() => QuantityValue.Parse(Value);
-
-        public ReferenceValue AsReferenceValue() => ReferenceValue.Parse(Value);
-    }
+    public ReferenceValue AsReferenceValue() => ReferenceValue.Parse(Value);
 }

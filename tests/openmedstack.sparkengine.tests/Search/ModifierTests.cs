@@ -6,50 +6,49 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Search
+namespace OpenMedStack.SparkEngine.Tests.Search;
+
+using Hl7.Fhir.Model;
+using SparkEngine.Search.Model;
+using Xunit;
+
+public class ModifierTests
 {
-    using Hl7.Fhir.Model;
-    using SparkEngine.Search.Model;
-    using Xunit;
-
-    public class ModifierTests
+    [Fact]
+    public void TestActualModifierConstructorWithMissingModifiers()
     {
-        [Fact]
-        public void TestActualModifierConstructorWithMissingModifiers()
-        {
-            var am = new ActualModifier("missing");
-            Assert.Equal(Modifier.MISSING, am.Modifier);
-            Assert.Equal("missing", am.RawModifier);
-            Assert.Null(am.ModifierType);
-            Assert.True(am.Missing.Value);
-            Assert.Equal("missing=true", am.ToString());
+        var am = new ActualModifier("missing");
+        Assert.Equal(Modifier.MISSING, am.Modifier);
+        Assert.Equal("missing", am.RawModifier);
+        Assert.Null(am.ModifierType);
+        Assert.True(am.Missing.Value);
+        Assert.Equal("missing=true", am.ToString());
 
-            am = new ActualModifier("missing=false");
-            Assert.Equal(Modifier.MISSING, am.Modifier);
-            Assert.Equal("missing=false", am.RawModifier);
-            Assert.Null(am.ModifierType);
-            Assert.False(am.Missing.Value);
-            Assert.Equal("missing=false", am.ToString());
-        }
+        am = new ActualModifier("missing=false");
+        Assert.Equal(Modifier.MISSING, am.Modifier);
+        Assert.Equal("missing=false", am.RawModifier);
+        Assert.Null(am.ModifierType);
+        Assert.False(am.Missing.Value);
+        Assert.Equal("missing=false", am.ToString());
+    }
 
-        [Fact]
-        public void TestActualModifierConstructorWithValidTypeModifier()
-        {
-            var am = new ActualModifier("Patient");
-            Assert.Equal(Modifier.TYPE, am.Modifier);
-            Assert.Equal("Patient", am.RawModifier);
-            Assert.Equal(typeof(Patient), am.ModifierType);
-            Assert.Equal("Patient", am.ToString());
-        }
+    [Fact]
+    public void TestActualModifierConstructorWithValidTypeModifier()
+    {
+        var am = new ActualModifier("Patient");
+        Assert.Equal(Modifier.TYPE, am.Modifier);
+        Assert.Equal("Patient", am.RawModifier);
+        Assert.Equal(typeof(Patient), am.ModifierType);
+        Assert.Equal("Patient", am.ToString());
+    }
 
-        [Fact]
-        public void TestActualModifierConstructorWithInvalidModifier()
-        {
-            var am = new ActualModifier("blabla");
-            Assert.Equal(Modifier.UNKNOWN, am.Modifier);
-            Assert.Equal("blabla", am.RawModifier);
-            Assert.Null(am.ModifierType);
-            Assert.Null(am.ToString());
-        }
+    [Fact]
+    public void TestActualModifierConstructorWithInvalidModifier()
+    {
+        var am = new ActualModifier("blabla");
+        Assert.Equal(Modifier.UNKNOWN, am.Modifier);
+        Assert.Equal("blabla", am.RawModifier);
+        Assert.Null(am.ModifierType);
+        Assert.Null(am.ToString());
     }
 }

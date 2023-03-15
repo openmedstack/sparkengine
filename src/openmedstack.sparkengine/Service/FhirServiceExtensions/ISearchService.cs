@@ -6,22 +6,23 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
+
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Hl7.Fhir.Rest;
+using Interfaces;
+
+public interface ISearchService
 {
-    using System.Threading.Tasks;
-    using Core;
-    using Hl7.Fhir.Rest;
+    Task<Snapshot> GetSnapshot(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 
-    public interface ISearchService
-    {
-        Task<Snapshot> GetSnapshot(string type, SearchParams searchCommand);
+    Task<Snapshot> GetSnapshotForEverything(IKey key, CancellationToken cancellationToken);
 
-        Task<Snapshot> GetSnapshotForEverything(IKey key);
+    Task<IKey> FindSingle(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<IKey> FindSingle(string type, SearchParams searchCommand);
+    Task<IKey?> FindSingleOrDefault(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 
-        Task<IKey?> FindSingleOrDefault(string type, SearchParams searchCommand);
-
-        Task<SearchResults> GetSearchResults(string type, SearchParams searchCommand);
-    }
+    Task<SearchResults> GetSearchResults(string type, SearchParams searchCommand, CancellationToken cancellationToken);
 }

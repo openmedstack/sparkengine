@@ -6,16 +6,15 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Model
-{
-    using System.Collections.Generic;
-    using System.Linq;
+namespace OpenMedStack.SparkEngine.Model;
 
-    public static class IndexValueExtensions
+using System.Collections.Generic;
+using System.Linq;
+
+public static class IndexValueExtensions
+{
+    public static IEnumerable<IndexValue> IndexValues(this IndexValue root)
     {
-        public static IEnumerable<IndexValue> IndexValues(this IndexValue root)
-        {
-            return root.Values.Where(v => v is IndexValue).Select(v => (IndexValue) v);
-        }
+        return root.Values.Where(v => v is IndexValue).Select(v => (IndexValue) v);
     }
 }

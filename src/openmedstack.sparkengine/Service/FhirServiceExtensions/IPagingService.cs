@@ -6,14 +6,14 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
-{
-    using System.Threading.Tasks;
-    using Core;
+namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-    public interface IPagingService
-    {
-        Task<ISnapshotPagination> StartPagination(Snapshot snapshot);
-        Task<ISnapshotPagination> StartPagination(string snapshotKey);
-    }
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+
+public interface IPagingService
+{
+    Task<ISnapshotPagination> StartPagination(Snapshot snapshot, CancellationToken cancellationToken);
+    Task<ISnapshotPagination> StartPagination(string snapshotKey, CancellationToken cancellationToken);
 }

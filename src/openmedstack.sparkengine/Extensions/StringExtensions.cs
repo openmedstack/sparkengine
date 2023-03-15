@@ -6,13 +6,12 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Extensions
+namespace OpenMedStack.SparkEngine.Extensions;
+
+public static class StringExtensions
 {
-    public static class StringExtensions
-    {
-        public static string FirstUpper(this string input) =>
-            string.IsNullOrWhiteSpace(input)
-                ? input
-                : string.Concat(input.Substring(0, 1).ToUpperInvariant(), input.Remove(0, 1));
-    }
+    public static string FirstUpper(this string input) =>
+        string.IsNullOrWhiteSpace(input)
+            ? input
+            : string.Concat(input[..1].ToUpperInvariant(), input.Remove(0, 1));
 }

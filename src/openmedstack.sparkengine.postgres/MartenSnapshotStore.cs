@@ -6,43 +6,46 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Postgres
+namespace OpenMedStack.SparkEngine.Postgres;
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Core;
+using Interfaces;
+using Marten;
+using Microsoft.Extensions.Logging;
+
+public class MartenSnapshotStore : ISnapshotStore
 {
-    using System;
-    using System.Threading.Tasks;
-    using Core;
-    using Marten;
-    using Microsoft.Extensions.Logging;
-    using Store.Interfaces;
+    private readonly ILogger<MartenSnapshotStore> _logger;
+    private readonly Func<IDocumentSession> _sessionFunc;
 
-    public class MartenSnapshotStore : ISnapshotStore
+    public MartenSnapshotStore(Func<IDocumentSession> sessionFunc, ILogger<MartenSnapshotStore> logger)
     {
-        private readonly ILogger<MartenSnapshotStore> _logger;
-        private readonly Func<IDocumentSession> _sessionFunc;
+        _sessionFunc = sessionFunc;
+        _logger = logger;
+    }
 
-        public MartenSnapshotStore(Func<IDocumentSession> sessionFunc, ILogger<MartenSnapshotStore> logger)
-        {
-            _sessionFunc = sessionFunc;
-            _logger = logger;
-        }
+    /// <inheritdoc />
+    public async Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Snapshot added");
+        var session = _sessionFunc();
+        await using var _ = session.ConfigureAwait(false);
+        session.Store(snapshot);
+        await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
 
-        /// <inheritdoc />
-        public async Task AddSnapshot(Snapshot snapshot)
-        {
-            _logger.LogDebug("Snapshot added");
-            await using var session = _sessionFunc();
-            session.Store(snapshot);
-            await session.SaveChangesAsync().ConfigureAwait(false);
-        }
+    /// <inheritdoc />
+    public async Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Returned snapshot " + snapshotId);
+        var session = _sessionFunc();
+        await using var _ = session.ConfigureAwait(false);
+        var snapshot = await session.LoadAsync<Snapshot>(snapshotId, cancellationToken).ConfigureAwait(false);
 
-        /// <inheritdoc />
-        public async Task<Snapshot?> GetSnapshot(string snapshotId)
-        {
-            await using var session = _sessionFunc();
-            var snapshot = await session.LoadAsync<Snapshot>(snapshotId).ConfigureAwait(false);
-
-            _logger.LogDebug("Returned snapshot {snapshot}", snapshotId);
-            return snapshot;
-        }
+        return snapshot;
     }
 }

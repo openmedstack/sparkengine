@@ -1,9 +1,8 @@
-﻿namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions
-{
-    using Hl7.Fhir.Model;
+﻿namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-    public interface ICapabilityStatementService
-    {
-        CapabilityStatement GetSparkCapabilityStatement(string sparkVersion);
-    }
+using Hl7.Fhir.Model;
+
+public interface ICapabilityStatementService
+{
+    CapabilityStatement GetSparkCapabilityStatement(string sparkVersion);
 }

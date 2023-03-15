@@ -6,26 +6,24 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Tests.Core
+namespace OpenMedStack.SparkEngine.Tests.Core;
+
+using Hl7.Fhir.Model;
+using SparkEngine.Core;
+using Xunit;
+
+public class FhirModelTests
 {
-    using System.Linq;
-    using Hl7.Fhir.Model;
-    using SparkEngine.Core;
-    using Xunit;
+    private static FhirModel _sut;
 
-    public class FhirModelTests
+    public FhirModelTests() => _sut = new FhirModel();
+
+    [Fact]
+    public void TestCompartments()
     {
-        private static FhirModel _sut;
+        var actual = _sut.FindCompartmentInfo(ResourceType.Patient);
 
-        public FhirModelTests() => _sut = new FhirModel();
-
-        [Fact]
-        public void TestCompartments()
-        {
-            var actual = _sut.FindCompartmentInfo(ResourceType.Patient);
-
-            Assert.NotNull(actual);
-            Assert.NotEmpty(actual.ReverseIncludes);
-        }
+        Assert.NotNull(actual);
+        Assert.NotEmpty(actual.ReverseIncludes);
     }
 }

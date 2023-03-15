@@ -6,37 +6,36 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
-namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes
+namespace OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+public class StringValue : ValueExpression
 {
-    public class StringValue : ValueExpression
+    public StringValue(string value) => Value = value;
+
+    public string Value { get; }
+
+    public override string ToString() => EscapeString(Value);
+
+    public static StringValue Parse(string text) => new(UnescapeString(text));
+
+
+    public static string EscapeString(string value)
     {
-        public StringValue(string value) => Value = value;
+        value = value.Replace(@"\", @"\\");
+        value = value.Replace(@"$", @"\$");
+        value = value.Replace(@",", @"\,");
+        value = value.Replace(@"|", @"\|");
 
-        public string Value { get; }
+        return value;
+    }
 
-        public override string ToString() => EscapeString(Value);
+    public static string UnescapeString(string value)
+    {
+        value = value.Replace(@"\|", @"|");
+        value = value.Replace(@"\,", @",");
+        value = value.Replace(@"\$", @"$");
+        value = value.Replace(@"\\", @"\");
 
-        public static StringValue Parse(string text) => new(UnescapeString(text));
-
-
-        public static string EscapeString(string value)
-        {
-            value = value.Replace(@"\", @"\\");
-            value = value.Replace(@"$", @"\$");
-            value = value.Replace(@",", @"\,");
-            value = value.Replace(@"|", @"\|");
-
-            return value;
-        }
-
-        public static string UnescapeString(string value)
-        {
-            value = value.Replace(@"\|", @"|");
-            value = value.Replace(@"\,", @",");
-            value = value.Replace(@"\$", @"$");
-            value = value.Replace(@"\\", @"\");
-
-            return value;
-        }
+        return value;
     }
 }
