@@ -16,7 +16,6 @@ public class ServerStartup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        //services.AddControllers();
         services.AddLogging();//l => l.AddXunit(_outputHelper));
         services.AddFhir<TestFhirController>(
             new SparkSettings
@@ -42,8 +41,7 @@ public class ServerStartup
                         TypeNameHandling = TypeNameHandling.Auto,
                         Formatting = Formatting.None,
                         DateParseHandling = DateParseHandling.DateTimeOffset
-                    },
-                    "test"))
+                    }))
             .AddS3Persistence(
                 new S3PersistenceConfiguration(
                     "fhirstore:O76W8n3MMpePgv0tuZwQ",
@@ -52,7 +50,7 @@ public class ServerStartup
                     new Uri("http://nas:8010"),
                     true,
                     true,
-                    false));
+                    true));
         //.AddDiskPersistence(new DiskPersistenceConfiguration(Path.Combine(".", "fhir"), true));
         services.AddSingleton<IPatchService, PatchService>();
         services.AddCors();

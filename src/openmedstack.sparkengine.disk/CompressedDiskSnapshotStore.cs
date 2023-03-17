@@ -59,8 +59,10 @@ public class CompressedDiskSnapshotStore : ISnapshotStore
 
         _logger.LogInformation("Reading snapshot from {path}", fullPath);
 
-        await using var fileStream = File.OpenRead(fullPath);
-        await using var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+        var fileStream = File.OpenRead(fullPath);
+        await using var _ = fileStream.ConfigureAwait(false);
+        var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+        await using var __ = gzip.ConfigureAwait(false);
         using var reader = new StreamReader(gzip, Encoding.UTF8, leaveOpen: true);
         using var jsonReader = new JsonTextReader(reader);
         var serializer = JsonSerializer.Create(_serializerSettings);

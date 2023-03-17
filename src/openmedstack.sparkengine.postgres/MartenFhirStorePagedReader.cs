@@ -44,7 +44,7 @@ public class MartenFhirStorePagedReader : IFhirStorePagedReader
 
             foreach (var envelope in data)
             {
-                var resource = await session.LoadAsync<Resource>(envelope.ResourceKey, cancellationToken);
+                var resource = await session.LoadAsync<Resource>(envelope.ResourceKey, cancellationToken).ConfigureAwait(false);
                 yield return Entry.Create(
                     envelope.Method,
                     envelope.GetKey(),

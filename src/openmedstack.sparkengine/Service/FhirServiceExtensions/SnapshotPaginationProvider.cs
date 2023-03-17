@@ -144,7 +144,7 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
             .SelectAwait(
                 async x =>
                 {
-                    var resource = await _fhirStore.Load(x.GetKey(), cancellationToken);
+                    var resource = await _fhirStore.Load(x.GetKey(), cancellationToken).ConfigureAwait(false);
                     return Entry.Create(x.Method, x.GetKey(), resource);
                 });
     }

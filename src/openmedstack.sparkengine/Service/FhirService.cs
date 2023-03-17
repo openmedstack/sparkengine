@@ -54,14 +54,14 @@ public class FhirService : IFhirService, IInteractionHandler
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
         if (entry == null || entry.IsDeleted || !entry.HasResource)
         {
-            return await _responseFactory.GetMetadataResponse(entry, key);
+            return await _responseFactory.GetMetadataResponse(entry, key).ConfigureAwait(false);
         }
 
         var resource = await _storageService.Load(key, cancellationToken).ConfigureAwait(false);
         resource!.AffixTags(parameters);
         await Store(Entry.Post(key, resource!), cancellationToken).ConfigureAwait(false);
 
-        return await _responseFactory.GetMetadataResponse(entry, key);
+        return await _responseFactory.GetMetadataResponse(entry, key).ConfigureAwait(false);
     }
 
     public Task<FhirResponse?> ConditionalCreate(
@@ -207,15 +207,15 @@ public class FhirService : IFhirService, IInteractionHandler
         Validate.ValidateKey(key);
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
         return parameters == null
-            ? await _responseFactory.GetFhirResponse(entry, key)
-            : await _responseFactory.GetFhirResponse(entry, key, parameters);
+            ? await _responseFactory.GetFhirResponse(entry, key).ConfigureAwait(false)
+            : await _responseFactory.GetFhirResponse(entry, key, parameters).ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> ReadMeta(IKey key, CancellationToken cancellationToken)
     {
         Validate.ValidateKey(key);
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        return await _responseFactory.GetMetadataResponse(entry, key);
+        return await _responseFactory.GetMetadataResponse(entry, key).ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> Search(
@@ -257,7 +257,7 @@ public class FhirService : IFhirService, IInteractionHandler
 
         try
         {
-            var entry = await _storageService.Load(key, cancellationToken);
+            var entry = await _storageService.Load(key, cancellationToken).ConfigureAwait(false);
             var resource = _patchService.Apply(entry!, parameters);
             return await Patch(Entry.Patch(current.GetKey().WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
         }
@@ -298,7 +298,7 @@ public class FhirService : IFhirService, IInteractionHandler
     {
         Validate.ValidateKey(key, true);
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        return await _responseFactory.GetFhirResponse(entry, key);
+        return await _responseFactory.GetFhirResponse(entry, key).ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> VersionSpecificUpdate(

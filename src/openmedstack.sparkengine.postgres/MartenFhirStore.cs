@@ -40,7 +40,7 @@ public class MartenResourcePersistence : IResourcePersistence
             var session = _sessionFunc();
             await using var _ = session.ConfigureAwait(false);
             session.Store(resource);
-            await session.SaveChangesAsync(cancellationToken);
+            await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (Exception ex)
@@ -57,7 +57,7 @@ public class MartenResourcePersistence : IResourcePersistence
         {
             var session = _sessionFunc();
             await using var _ = session.ConfigureAwait(false);
-            var resource = await session.LoadAsync<Resource>(key.ResourceId!, cancellationToken);
+            var resource = await session.LoadAsync<Resource>(key.ResourceId!, cancellationToken).ConfigureAwait(false);
             return resource;
         }
         catch (Exception ex)

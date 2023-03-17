@@ -52,7 +52,7 @@ public class FhirResponseFactory : IFhirResponseFactory
             return response;
         }
 
-        var resource = await _fhirStore.Load(Key.ParseOperationPath(entry.ResourceKey));
+        var resource = await _fhirStore.Load(Key.ParseOperationPath(entry.ResourceKey)).ConfigureAwait(false);
         return Respond.WithResource(resource!);
     }
 
@@ -71,7 +71,7 @@ public class FhirResponseFactory : IFhirResponseFactory
             return Respond.Gone(entry);
         }
 
-        var resource = await _fhirStore.Load(key!);
+        var resource = await _fhirStore.Load(key!).ConfigureAwait(false);
         return Respond.WithMeta(resource!.Meta);
     }
 

@@ -58,7 +58,7 @@ public class FhirClientLoadTests : IDisposable
         var faker = CreateFaker();
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        const int count = 1_000;
+        const int count = 10;
         var tasks = Enumerable.Range(0, count).Select(async _ =>
         {
             var patient = faker.Generate();

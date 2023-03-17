@@ -16,7 +16,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SparkEngine.Core;
 using SparkEngine.Interfaces;
-using SparkEngine.Service;
 using SparkEngine.Web.Controllers;
 
 [Route("uma")]

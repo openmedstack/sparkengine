@@ -3,7 +3,6 @@
 using Controllers;
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using SparkEngine.Service;
 
 //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [Route("fhir")]

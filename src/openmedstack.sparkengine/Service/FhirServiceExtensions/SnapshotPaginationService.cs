@@ -78,7 +78,7 @@ internal class SnapshotPaginationService : ISnapshotPagination
         }
 
         var resources =
-            await System.Threading.Tasks.Task.WhenAll(infos.Select(i => _fhirStore.Load(i.GetKey(), cancellationToken)));
+            await System.Threading.Tasks.Task.WhenAll(infos.Select(i => _fhirStore.Load(i.GetKey(), cancellationToken))).ConfigureAwait(false);
         var entries = infos.Select(
                 i => Entry.Create(i.Method, i.GetKey(), resources.FirstOrDefault(r => r!.ExtractKey().Equals(i.GetKey()))))
             .ToList();
@@ -135,7 +135,7 @@ internal class SnapshotPaginationService : ISnapshotPagination
             .SelectAwait(
                 async x =>
                 {
-                    var resource = await _fhirStore.Load(x.GetKey(), cancellationToken);
+                    var resource = await _fhirStore.Load(x.GetKey(), cancellationToken).ConfigureAwait(false);
                     return Entry.Create(x.Method, x.GetKey(), resource);
                 });
     }

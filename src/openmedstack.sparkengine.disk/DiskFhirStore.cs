@@ -54,11 +54,11 @@ public class DiskFhirStore : AbstractDiskFhirStore
         await File.WriteAllTextAsync(
             Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.ToFileName()}.json")),
             json,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
         await File.WriteAllTextAsync(
             Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.WithoutVersion().ToFileName()}.json")),
             json,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         return Entry.Create(entry.Method, entry.Key, entry.Resource);
     }
@@ -70,7 +70,7 @@ public class DiskFhirStore : AbstractDiskFhirStore
         {
             var path = Path.Combine(EntryPath, $"{k.ToFileName()}.json");
             var info = File.Exists(path)
-                ? JsonConvert.DeserializeObject<ResourceInfo>(await File.ReadAllTextAsync(path, token))
+                ? JsonConvert.DeserializeObject<ResourceInfo>(await File.ReadAllTextAsync(path, token).ConfigureAwait(false))
                 : null;
             return info;
         }
@@ -91,11 +91,13 @@ public class DiskFhirStore : AbstractDiskFhirStore
             return default;
         }
 
-        await using var fileStream = File.OpenRead(path);
-        await using var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+        var fileStream = File.OpenRead(path);
+        await using var _ = fileStream.ConfigureAwait(false);
+        var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+        await using var __ = gzip.ConfigureAwait(false);
         using var streamReader = new StreamReader(path);
 
-        var json = await streamReader.ReadToEndAsync(cancellationToken);
+        var json = await streamReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
 
         return Deserializer.DeserializeResource(json);
     }

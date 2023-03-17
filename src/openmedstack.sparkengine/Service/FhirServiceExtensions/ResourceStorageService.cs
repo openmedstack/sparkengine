@@ -9,14 +9,12 @@
 
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Extensions;
-using Fhir.Metrics;
 using Hl7.Fhir.Model;
 using Interfaces;
 

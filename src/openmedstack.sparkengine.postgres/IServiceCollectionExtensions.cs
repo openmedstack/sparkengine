@@ -13,7 +13,6 @@ using Interfaces;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Npgsql;
 using Weasel.Core;
 
 public static class ServiceCollectionExtensions

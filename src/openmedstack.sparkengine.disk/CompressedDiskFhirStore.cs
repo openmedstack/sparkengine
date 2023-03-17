@@ -1,7 +1,6 @@
 ﻿namespace OpenMedStack.SparkEngine.Disk;
 
 using System.IO.Compression;
-using System.Runtime.CompilerServices;
 using Core;
 using Hl7.Fhir.Model;
 using Interfaces;
@@ -57,11 +56,11 @@ public class CompressedDiskFhirStore : AbstractDiskFhirStore
         await File.WriteAllTextAsync(
             Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.ToFileName()}.gz")),
             json,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
         await File.WriteAllTextAsync(
             Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.WithoutVersion().ToFileName()}.gz")),
             json,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         return Entry.Create(entry.Method, entry.Key, entry.Resource);
     }
@@ -78,10 +77,12 @@ public class CompressedDiskFhirStore : AbstractDiskFhirStore
                 return default;
             }
 
-            await using var fileStream = File.OpenRead(path);
-            await using var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+            var fileStream = File.OpenRead(path);
+            await using var _ = fileStream.ConfigureAwait(false);
+            var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+            await using var __ = gzip.ConfigureAwait(false);
             using var streamReader = new StreamReader(path);
-            var json = await streamReader.ReadToEndAsync(token);
+            var json = await streamReader.ReadToEndAsync(token).ConfigureAwait(false);
 
             return JsonConvert.DeserializeObject<T>(json);
         }
@@ -102,11 +103,13 @@ public class CompressedDiskFhirStore : AbstractDiskFhirStore
             return default;
         }
 
-        await using var fileStream = File.OpenRead(path);
-        await using var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+        var fileStream = File.OpenRead(path);
+        await using var _ = fileStream.ConfigureAwait(false);
+        var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+        await using var __ = gzip.ConfigureAwait(false);
         using var streamReader = new StreamReader(path);
 
-        var json = await streamReader.ReadToEndAsync(cancellationToken);
+        var json = await streamReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
 
         return Deserializer.DeserializeResource(json);
     }

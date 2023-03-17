@@ -5,7 +5,6 @@ using Hl7.Fhir.Rest;
 using Hl7.Fhir.Serialization;
 using TechTalk.SpecFlow;
 using Xunit;
-using Xunit.Abstractions;
 
 [Binding]
 public class PatientLifeCycleStepDefinitions

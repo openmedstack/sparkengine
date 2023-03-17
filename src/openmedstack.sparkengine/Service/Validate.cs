@@ -12,7 +12,6 @@ namespace OpenMedStack.SparkEngine.Service;
 using System;
 using System.Linq;
 using System.Net;
-using Core;
 using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;

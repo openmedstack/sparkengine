@@ -13,7 +13,6 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Marten;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Weasel.Core;
 
 internal class CustomSerializer : ISerializer

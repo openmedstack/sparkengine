@@ -2,7 +2,6 @@ namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System.Threading;
 using System.Threading.Tasks;
-using Core;
 using Hl7.Fhir.Model;
 
 public interface IResourcePersistence

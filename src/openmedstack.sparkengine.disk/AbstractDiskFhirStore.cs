@@ -42,7 +42,7 @@ public abstract class AbstractDiskFhirStore : IFhirStore
     {
         foreach (var localIdentifier in localIdentifiers)
         {
-            var info = await Get(localIdentifier, cancellationToken);
+            var info = await Get(localIdentifier, cancellationToken).ConfigureAwait(false);
             if (info != null)
             {
                 yield return info;

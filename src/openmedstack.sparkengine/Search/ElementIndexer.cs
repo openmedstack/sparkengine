@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Core;
 using Extensions;
 using Hl7.Fhir.Model;
 using Interfaces;
