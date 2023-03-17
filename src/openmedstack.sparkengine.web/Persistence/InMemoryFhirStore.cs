@@ -50,7 +50,12 @@ public class InMemoryFhirStore : IFhirStore
     /// <inheritdoc />
     public Task<Resource?> Load(IKey key, CancellationToken cancellationToken = default)
     {
-        throw new System.NotImplementedException();
+        if (_entries.TryGetValue(key.ToStorageKey(),out var entry))
+        {
+            return Task.FromResult(entry.Resource);
+        }
+
+        return Task.FromResult<Resource?>(null);
     }
 
     /// <inheritdoc />

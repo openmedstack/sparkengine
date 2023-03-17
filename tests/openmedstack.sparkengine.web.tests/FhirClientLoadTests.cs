@@ -58,7 +58,7 @@ public class FhirClientLoadTests : IDisposable
         var faker = CreateFaker();
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        const int count = 10;
+        const int count = 25_000;
         var tasks = Enumerable.Range(0, count).Select(async _ =>
         {
             var patient = faker.Generate();
@@ -71,16 +71,16 @@ public class FhirClientLoadTests : IDisposable
         stopwatch.Stop();
 
         _outputHelper.WriteLine($"Inserted {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
-        //var elapsed = stopwatch.Elapsed;
-        //stopwatch.Restart();
-        //var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
-        //_ = await Task.WhenAll(patientTasks).ConfigureAwait(false);
-        //stopwatch.Stop();
+        var elapsed = stopwatch.Elapsed;
+        stopwatch.Restart();
+        var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
+        _ = await Task.WhenAll(patientTasks).ConfigureAwait(false);
+        stopwatch.Stop();
 
-        //elapsed += stopwatch.Elapsed;
+        elapsed += stopwatch.Elapsed;
 
-        //_outputHelper.WriteLine($"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
-        //_outputHelper.WriteLine($"Inserting and reading {count} records took {elapsed}.");
+        _outputHelper.WriteLine($"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        _outputHelper.WriteLine($"Inserting and reading {count} records took {elapsed}.");
     }
 
     private static Faker<Patient> CreateFaker()
