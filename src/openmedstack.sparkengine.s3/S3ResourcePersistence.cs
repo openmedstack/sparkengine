@@ -35,7 +35,6 @@ public class S3ResourcePersistence : IResourcePersistence
 
     public S3ResourcePersistence(
         S3PersistenceConfiguration configuration,
-        string bucket,
         FhirJsonSerializer serializer,
         FhirJsonParser parser,
         ILogger<S3ResourcePersistence> logger)
@@ -49,7 +48,7 @@ public class S3ResourcePersistence : IResourcePersistence
                 UseHttp = configuration.UseHttp,
                 ForcePathStyle = configuration.UsePathStyle
             });
-        _bucket = bucket;
+        _bucket = configuration.Bucket;
         _serializer = serializer;
         _parser = parser;
         _logger = logger;

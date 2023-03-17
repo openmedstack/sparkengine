@@ -1,8 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using OpenMedStack;
 using OpenMedStack.Autofac;
 using OpenMedStack.Autofac.MassTransit;
@@ -40,6 +38,7 @@ FhirServerConfiguration CreateConfiguration()
     var accessSecret = Environment.GetEnvironmentVariable("STORAGE__SECRETKEY");
     var storageUrl = Environment.GetEnvironmentVariable("STORAGE__STORAGEURL");
     var storageCompress = Environment.GetEnvironmentVariable("STORAGE__COMPRESS");
+    var storageBucket = Environment.GetEnvironmentVariable("STORAGE__BUCKET");
     var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRING");
     var serviceUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
     var serviceBus = Environment.GetEnvironmentVariable("SERVICEBUS");
@@ -53,6 +52,7 @@ FhirServerConfiguration CreateConfiguration()
         accessSecret,
         storageUrl,
         storageCompress,
+        storageBucket,
         connectionString,
         serviceUrls,
         serviceBus);
@@ -71,6 +71,7 @@ FhirServerConfiguration CreateConfiguration()
         AccessKey = accessKey!,
         AccessSecret = accessSecret!,
         StorageServiceUrl = new Uri(storageUrl!),
+        Bucket = storageBucket!,
         CompressStorage = bool.TryParse(storageCompress, out var compress) && compress,
         FhirRoot = fhirRoot!,
         ConnectionString = connectionString!,
@@ -80,7 +81,6 @@ FhirServerConfiguration CreateConfiguration()
 
 var chassis = Chassis.From(configuration)
     .AddAutofacModules((c, _) => new FhirModule(c))
-    //.DefinedIn(typeof(ServiceCollectionExtensions).Assembly, typeof(ResourceRegistered).Assembly)
     .UsingInMemoryMassTransit()
     .BindToUrls(configuration.Urls)
     .UsingWebServer(c => new ServerStartup((FhirServerConfiguration)c));

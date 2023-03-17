@@ -13,6 +13,7 @@ using Interfaces;
 using Marten;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Npgsql;
 using Weasel.Core;
 
 public static class ServiceCollectionExtensions
@@ -25,6 +26,7 @@ public static class ServiceCollectionExtensions
                 {
                     o.Serializer(sp.GetRequiredService<ISerializer>());
                     o.Connection(settings.ConnectionString);
+                    o.DatabaseSchemaName = settings.Schema;
                     o.Schema.Include<FhirRegistry>();
                     /*
                      
@@ -38,12 +40,11 @@ public static class ServiceCollectionExtensions
     REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
     
                      */
-                    o.AutoCreateSchemaObjects = AutoCreate.All;
+                    o.AutoCreateSchemaObjects = AutoCreate.None;
                 }));
         services.TryAddSingleton(settings);
-        services.TryAddTransient<ISerializer>(
-            sp => new CustomSerializer(sp.GetRequiredService<StoreSettings>().SerializerSettings));
         services.TryAddTransient(sp => sp.GetRequiredService<StoreSettings>().SerializerSettings);
+        services.TryAddTransient<ISerializer, CustomSerializer>();
         services.AddTransient<Func<IDocumentSession>>(
             sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
         services.TryAddTransient<IResourcePersistence, MartenResourcePersistence>();

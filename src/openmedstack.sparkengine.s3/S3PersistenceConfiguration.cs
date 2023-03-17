@@ -2,11 +2,15 @@
 
 using System;
 
+/// <summary>
+/// Defines the configuration for S3 persistence.
+/// </summary>
 public record S3PersistenceConfiguration
 {
     public S3PersistenceConfiguration(
         string accessKey,
         string secretKey,
+        string bucket,
         Uri serviceUrl,
         bool useHttp = false,
         bool usePathStyle = false,
@@ -14,6 +18,7 @@ public record S3PersistenceConfiguration
     {
         AccessKey = accessKey;
         SecretKey = secretKey;
+        Bucket = bucket;
         ServiceUrl = serviceUrl;
         UseHttp = useHttp;
         UsePathStyle = usePathStyle;
@@ -29,6 +34,11 @@ public record S3PersistenceConfiguration
     /// Gets the S3 account secret key
     /// </summary>
     public string SecretKey { get; }
+
+    /// <summary>
+    /// Gets the root bucket for the tenant.
+    /// </summary>
+    public string Bucket { get; }
 
     /// <summary>
     /// Gets the S3 service URL.

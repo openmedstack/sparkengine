@@ -16,9 +16,9 @@ using OpenMedStack.SparkEngine.Interfaces;
 
 public class LogListener : IServiceListener
 {
-    private readonly ILogger _logger;
+    private readonly ILogger<LogListener> _logger;
 
-    public LogListener(ILogger logger) => _logger = logger;
+    public LogListener(ILogger<LogListener> logger) => _logger = logger;
 
     /// <inheritdoc />
     public Task Inform(Uri location, Entry interaction)

@@ -54,6 +54,7 @@ internal class ServerStartup : IConfigureWebApplication
             .AddS3Persistence(new S3PersistenceConfiguration(
                 _configuration.AccessKey,
                 _configuration.AccessSecret,
+                _configuration.Bucket,
                 _configuration.StorageServiceUrl,
                 true,
                 true,

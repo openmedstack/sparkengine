@@ -41,7 +41,7 @@ public class MartenSnapshotStore : ISnapshotStore
     /// <inheritdoc />
     public async Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Returned snapshot " + snapshotId);
+        _logger.LogDebug("Returned snapshot {id}", snapshotId);
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         var snapshot = await session.LoadAsync<Snapshot>(snapshotId, cancellationToken).ConfigureAwait(false);

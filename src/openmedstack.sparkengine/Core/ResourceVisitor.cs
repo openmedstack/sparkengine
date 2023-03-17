@@ -92,7 +92,7 @@ public partial class ResourceVisitor
         }
     }
 
-    private Tuple<string, string, string> HeadPredicateAndTail(string path)
+    private static Tuple<string, string, string> HeadPredicateAndTail(string path)
     {
         var match = _headTailRegex.Match(path);
         var head = match.Groups["head"].Value;

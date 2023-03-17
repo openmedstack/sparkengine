@@ -10,4 +10,5 @@ internal class FhirServerConfiguration : WebDeploymentConfiguration
     public required Uri StorageServiceUrl { get; init; }
     public required string FhirRoot { get; init; }
     public required bool CompressStorage { get; init; }
+    public required string Bucket { get; init; }
 }

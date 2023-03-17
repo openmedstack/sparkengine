@@ -20,6 +20,7 @@ internal class FhirModule : Module
     /// <inheritdoc />
     protected override void Load(ContainerBuilder builder)
     {
+        builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
         builder.RegisterType<GuidGenerator>().As<IGenerator>().SingleInstance();
         builder.RegisterType<PatchService>().As<IPatchService>().SingleInstance();
         builder.Register(_ => new DbSourceMap(_configuration.ConnectionString))
@@ -37,7 +38,7 @@ internal class FhirModule : Module
                         new Uri(_configuration.TokenService));
                 })
             .AsSelf()
-            .AsImplementedInterfaces();
+            .AsImplementedInterfaces().InstancePerLifetimeScope();
         builder.Register(
                 sp => new TokenClient(
                     TokenCredentials.FromClientCredentials(_configuration.ClientId, _configuration.Secret),
@@ -48,7 +49,8 @@ internal class FhirModule : Module
                     },
                     new Uri(_configuration.TokenService)))
             .AsSelf()
-            .AsImplementedInterfaces();
+            .AsImplementedInterfaces()
+            .InstancePerLifetimeScope();
 
     }
 }

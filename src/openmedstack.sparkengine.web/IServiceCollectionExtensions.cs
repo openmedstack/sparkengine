@@ -131,7 +131,7 @@ public static class ServiceCollectionExtensions
                 }).Services;
     }
 
-    public static IServiceCollection AddInMemoryPersistence(this IServiceCollection services)
+    public static IServiceCollection AddInMemoryFhirStores(this IServiceCollection services)
     {
         return services.AddSingleton<InMemoryFhirIndex>()
             .AddSingleton<IFhirIndex>(sp => sp.GetRequiredService<InMemoryFhirIndex>())

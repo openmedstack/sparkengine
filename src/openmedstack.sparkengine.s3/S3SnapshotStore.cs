@@ -24,7 +24,6 @@ public class S3SnapshotStore : ISnapshotStore
 
     public S3SnapshotStore(
         S3PersistenceConfiguration configuration,
-        string bucket,
         JsonSerializerSettings serializerSettings,
         ILogger<S3SnapshotStore> logger)
     {
@@ -37,7 +36,7 @@ public class S3SnapshotStore : ISnapshotStore
                 UseHttp = configuration.UseHttp,
                 ForcePathStyle = configuration.UsePathStyle
             });
-        _bucket = bucket;
+        _bucket = configuration.Bucket;
         _serializerSettings = serializerSettings;
         _logger = logger;
     }
