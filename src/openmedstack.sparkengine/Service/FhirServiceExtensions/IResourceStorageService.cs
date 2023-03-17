@@ -12,15 +12,18 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
+using Hl7.Fhir.Model;
 using Interfaces;
 
 public interface IResourceStorageService
 {
     Task<bool> Exists(IKey key, CancellationToken cancellationToken);
 
-    Task<Entry?> Get(IKey key, CancellationToken cancellationToken);
+    Task<ResourceInfo?> Get(IKey key, CancellationToken cancellationToken);
+
+    Task<Resource?> Load(IKey key, CancellationToken cancellationToken);
 
     Task<Entry> Add(Entry entry, CancellationToken cancellationToken);
 
-    IAsyncEnumerable<Entry> Get(IEnumerable<string> localIdentifiers, string? sortBy = null, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<ResourceInfo> Get(IEnumerable<string> localIdentifiers, string? sortBy = null, CancellationToken cancellationToken = default);
 }

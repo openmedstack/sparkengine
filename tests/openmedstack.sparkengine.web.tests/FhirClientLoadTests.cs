@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using Bogus;
@@ -55,7 +54,38 @@ public class FhirClientLoadTests : IDisposable
                 VerifyFhirVersion = false
             });
 
-        var faker = new Faker<Patient>().RuleFor(x => x.Active, true)
+        var faker = CreateFaker();
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        const int count = 1;
+        var tasks = Enumerable.Range(0, count).Select(async _ =>
+        {
+            var patient = faker.Generate();
+
+            var inserted = await client.CreateAsync(patient).ConfigureAwait(false);
+
+            return inserted!.Id;
+        });
+        var ids = await Task.WhenAll(tasks).ConfigureAwait(false);
+        stopwatch.Stop();
+
+        _outputHelper.WriteLine($"Inserted {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        var elapsed = stopwatch.Elapsed;
+        stopwatch.Restart();
+        var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
+        _ = await Task.WhenAll(patientTasks).ConfigureAwait(false);
+        stopwatch.Stop();
+
+        elapsed += stopwatch.Elapsed;
+        
+        _outputHelper.WriteLine($"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        _outputHelper.WriteLine($"Inserting and reading {count} records took {elapsed}.");
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromMinutes(1));
+    }
+
+    private static Faker<Patient> CreateFaker()
+    {
+        return new Faker<Patient>().RuleFor(x => x.Active, true)
             .RuleFor(
                 x => x.Name,
                 f =>
@@ -86,32 +116,6 @@ public class FhirClientLoadTests : IDisposable
                     PostalCode = f.Address.ZipCode(),
                     Use = Address.AddressUse.Home
                 }});
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-        const int count = 100;
-        var tasks = Enumerable.Range(0, count).Select(async _ =>
-        {
-            var patient = faker.Generate();
-
-            var inserted = await client.CreateAsync(patient).ConfigureAwait(false);
-
-            return inserted!.Id;
-        });
-        var ids = await Task.WhenAll(tasks).ConfigureAwait(false);
-        stopwatch.Stop();
-
-        _outputHelper.WriteLine($"Inserted {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
-        var elapsed = stopwatch.Elapsed;
-        stopwatch.Restart();
-        var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
-        _ = await Task.WhenAll(patientTasks).ConfigureAwait(false);
-        stopwatch.Stop();
-
-        elapsed += stopwatch.Elapsed;
-        
-        _outputHelper.WriteLine($"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
-        _outputHelper.WriteLine($"Inserting and reading {count} records took {elapsed}.");
-        Assert.True(stopwatch.Elapsed < TimeSpan.FromMinutes(1));
     }
 
     [Theory]

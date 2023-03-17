@@ -71,9 +71,7 @@ public class ElementIndexer
         {
             // TODO: How to handle composite SearchParameter type
             //if (element is Sequence.VariantComponent) return result;
-#pragma warning disable IL2026 // Using dynamic types might cause types or members to be removed by trimmer.
             List<Expression> expressions = ToExpressions((dynamic)element);
-#pragma warning restore IL2026 // Using dynamic types might cause types or members to be removed by trimmer.
             if (expressions != null)
             {
                 result.AddRange(expressions);

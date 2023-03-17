@@ -10,6 +10,7 @@ namespace OpenMedStack.SparkEngine.S3;
 
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,6 +27,7 @@ using Resource = Hl7.Fhir.Model.Resource;
 public class S3ResourcePersistence : IResourcePersistence
 {
     private readonly AmazonS3Client _client;
+    private readonly bool _compress;
     private readonly string _bucket;
     private readonly FhirJsonSerializer _serializer;
     private readonly FhirJsonParser _parser;
@@ -38,6 +40,7 @@ public class S3ResourcePersistence : IResourcePersistence
         FhirJsonParser parser,
         ILogger<S3ResourcePersistence> logger)
     {
+        _compress = configuration.Compress;
         _client = new AmazonS3Client(
             new BasicAWSCredentials(configuration.AccessKey, configuration.SecretKey),
             new AmazonS3Config
@@ -58,7 +61,9 @@ public class S3ResourcePersistence : IResourcePersistence
         try
         {
             using var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
+            var gzip = new GZipStream(stream, CompressionLevel.Optimal, true);
+            await using var __ = gzip.ConfigureAwait(false);
+            var writer = _compress ? new StreamWriter(gzip, leaveOpen: true) : new StreamWriter(stream, leaveOpen: true);
             await using var _ = writer.ConfigureAwait(false);
             using var jsonWriter = new JsonTextWriter(writer);
             await _serializer.SerializeAsync(resource, jsonWriter).ConfigureAwait(false);
@@ -72,7 +77,7 @@ public class S3ResourcePersistence : IResourcePersistence
                         AutoResetStreamPosition = false,
                         Key = resource.ExtractKey().ToStorageKey(),
                         BucketName = _bucket,
-                        ContentType = "application/json",
+                        ContentType = _compress ? "application/gzip" : "application/json",
                         InputStream = stream,
                         DisableMD5Stream = true,
                         UseChunkEncoding = false
@@ -98,7 +103,9 @@ public class S3ResourcePersistence : IResourcePersistence
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            using var streamReader = new StreamReader(response.ResponseStream);
+            var gzip = new GZipStream(response.ResponseStream, CompressionMode.Decompress, true);
+            await using var _ = gzip.ConfigureAwait(false);
+            using var streamReader = _compress ? new StreamReader(gzip) : new StreamReader(response.ResponseStream);
             using var jsonTextReader = new JsonTextReader(streamReader);
             var resource = await _parser.ParseAsync<Resource>(jsonTextReader).ConfigureAwait(false);
             return resource;

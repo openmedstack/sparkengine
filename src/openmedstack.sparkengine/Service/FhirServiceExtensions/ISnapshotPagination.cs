@@ -9,11 +9,12 @@
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Hl7.Fhir.Model;
 
 public interface ISnapshotPagination
 {
-    Task<Bundle> GetPage(int? index = null, Action<Entry>? transformElement = null);
+    Task<Bundle> GetPage(CancellationToken cancellationToken, int? index = null, Action<Entry>? transformElement = null);
 }

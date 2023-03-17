@@ -8,24 +8,24 @@
 
 namespace OpenMedStack.SparkEngine.Postgres;
 
+using Core;
+using Hl7.Fhir.Model;
 using Marten;
-using Marten.Schema;
-using Marten.Schema.Indexing.Unique;
 using Weasel.Postgresql.Tables;
 
 public class FhirRegistry : MartenRegistry
 {
     public FhirRegistry()
     {
-        For<EntryEnvelope>()
+        For<Resource>().AddSubClassHierarchy().Identity(x => x.Id);
+        For<ResourceInfo>()
             .Index(x => x.Id)
-            .Duplicate(x => x.ResourceType)
-            .Duplicate(x => x.ResourceId!, notNull: false)
-            .Duplicate(x => x.VersionId!, notNull: false)
-            .Duplicate(x => x.ResourceKey)
-            .Duplicate(x => x.Deleted)
-            .Duplicate(x => x.IsPresent)
-            .Index(x => x.When)
+            .Index(x => x.ResourceId!)
+            .Index(x => x.ResourceType!)
+            .Index(x => x.VersionId!)
+            .Index(x => x.IsDeleted)
+            .Index(x => x.IsPresent)
+            .Index(x => x.When!)
             .GinIndexJsonData();
         For<IndexEntry>()
             .Identity(x => x.Id)

@@ -27,7 +27,7 @@ public class MartenFhirStoreAdministration : IFhirStoreAdministration
         var tasks = new[]
         {
             documentCleaner.DeleteDocumentsByTypeAsync(typeof(IndexEntry)),
-            documentCleaner.DeleteDocumentsByTypeAsync(typeof(EntryEnvelope)),
+            documentCleaner.DeleteDocumentsByTypeAsync(typeof(ResourceInfo)),
             documentCleaner.DeleteDocumentsByTypeAsync(typeof(Snapshot))
         };
         return Task.WhenAll(tasks);

@@ -70,11 +70,9 @@ public class IndexServiceTests
                 "Patient.name.extension.where(url='http://hl7.no/fhir/StructureDefinition/no-basis-middlename')"
         };
         var searchParameters = new List<SearchParamDefinition> { spPatientName, spMiddleName };
-        var resources =
-            new Dictionary<Type, string> { { typeof(Patient), "Patient" }, { typeof(HumanName), "HumanName" } };
-
+        
         // For this test setup we want a limited available types and search parameters.
-        IFhirModel limitedFhirModel = new FhirModel(resources, searchParameters);
+        IFhirModel limitedFhirModel = new FhirModel(searchParameters);
         var limitedElementIndexer = new ElementIndexer(limitedFhirModel, new Mock<ILogger<ElementIndexer>>().Object);
         _limitedIndexService = new IndexService(limitedFhirModel, indexStoreMock.Object, limitedElementIndexer);
 

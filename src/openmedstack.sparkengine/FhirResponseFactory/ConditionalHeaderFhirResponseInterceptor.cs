@@ -18,7 +18,7 @@ public class ConditionalHeaderFhirResponseInterceptor : IFhirResponseInterceptor
 {
     public bool CanHandle(object input) => input is ConditionalHeaderParameters;
 
-    public FhirResponse? GetFhirResponse(Entry entry, object input)
+    public FhirResponse? GetFhirResponse(ResourceInfo entry, object input)
     {
         var parameters = ConvertInput(input);
         if (parameters == null)
@@ -27,10 +27,10 @@ public class ConditionalHeaderFhirResponseInterceptor : IFhirResponseInterceptor
         }
 
         var matchTags = parameters.IfNoneMatchTags.Any()
-            ? parameters.IfNoneMatchTags.Any(t => t == ETag.Create(entry.Key!.VersionId).Tag)
+            ? parameters.IfNoneMatchTags.Any(t => t == ETag.Create(entry.VersionId).Tag)
             : (bool?) null;
         var matchModifiedDate = parameters.IfModifiedSince.HasValue
-            ? parameters.IfModifiedSince.Value < entry.Resource!.Meta.LastUpdated
+            ? parameters.IfModifiedSince.Value < entry.When
             : (bool?) null;
 
         if (!matchTags.HasValue && !matchModifiedDate.HasValue)

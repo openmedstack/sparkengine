@@ -13,5 +13,5 @@ using Core;
 
 public interface IFhirResponseInterceptorRunner
 {
-    FhirResponse? RunInterceptors(Entry entry, IEnumerable<object> parameters);
+    FhirResponse? RunInterceptors(ResourceInfo entry, IEnumerable<object> parameters);
 }

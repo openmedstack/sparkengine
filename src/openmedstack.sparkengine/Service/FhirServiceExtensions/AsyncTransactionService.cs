@@ -32,7 +32,7 @@ public class AsyncTransactionService : ITransactionService
         _searchService = searchService;
     }
 
-    private FhirResponse MergeFhirResponse(FhirResponse? previousResponse, FhirResponse response)
+    private static FhirResponse MergeFhirResponse(FhirResponse? previousResponse, FhirResponse response)
     {
         if (previousResponse == null)
         {
@@ -49,9 +49,7 @@ public class AsyncTransactionService : ITransactionService
             throw new Exception("Incompatible responses");
         }
 
-        if (response.Key != null
-            && previousResponse.Key != null
-            && response.Key.Equals(previousResponse.Key) == false)
+        if (response.Key != null && previousResponse.Key != null && response.Key.Equals(previousResponse.Key) == false)
         {
             throw new Exception("Incompatible responses");
         }
@@ -92,7 +90,8 @@ public class AsyncTransactionService : ITransactionService
         Mapper<string, IKey>? mapper,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken).ConfigureAwait(false))
+        await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken)
+                           .ConfigureAwait(false))
         {
             var response = await interactionHandler.HandleInteraction(interaction, cancellationToken)
                 .ConfigureAwait(false);
@@ -102,15 +101,9 @@ public class AsyncTransactionService : ITransactionService
             }
 
             interaction.Resource = response.Resource;
-            //response.Resource = null;
 
-            //_transfer.Externalize(interactions);
             yield return Tuple.Create(_transfer.Externalize(interaction), response);
-            //responses.Add(new Tuple<Entry, FhirResponse>(interaction, response));
         }
-
-        //_transfer.Externalize(interactions);
-        //return responses;
     }
 
     public Task<FhirResponse?> HandleTransaction(
@@ -121,7 +114,7 @@ public class AsyncTransactionService : ITransactionService
         return HandleOperation(operation, interactionHandler, cancellationToken: cancellationToken);
     }
 
-    public async Task<FhirResponse?> HandleOperation(
+    private async Task<FhirResponse?> HandleOperation(
         ResourceManipulationOperation operation,
         IInteractionHandler interactionHandler,
         Mapper<string, IKey>? mapper = null,
@@ -130,7 +123,8 @@ public class AsyncTransactionService : ITransactionService
         var interactions = operation.GetEntries();
 
         FhirResponse? response = null;
-        await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken).ConfigureAwait(false))
+        await foreach (var interaction in _transfer.Internalize(interactions, mapper, cancellationToken)
+                           .ConfigureAwait(false))
         {
             response = MergeFhirResponse(
                 response,

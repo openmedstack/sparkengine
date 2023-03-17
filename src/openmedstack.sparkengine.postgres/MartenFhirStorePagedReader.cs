@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
+using Hl7.Fhir.Model;
 using Interfaces;
 using Marten;
 using Marten.Pagination;
@@ -30,20 +31,24 @@ public class MartenFhirStorePagedReader : IFhirStorePagedReader
         FhirStorePageReaderOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var pagesize = options?.PageSize ?? 100;
+        var pageSize = options?.PageSize ?? 100;
         var pageNumber = 0;
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         while (true)
         {
-            var data = await session.Query<EntryEnvelope>()
+            var data = await session.Query<ResourceInfo>()
                 .OrderBy(x => x.Id)
-                .ToPagedListAsync(pageNumber, pagesize, cancellationToken)
+                .ToPagedListAsync(pageNumber, pageSize, cancellationToken)
                 .ConfigureAwait(false);
 
             foreach (var envelope in data)
             {
-                yield return Entry.Create(envelope.Method, Key.Create(envelope.ResourceType, envelope.ResourceId, envelope.VersionId), envelope.Resource);
+                var resource = await session.LoadAsync<Resource>(envelope.ResourceKey, cancellationToken);
+                yield return Entry.Create(
+                    envelope.Method,
+                    envelope.GetKey(),
+                    resource);
             }
 
             if (data.IsLastPage)

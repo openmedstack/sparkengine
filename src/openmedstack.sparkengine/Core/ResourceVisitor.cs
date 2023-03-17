@@ -15,7 +15,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Hl7.Fhir.Model;
 
-public class ResourceVisitor
+public partial class ResourceVisitor
 {
     /// <summary>
     ///     Matches
@@ -25,10 +25,9 @@ public class ResourceVisitor
     ///     a(x=y).b.c  => "a"      | "x=y"         | "b.c"
     ///     See also ResourceVisitorTests.
     /// </summary>
-    private readonly Regex _headTailRegex = new(
-        @"(?([^\.]*\[.*\])(?<head>[^\[]*)\[(?<predicate>.*)\](\.(?<tail>.*))?|(?<head>[^\.]*)(\.(?<tail>.*))?)");
+    private static readonly Regex _headTailRegex = HeadTailRegex();
 
-    private readonly Regex _predicateRegex = new(@"(?<propname>[^=]*)=(?<filterValue>.*)");
+    private static readonly Regex _predicateRegex = PredicateRegex();
 
     private readonly FhirPropertyIndex _propIndex;
 
@@ -161,4 +160,9 @@ public class ResourceVisitor
         var codedEnum = type.GenericTypeArguments.FirstOrDefault()?.IsEnum;
         return codedEnum.HasValue && codedEnum.Value;
     }
+
+    [GeneratedRegex("(?([^\\.]*\\[.*\\])(?<head>[^\\[]*)\\[(?<predicate>.*)\\](\\.(?<tail>.*))?|(?<head>[^\\.]*)(\\.(?<tail>.*))?)")]
+    private static partial Regex HeadTailRegex();
+    [GeneratedRegex("(?<propname>[^=]*)=(?<filterValue>.*)")]
+    private static partial Regex PredicateRegex();
 }

@@ -102,7 +102,7 @@ public class SearchService : ISearchService, IServiceListener
 
     public Task Inform(Uri location, Entry interaction) => _indexService.Process(interaction);
 
-    private static Snapshot CreateSnapshot(Uri selfLink, IList<string> keys, SearchParams searchCommand)
+    private static Snapshot CreateSnapshot(Uri selfLink, IReadOnlyList<string> keys, SearchParams searchCommand)
     {
         var sort = GetFirstSort(searchCommand);
 

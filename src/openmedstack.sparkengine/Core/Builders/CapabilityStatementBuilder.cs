@@ -32,18 +32,18 @@ public class CapabilityStatementBuilder
     private Markdown? _purpose;
     private Markdown? _copyright;
     private Code<CapabilityStatementKind>? _kind;
-    private List<Canonical> _instantiates = new();
-    private List<Canonical> _imports = new();
+    private readonly List<Canonical> _instantiates = new();
+    private readonly List<Canonical> _imports = new();
     private SoftwareComponent? _software;
     private ImplementationComponent? _implementation;
     private Code<FHIRVersion>? _fhirVersion;
-    private List<Code> _format = new();
-    private List<Code> _patchFormat = new();
-    private List<Canonical> _implementationGuide = new();
-    private List<ResourceReference> _profile = new();
-    private List<RestComponent> _rest = new();
-    private List<MessagingComponent> _messaging = new();
-    private List<DocumentComponent> _document = new();
+    private readonly List<Code> _format = new();
+    private readonly List<Code> _patchFormat = new();
+    private readonly List<Canonical> _implementationGuide = new();
+    private readonly List<ResourceReference> _profile = new();
+    private readonly List<RestComponent> _rest = new();
+    private readonly List<MessagingComponent> _messaging = new();
+    private readonly List<DocumentComponent> _document = new();
 
     public CapabilityStatement Build()
     {
@@ -271,10 +271,7 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithContact(ContactDetail contact)
     {
-        if (_contact == null)
-        {
-            _contact = new List<ContactDetail>();
-        }
+        _contact ??= new List<ContactDetail>();
 
         _contact.Add(contact);
         return this;
@@ -294,10 +291,7 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithUseContext(UsageContext useContext)
     {
-        if (_useContext == null)
-        {
-            _useContext = new List<UsageContext>();
-        }
+        _useContext ??= new List<UsageContext>();
 
         _useContext.Add(useContext);
         return this;
@@ -305,10 +299,7 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithJurisdiction(CodeableConcept jurisdiction)
     {
-        if (_jurisdiction == null)
-        {
-            _jurisdiction = new List<CodeableConcept>();
-        }
+        _jurisdiction ??= new List<CodeableConcept>();
 
         _jurisdiction.Add(jurisdiction);
         return this;
@@ -356,11 +347,6 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithInstantiates(Canonical instantiates)
     {
-        if (_instantiates == null)
-        {
-            _instantiates = new List<Canonical>();
-        }
-
         _instantiates.Add(instantiates);
         return this;
     }
@@ -433,22 +419,12 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithAcceptFormat(Code format)
     {
-        if (_format == null)
-        {
-            _format = new List<Code>();
-        }
-
         _format.Add(format);
         return this;
     }
 
     public CapabilityStatementBuilder WithAcceptFormat(IEnumerable<string> format)
     {
-        if (_format == null)
-        {
-            _format = new List<Code>();
-        }
-
         _format.AddRange(format.Select(f => new Code(f)));
 
         return this;
@@ -461,11 +437,6 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithPatchFormat(Code patchFormat)
     {
-        if (_patchFormat == null)
-        {
-            _patchFormat = new List<Code>();
-        }
-
         _patchFormat.Add(patchFormat);
         return this;
     }
@@ -478,11 +449,6 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithImplementationGuide(Canonical implementationGuide)
     {
-        if (_implementationGuide == null)
-        {
-            _implementationGuide = new List<Canonical>();
-        }
-
         _implementationGuide.Add(implementationGuide);
         return this;
     }
@@ -494,11 +460,6 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithProfile(ResourceReference profile)
     {
-        if (_profile == null)
-        {
-            _profile = new List<ResourceReference>();
-        }
-
         _profile.Add(profile);
         return this;
     }
@@ -510,11 +471,6 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithRest(RestComponent? rest)
     {
-        if (_rest == null)
-        {
-            _rest = new List<RestComponent>();
-        }
-
         if (rest != null)
         {
             _rest.Add(rest);
@@ -530,15 +486,7 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithMessaging(MessagingComponent messaging)
     {
-        if (_messaging == null)
-        {
-            _messaging = new List<MessagingComponent>();
-        }
-
-        if (messaging != null)
-        {
-            _messaging.Add(messaging);
-        }
+        _messaging.Add(messaging);
 
         return this;
     }
@@ -548,7 +496,7 @@ public class CapabilityStatementBuilder
         return WithDocument(mode, new Canonical(profile), !string.IsNullOrWhiteSpace(documentation) ? new Markdown(documentation) : null);
     }
 
-    public CapabilityStatementBuilder WithDocument(DocumentMode mode, Canonical profile, Markdown? documentation = null)
+    private CapabilityStatementBuilder WithDocument(DocumentMode mode, Canonical profile, Markdown? documentation = null)
     {
         return WithDocument(new DocumentComponent()
         {
@@ -560,11 +508,6 @@ public class CapabilityStatementBuilder
 
     public CapabilityStatementBuilder WithDocument(DocumentComponent document)
     {
-        if (_document == null)
-        {
-            _document = new List<DocumentComponent>();
-        }
-
         _document.Add(document);
         return this;
     }

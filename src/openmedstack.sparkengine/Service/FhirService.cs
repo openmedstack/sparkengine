@@ -52,15 +52,16 @@ public class FhirService : IFhirService, IInteractionHandler
     public async Task<FhirResponse> AddMeta(IKey key, Parameters parameters, CancellationToken cancellationToken)
     {
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        if (entry == null || entry.IsDeleted() || entry.Resource == null)
+        if (entry == null || entry.IsDeleted || !entry.HasResource)
         {
-            return _responseFactory.GetMetadataResponse(entry, key);
+            return await _responseFactory.GetMetadataResponse(entry, key);
         }
 
-        entry.Resource.AffixTags(parameters);
-        await Store(entry, cancellationToken).ConfigureAwait(false);
+        var resource = await _storageService.Load(key, cancellationToken).ConfigureAwait(false);
+        resource!.AffixTags(parameters);
+        await Store(Entry.Post(key, resource!), cancellationToken).ConfigureAwait(false);
 
-        return _responseFactory.GetMetadataResponse(entry, key);
+        return await _responseFactory.GetMetadataResponse(entry, key);
     }
 
     public Task<FhirResponse?> ConditionalCreate(
@@ -146,7 +147,7 @@ public class FhirService : IFhirService, IInteractionHandler
     public async Task<FhirResponse> GetPage(string snapshotKey, int index, CancellationToken cancellationToken)
     {
         var snapshot = await _pagingService.StartPagination(snapshotKey, cancellationToken).ConfigureAwait(false);
-        var page = await snapshot.GetPage(index).ConfigureAwait(false);
+        var page = await snapshot.GetPage(cancellationToken, index).ConfigureAwait(false);
         return _responseFactory.GetFhirResponse(page);
     }
 
@@ -206,15 +207,15 @@ public class FhirService : IFhirService, IInteractionHandler
         Validate.ValidateKey(key);
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
         return parameters == null
-            ? _responseFactory.GetFhirResponse(entry, key)
-            : _responseFactory.GetFhirResponse(entry, key, parameters);
+            ? await _responseFactory.GetFhirResponse(entry, key)
+            : await _responseFactory.GetFhirResponse(entry, key, parameters);
     }
 
     public async Task<FhirResponse> ReadMeta(IKey key, CancellationToken cancellationToken)
     {
         Validate.ValidateKey(key);
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        return _responseFactory.GetMetadataResponse(entry, key);
+        return await _responseFactory.GetMetadataResponse(entry, key);
     }
 
     public async Task<FhirResponse> Search(
@@ -256,8 +257,9 @@ public class FhirService : IFhirService, IInteractionHandler
 
         try
         {
-            var resource = _patchService.Apply(current.Resource!, parameters);
-            return await Patch(Entry.Patch(current.Key.WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
+            var entry = await _storageService.Load(key, cancellationToken);
+            var resource = _patchService.Apply(entry!, parameters);
+            return await Patch(Entry.Patch(current.GetKey().WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -296,7 +298,7 @@ public class FhirService : IFhirService, IInteractionHandler
     {
         Validate.ValidateKey(key, true);
         var entry = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        return _responseFactory.GetFhirResponse(entry, key);
+        return await _responseFactory.GetFhirResponse(entry, key);
     }
 
     public async Task<FhirResponse> VersionSpecificUpdate(
@@ -308,7 +310,7 @@ public class FhirService : IFhirService, IInteractionHandler
         Validate.HasVersion(versionedKey);
         var key = versionedKey.WithoutVersion();
         var current = await _storageService.Get(key, cancellationToken).ConfigureAwait(false);
-        Validate.IsSameVersion(current?.Key, versionedKey);
+        Validate.IsSameVersion(current?.GetKey(), versionedKey);
         return await Put(key, resource, cancellationToken).ConfigureAwait(false);
     }
 
@@ -346,33 +348,26 @@ public class FhirService : IFhirService, IInteractionHandler
 
     public async Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken)
     {
-        switch (interaction.Method)
+        return (interaction.Method) switch
         {
-            case Bundle.HTTPVerb.PUT:
-                return await Put(interaction, cancellationToken).ConfigureAwait(false);
-            case Bundle.HTTPVerb.POST:
-                return await Create(interaction, cancellationToken).ConfigureAwait(false);
-            case Bundle.HTTPVerb.DELETE:
-                {
-                    var current = await _storageService.Get(interaction.Key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
-                    return current is { IsPresent: true }
-                        ? await Delete(interaction, cancellationToken).ConfigureAwait(false)
-                        : Respond.WithCode(HttpStatusCode.NotFound);
-                }
-            case Bundle.HTTPVerb.GET:
-                if (interaction.Key.HasVersionId())
-                {
-                    return await VersionRead(interaction.Key, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    return await Read(interaction.Key, null, cancellationToken).ConfigureAwait(false);
-                }
-            case Bundle.HTTPVerb.PATCH:
-                return await Patch(interaction.Key, (interaction.Resource as Parameters)!, cancellationToken).ConfigureAwait(false);
-            default:
-                return Respond.Success;
-        }
+            Bundle.HTTPVerb.PUT => await Put(interaction, cancellationToken).ConfigureAwait(false),
+            Bundle.HTTPVerb.POST => await Create(interaction, cancellationToken).ConfigureAwait(false),
+            Bundle.HTTPVerb.DELETE => (await _storageService.Get(interaction.Key.WithoutVersion(), cancellationToken)
+                .ConfigureAwait(false)) is { IsPresent: true }
+                ? await Delete(interaction, cancellationToken).ConfigureAwait(false)
+                : Respond.WithCode(HttpStatusCode.NotFound),
+            Bundle.HTTPVerb.GET when (interaction.Key.HasVersionId()) => await VersionRead(
+                    interaction.Key,
+                    cancellationToken)
+                .ConfigureAwait(false),
+            Bundle.HTTPVerb.GET => await Read(interaction.Key, null, cancellationToken).ConfigureAwait(false),
+            Bundle.HTTPVerb.PATCH => await Patch(
+                    interaction.Key,
+                    (interaction.Resource as Parameters)!,
+                    cancellationToken)
+                .ConfigureAwait(false),
+            _ => Respond.Success
+        };
     }
 
     private async Task<FhirResponse> Create(Entry entry, CancellationToken cancellationToken)
@@ -403,7 +398,7 @@ public class FhirService : IFhirService, IInteractionHandler
     private async Task<FhirResponse> CreateSnapshotResponse(Snapshot snapshot, int pageIndex, CancellationToken cancellationToken)
     {
         var pagination = await _pagingService.StartPagination(snapshot, cancellationToken).ConfigureAwait(false);
-        var bundle = await pagination.GetPage(pageIndex).ConfigureAwait(false);
+        var bundle = await pagination.GetPage(cancellationToken, pageIndex).ConfigureAwait(false);
         return _responseFactory.GetFhirResponse(bundle);
     }
 }

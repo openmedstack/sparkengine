@@ -12,7 +12,7 @@ using Core;
 
 public interface IFhirResponseInterceptor
 {
-    FhirResponse? GetFhirResponse(Entry entry, object input);
+    FhirResponse? GetFhirResponse(ResourceInfo entry, object input);
 
     bool CanHandle(object input);
 }

@@ -1,34 +1,23 @@
-﻿#nullable enable
-namespace OpenMedStack.SparkEngine.Web.Persistence;
+﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Hl7.Fhir.Model;
 using Interfaces;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
-using Service;
+using Task = System.Threading.Tasks.Task;
 
 public class InMemoryFhirStore : IFhirStore
 {
-    private readonly ITransfer _transfer;
     private readonly ConcurrentDictionary<string, Entry> _entries = new();
-
-    public InMemoryFhirStore(ITransfer transfer)
-    {
-        _transfer = transfer;
-    }
-
+    
     /// <inheritdoc />
-    public async Task<Entry> Add(Entry entry, CancellationToken cancellationToken = default)
+    public Task<Entry> Add(Entry entry, CancellationToken cancellationToken = default)
     {
-        if (entry.State != EntryState.Internal)
-        {
-            await _transfer.Internalize(entry, cancellationToken).ConfigureAwait(false);
-        }
-
         if (entry.IsDelete)
         {
             _entries.Remove(entry.Key!.ToStorageKey(), out _);
@@ -46,25 +35,26 @@ public class InMemoryFhirStore : IFhirStore
                 (_, _) => entry);
         }
 
-        return _transfer.Externalize(entry);
+        return Task.FromResult(entry);
     }
 
     /// <inheritdoc />
-    public Task<Entry?> Get(IKey key, CancellationToken cancellationToken = default)
+    public Task<ResourceInfo?> Get(IKey key, CancellationToken cancellationToken = default)
     {
-        if (key == null)
-        {
-            return Task.FromResult<Entry?>(null);
-        }
-
         var result = _entries.TryGetValue(key.ToStorageKey(), out var entry) ? entry.IsDelete ? null : entry :
             _entries.TryGetValue(key.WithoutVersion().ToStorageKey(), out entry) ? entry.IsDelete ? null : entry : null;
-        result = result == null ? null : _transfer.Externalize(result);
-        return Task.FromResult(result);
+
+        return Task.FromResult(result == null ? null : ResourceInfo.FromEntry(result));
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<Entry> Get(
+    public Task<Resource?> Load(IKey key, CancellationToken cancellationToken = default)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<ResourceInfo> Get(
         IEnumerable<IKey> localIdentifiers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -75,7 +65,7 @@ public class InMemoryFhirStore : IFhirStore
             {
                 if (!entry.IsDelete)
                 {
-                    yield return _transfer.Externalize(entry);
+                    yield return ResourceInfo.FromEntry(entry);
                 }
             }
         }
@@ -84,11 +74,6 @@ public class InMemoryFhirStore : IFhirStore
     /// <inheritdoc />
     public Task<bool> Exists(IKey key, CancellationToken cancellationToken = default)
     {
-        if (key == null)
-        {
-            return Task.FromResult(false);
-        }
-
         var exists = _entries.ContainsKey(key.ToStorageKey());
         return Task.FromResult(exists);
     }

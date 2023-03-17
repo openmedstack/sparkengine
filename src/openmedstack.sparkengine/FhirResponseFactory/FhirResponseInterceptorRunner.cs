@@ -30,14 +30,14 @@ public class FhirResponseInterceptorRunner : IFhirResponseInterceptorRunner
         _interceptors.Clear();
     }
 
-    public FhirResponse? RunInterceptors(Entry entry, IEnumerable<object> parameters)
+    public FhirResponse? RunInterceptors(ResourceInfo entry, IEnumerable<object> parameters)
     {
         FhirResponse? response = null;
         _ = parameters.FirstOrDefault(p => (response = RunInterceptors(entry, p)) != null);
         return response;
     }
 
-    private FhirResponse? RunInterceptors(Entry entry, object input)
+    private FhirResponse? RunInterceptors(ResourceInfo entry, object input)
     {
         FhirResponse? response = null;
         _ = GetResponseInterceptors(input)

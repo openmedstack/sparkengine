@@ -52,22 +52,23 @@ public class CustomSerializerTests
             } }
         };
         var key = Key.Create(patient.TypeName, "abc");
-        var envelope = new EntryEnvelope
+        var envelope = new ResourceInfo
         {
             Method = Bundle.HTTPVerb.GET,
-            Deleted = false,
+            IsDeleted = false,
             Id = Guid.NewGuid().ToString("N"),
             IsPresent = true,
-            ResourceId = "abc",
-            Resource = patient,
             ResourceKey = key.ToStorageKey(),
             ResourceType = patient.TypeName,
             State = EntryState.Internal,
-            When = DateTimeOffset.UtcNow
+            When = DateTimeOffset.UtcNow,
+            ResourceId = patient.Id,
+            VersionId = patient.VersionId,
+            HasResource = true
         };
         var json = _serializer.ToJson(envelope);
         using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        var e = _serializer.FromJson(typeof(EntryEnvelope), memoryStream);
+        var e = _serializer.FromJson(typeof(ResourceInfo), memoryStream);
 
         Assert.NotNull(e);
     }

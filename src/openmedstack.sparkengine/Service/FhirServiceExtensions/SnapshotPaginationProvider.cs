@@ -11,6 +11,8 @@ namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using Extensions;
@@ -37,7 +39,10 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
         _snapshotPaginationCalculator = snapshotPaginationCalculator;
     }
 
-    public async Task<Bundle> GetPage(int? index = null, Action<Entry>? transformElement = null)
+    public async Task<Bundle> GetPage(
+        CancellationToken cancellationToken,
+        int? index = null,
+        Action<Entry>? transformElement = null)
     {
         if (_snapshot == null)
         {
@@ -49,7 +54,7 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
                 "The specified index lies outside the range of available results ({0}) in snapshot {1}",
                 _snapshot.Keys.Count(),
                 _snapshot.Id)
-            : await CreateBundle(index).ConfigureAwait(false);
+            : await CreateBundle(cancellationToken, index).ConfigureAwait(false);
     }
 
     public ISnapshotPagination StartPagination(Snapshot snapshot)
@@ -58,24 +63,31 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
         return this;
     }
 
-    private async Task<Bundle> CreateBundle(int? start = null)
+    private async Task<Bundle> CreateBundle(CancellationToken cancellationToken, int? start = null)
     {
         var bundle = new Bundle { Type = _snapshot!.Type, Total = _snapshot.Count, Id = Guid.NewGuid().ToString() };
 
         var keys = _snapshotPaginationCalculator.GetKeysForPage(_snapshot, start).ToList();
-        var entries = await _fhirStore.Get(keys).ToListAsync().ConfigureAwait(false);
+        var infos = await _fhirStore.Get(keys, cancellationToken).ToListAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         if (_snapshot.SortBy != null)
         {
-            entries = entries.Select(e => new { Entry = e, Index = keys.IndexOf(e.Key!) })
+            infos = infos.Select(e => new { Entry = e, Index = keys.IndexOf(e.GetKey()) })
                 .OrderBy(e => e.Index)
                 .Select(e => e.Entry)
                 .ToList();
         }
 
-        var included = await GetIncludesRecursiveFor(entries, _snapshot.Includes)
-            .ToListAsync()
+        var resources = await System.Threading.Tasks.Task.WhenAll(infos.Select(x => _fhirStore.Load(x.GetKey(), cancellationToken)))
             .ConfigureAwait(false);
-        //entries.Append(included);
+        var entries = infos.Select(
+                x => Entry.Create(
+                    x.Method,
+                    x.GetKey(),
+                    resources.Where(x => x != null).FirstOrDefault(r => r!.ExtractKey().Equals(x.GetKey()))))
+            .ToArray();
+        var included = await GetIncludesRecursiveFor(entries, _snapshot.Includes, cancellationToken)
+            .ToListAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
 
         foreach (var entry in _transfer.Externalize(entries).Concat(_transfer.Externalize(included)))
         {
@@ -90,17 +102,22 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
 
     private async IAsyncEnumerable<Entry> GetIncludesRecursiveFor(
         IList<Entry> entries,
-        ICollection<string> includes)
+        ICollection<string> includes,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         IList<Entry> included = new List<Entry>();
 
-        var latest = await GetIncludesFor(entries, includes).ToListAsync().ConfigureAwait(false);
+        var latest = await GetIncludesFor(entries, includes, cancellationToken)
+            .ToListAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         int previousCount;
         do
         {
             previousCount = included.Count;
             included.AppendDistinct(latest);
-            latest = await GetIncludesFor(latest, includes).ToListAsync().ConfigureAwait(false);
+            latest = await GetIncludesFor(latest, includes, cancellationToken)
+                .ToListAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
         }
         while (included.Count > previousCount);
 
@@ -110,7 +127,7 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
         }
     }
 
-    private IAsyncEnumerable<Entry> GetIncludesFor(IEnumerable<Entry> entries, IEnumerable<string>? includes)
+    private IAsyncEnumerable<Entry> GetIncludesFor(IEnumerable<Entry> entries, IEnumerable<string>? includes, CancellationToken cancellationToken)
     {
         if (includes == null)
         {
@@ -123,7 +140,13 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
             .Distinct()
             .Select(k => (IKey)Key.ParseOperationPath(k));
 
-        return _fhirStore.Get(identifiers);
+        return _fhirStore.Get(identifiers, cancellationToken)
+            .SelectAwait(
+                async x =>
+                {
+                    var resource = await _fhirStore.Load(x.GetKey(), cancellationToken);
+                    return Entry.Create(x.Method, x.GetKey(), resource);
+                });
     }
 
     private void BuildLinks(Bundle bundle, int? start = null)

@@ -25,7 +25,7 @@ public class DiskSnapshotStore : ISnapshotStore
     /// <inheritdoc />
     public async Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
     {
-        var fileName = $"{snapshot.Id}.json";
+        var fileName = $"{snapshot.Id.Replace('/', '_')}.json";
         var fullPath = Path.GetFullPath(Path.Combine(_rootPath, fileName));
 
         _logger.LogInformation("Writing snapshot to {path}", fullPath);
@@ -38,12 +38,12 @@ public class DiskSnapshotStore : ISnapshotStore
     /// <inheritdoc />
     public async Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
     {
-        var fileName = $"{snapshotId}.json";
+        var fileName = $"{snapshotId.Replace('/', '_')}.json";
         var fullPath = Path.GetFullPath(Path.Combine(_rootPath, fileName));
-        
+
         _logger.LogInformation("Reading snapshot from {path}", fullPath);
 
-        var json = await File.ReadAllTextAsync(fullPath, cancellationToken);
+        var json = await File.ReadAllTextAsync(fullPath, cancellationToken).ConfigureAwait(false);
         return JsonConvert.DeserializeObject<Snapshot>(json, _serializerSettings);
     }
 }

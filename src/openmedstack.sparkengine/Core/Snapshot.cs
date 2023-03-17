@@ -52,7 +52,7 @@ public class Snapshot
     public static Snapshot Create(
         Bundle.BundleType type,
         Uri selfLink,
-        IList<string> keys,
+        IReadOnlyList<string> keys,
         string? sortBy,
         int? count,
         IList<string> includes,

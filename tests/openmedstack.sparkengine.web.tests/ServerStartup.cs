@@ -31,14 +31,14 @@ public class ServerStartup
         services.AddSingleton<IGenerator, GuidGenerator>();
         services.AddPostgresFhirStore(
                 new StoreSettings(
-                    "Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;Pooling=true;",
+                    "Server=odin;Port=5432;Database=fhirserver;User Id=fhir;Password=AxeeFE6wSG553ii;Pooling=true;Search Path=test;",
                     new JsonSerializerSettings
                     {
                         ContractResolver = new CamelCasePropertyNamesContractResolver(),
                         DateFormatHandling = DateFormatHandling.IsoDateFormat,
                         DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                        NullValueHandling = NullValueHandling.Ignore,
-                        DefaultValueHandling = DefaultValueHandling.Ignore,
+                        NullValueHandling = NullValueHandling.Include,
+                        DefaultValueHandling = DefaultValueHandling.Include,
                         TypeNameHandling = TypeNameHandling.Auto,
                         Formatting = Formatting.None,
                         DateParseHandling = DateParseHandling.DateTimeOffset
@@ -48,6 +48,7 @@ public class ServerStartup
                     "fhirstore:O76W8n3MMpePgv0tuZwQ",
                     "yhxwfaFKh0eQQammadwlAxLfizwHPZnQ",
                     new Uri("http://nas:8010"),
+                    true,
                     true,
                     true));
             //.AddDiskPersistence(new DiskPersistenceConfiguration(Path.Combine(".", "fhir"), true));

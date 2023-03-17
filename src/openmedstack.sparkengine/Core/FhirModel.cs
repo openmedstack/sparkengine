@@ -13,20 +13,8 @@ using Model;
 
 public class FhirModel : IFhirModel
 {
-    //TODO: this should be removed after IndexServiceTests are changed to used mocking instead of this for overriding the context (CCR).
-    private readonly Dictionary<Type, string> _resourceTypeToResourceTypeName;
     private readonly List<SearchParameter> _searchParameters;
-
-    public FhirModel(
-        Dictionary<Type, string> resourceTypeToResourceTypeNameMapping,
-        IEnumerable<SearchParamDefinition> searchParameters)
-    {
-        _resourceTypeToResourceTypeName = resourceTypeToResourceTypeNameMapping;
-        _searchParameters = searchParameters.Select(CreateSearchParameterFromSearchParamDefinition).ToList();
-        LoadGenericSearchParameters();
-        LoadCompartments();
-    }
-
+    
     public FhirModel()
         : this(ModelInfo.SearchParameters)
     {
@@ -34,7 +22,6 @@ public class FhirModel : IFhirModel
 
     public FhirModel(IEnumerable<SearchParamDefinition> searchParameters)
     {
-        _resourceTypeToResourceTypeName = new Dictionary<Type, string>();
         _searchParameters = searchParameters.Select(CreateSearchParameterFromSearchParamDefinition).ToList();
         LoadGenericSearchParameters();
         LoadCompartments();
@@ -201,7 +188,7 @@ public class FhirModel : IFhirModel
         return (AllResourceTypes)Enum.Parse(typeof(AllResourceTypes), name, true);
     }
 
-    public ResourceType GetResourceTypeForResourceName(string name)
+    public static ResourceType GetResourceTypeForResourceName(string name)
     {
         return (ResourceType)Enum.Parse(typeof(ResourceType), name, true);
     }

@@ -17,9 +17,9 @@ using Interfaces;
 
 public interface IFhirResponseFactory
 {
-    FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, IEnumerable<object>? parameters = null);
-    FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, params object[] parameters);
-    FhirResponse GetMetadataResponse(Entry? entry, IKey? key = null);
+    Task<FhirResponse> GetFhirResponse(ResourceInfo? entry, IKey? key = null, IEnumerable<object>? parameters = null);
+    Task<FhirResponse> GetFhirResponse(ResourceInfo? entry, IKey? key = null, params object[] parameters);
+    Task<FhirResponse> GetMetadataResponse(ResourceInfo? entry, IKey? key = null);
     FhirResponse GetFhirResponse(Bundle? bundle);
 
     Task<FhirResponse> GetFhirResponse(

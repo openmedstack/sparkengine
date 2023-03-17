@@ -1,19 +1,22 @@
 ﻿namespace OpenMedStack.SparkEngine.Disk;
 
+using System.IO.Compression;
+using System.Runtime.CompilerServices;
 using Core;
 using Hl7.Fhir.Model;
 using Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OpenMedStack.SparkEngine.Extensions;
-using System.IO.Compression;
+using SparkEngine.Extensions;
 using Task = System.Threading.Tasks.Task;
 
-public class DiskFhirStore : AbstractDiskFhirStore
+public class CompressedDiskFhirStore : AbstractDiskFhirStore
 {
-    private readonly ILogger<DiskFhirStore> _logger;
+    private readonly ILogger<CompressedDiskFhirStore> _logger;
 
-    public DiskFhirStore(DiskPersistenceConfiguration configuration, ILogger<DiskFhirStore> logger) : base(configuration)
+    /// <inheritdoc />
+    public CompressedDiskFhirStore(DiskPersistenceConfiguration configuration, ILogger<CompressedDiskFhirStore> logger)
+        : base(configuration)
     {
         _logger = logger;
     }
@@ -45,18 +48,18 @@ public class DiskFhirStore : AbstractDiskFhirStore
 
         var json = await Serializer.SerializeToStringAsync(entry.Resource!).ConfigureAwait(false);
         await File.WriteAllTextAsync(
-                Path.GetFullPath(Path.Combine(ResourcePath, $"{entry.Key.ToFileName()}.json")),
+                Path.GetFullPath(Path.Combine(ResourcePath, $"{entry.Key.ToFileName()}.gz")),
                 json,
                 cancellationToken)
             .ConfigureAwait(false);
 
         json = JsonConvert.SerializeObject(ResourceInfo.FromEntry(entry));
         await File.WriteAllTextAsync(
-            Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.ToFileName()}.json")),
+            Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.ToFileName()}.gz")),
             json,
             cancellationToken);
         await File.WriteAllTextAsync(
-            Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.WithoutVersion().ToFileName()}.json")),
+            Path.GetFullPath(Path.Combine(EntryPath, $"{entry.Key.WithoutVersion().ToFileName()}.gz")),
             json,
             cancellationToken);
 
@@ -66,17 +69,25 @@ public class DiskFhirStore : AbstractDiskFhirStore
     /// <inheritdoc />
     public override async Task<ResourceInfo?> Get(IKey key, CancellationToken cancellationToken = default)
     {
-        async Task<ResourceInfo?> GetEntry(IKey k, CancellationToken token)
+        async Task<T?> GetContent<T>(IKey k, CancellationToken token)
         {
-            var path = Path.Combine(EntryPath, $"{k.ToFileName()}.json");
-            var info = File.Exists(path)
-                ? JsonConvert.DeserializeObject<ResourceInfo>(await File.ReadAllTextAsync(path, token))
-                : null;
-            return info;
+            var path = Path.Combine(EntryPath, $"{k.ToFileName()}.gz");
+
+            if (!File.Exists(path))
+            {
+                return default;
+            }
+
+            await using var fileStream = File.OpenRead(path);
+            await using var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
+            using var streamReader = new StreamReader(path);
+            var json = await streamReader.ReadToEndAsync(token);
+
+            return JsonConvert.DeserializeObject<T>(json);
         }
 
-        var entry = await GetEntry(key, cancellationToken).ConfigureAwait(false)
-                    ?? await GetEntry(key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
+        var entry = await GetContent<ResourceInfo>(key, cancellationToken).ConfigureAwait(false)
+                    ?? await GetContent<ResourceInfo>(key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
 
         return entry;
     }
@@ -84,7 +95,7 @@ public class DiskFhirStore : AbstractDiskFhirStore
     /// <inheritdoc />
     public override async Task<Resource?> Load(IKey key, CancellationToken cancellationToken = default)
     {
-        var path = Path.Combine(EntryPath, $"{key.ToFileName()}.json");
+        var path = Path.Combine(EntryPath, $"{key.ToFileName()}.gz");
 
         if (!File.Exists(path))
         {
@@ -103,7 +114,7 @@ public class DiskFhirStore : AbstractDiskFhirStore
     /// <inheritdoc />
     public override Task<bool> Exists(IKey key, CancellationToken cancellationToken = default)
     {
-        var exists = File.Exists(Path.Combine(EntryPath, $"{key.ToFileName()}.json"));
+        var exists = File.Exists(Path.Combine(EntryPath, $"{key.ToFileName()}.gz"));
         return Task.FromResult(exists);
     }
 }

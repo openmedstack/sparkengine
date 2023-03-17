@@ -9,13 +9,15 @@ public record S3PersistenceConfiguration
         string secretKey,
         Uri serviceUrl,
         bool useHttp = false,
-        bool usePathStyle = false)
+        bool usePathStyle = false,
+        bool compress = false)
     {
         AccessKey = accessKey;
         SecretKey = secretKey;
         ServiceUrl = serviceUrl;
         UseHttp = useHttp;
         UsePathStyle = usePathStyle;
+        Compress = compress;
     }
 
     /// <summary>
@@ -42,4 +44,9 @@ public record S3PersistenceConfiguration
     /// Gets whether to use path style bucket naming.
     /// </summary>
     public bool UsePathStyle { get; }
+
+    /// <summary>
+    /// Gets whether the persisted object is compressed.
+    /// </summary>
+    public bool Compress { get; }
 }

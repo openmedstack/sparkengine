@@ -18,7 +18,7 @@ public static class Respond
 {
     public static FhirResponse Success => new(HttpStatusCode.OK);
 
-    public static FhirResponse WithCode(HttpStatusCode code) => new(code, null);
+    public static FhirResponse WithCode(HttpStatusCode code) => new(code);
 
     public static FhirResponse WithError(HttpStatusCode code, string message, params object?[] args)
     {
@@ -36,8 +36,7 @@ public static class Respond
 
     public static FhirResponse WithMeta(Meta meta)
     {
-        var parameters = new Parameters();
-        parameters.Add(nameof(Meta), meta);
+        var parameters = new Parameters { { nameof(Meta), meta } };
         return WithResource(parameters);
     }
 
@@ -49,9 +48,9 @@ public static class Respond
                 "Could not retrieve meta. Meta was not present on the resource");
 
     public static FhirResponse WithResource(HttpStatusCode code, Entry entry) =>
-        new(code, entry.Key!, entry.Resource!);
+        new(code, entry.Key, entry.Resource!);
 
-    public static FhirResponse WithResource(Entry entry) => new(HttpStatusCode.OK, entry.Key!, entry.Resource!);
+    public static FhirResponse WithResource(Entry entry) => new(HttpStatusCode.OK, entry.Key, entry.Resource!);
 
     public static FhirResponse NotFound(IKey? key) =>
         key?.VersionId == null
@@ -63,15 +62,16 @@ public static class Respond
             : WithError(
                 HttpStatusCode.NotFound,
                 "There is no {0} resource with id {1}, or there is no version {2}",
-                key?.TypeName,
-                key?.ResourceId,
-                key?.VersionId);
+                key.TypeName,
+                key.ResourceId,
+                key.VersionId);
 
     // For security reasons (leakage): keep message in sync with Error.NotFound(key)
-    public static FhirResponse Gone(Entry entry)
+    public static FhirResponse Gone(ResourceInfo entry)
     {
+        var key = Key.ParseOperationPath(entry.ResourceKey);
         var message =
-            $"A {entry.Key?.TypeName ?? "unknown"} resource with id {entry.Key?.ResourceId ?? "unknown"} existed, but was deleted on {entry.When} (version {entry.Key?.ToRelativeUri().AbsoluteUri ?? "unknown"}).";
+            $"A {key.TypeName ?? "unknown"} resource with id {key.ResourceId ?? "unknown"} existed, but was deleted on {entry.When} (version {key.ToRelativeUri().AbsoluteUri}).";
 
         return WithError(HttpStatusCode.Gone, message);
     }

@@ -15,10 +15,58 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Core;
+using Hl7.Fhir.Model;
 using Interfaces;
 using Marten;
+using Microsoft.Extensions.Logging;
 using SparkEngine.Extensions;
-using Task = System.Threading.Tasks.Task;
+
+public class MartenResourcePersistence : IResourcePersistence
+{
+    private readonly Func<IDocumentSession> _sessionFunc;
+    private readonly ILogger<MartenResourcePersistence> _logger;
+
+    public MartenResourcePersistence(Func<IDocumentSession> sessionFunc, ILogger<MartenResourcePersistence> logger)
+    {
+        _sessionFunc = sessionFunc;
+        _logger = logger;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> Store(Resource resource, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
+            session.Store(resource);
+            await session.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{error}", ex.Message);
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<Resource?> Get(IKey key, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var session = _sessionFunc();
+            await using var _ = session.ConfigureAwait(false);
+            var resource = await session.LoadAsync<Resource>(key.ResourceId!, cancellationToken);
+            return resource;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{error}", ex.Message);
+            return null;
+        }
+    }
+}
 
 public class MartenFhirStore : IFhirStore
 {
@@ -43,33 +91,29 @@ public class MartenFhirStore : IFhirStore
         await using var _ = session.ConfigureAwait(false);
         if (entry.IsPresent)
         {
-            var existing = await session.Query<EntryEnvelope>()
+            var existing = await session.Query<ResourceInfo>()
                 .Where(x => x.Id == entry.Key.ToStorageKey())
                 .ToListAsync(token: cancellationToken).ConfigureAwait(false);
-            foreach (var envelope in existing)
-            {
-                envelope.IsPresent = false;
-            }
+            existing = existing.Select(envelope => envelope with { IsPresent = false }).ToArray();
 
-            session.Store<EntryEnvelope>(existing);
+            session.Store<ResourceInfo>(existing);
             await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         var persisted = await _persistence.Store(entry.Resource, cancellationToken).ConfigureAwait(false);
-        var entryEnvelope = new EntryEnvelope
+        var entryEnvelope = new ResourceInfo
         {
             Id = entry.Key.ToStorageKey(),
-            ResourceId = entry.Resource.Id,
             VersionId = entry.Resource.VersionId,
             ResourceType = entry.Resource.TypeName,
-            ResourceKey = entry.Key.WithoutVersion().ToStorageKey(),
+            ResourceKey = entry.Key.ToStorageKey(),
             State = entry.State,
             Method = entry.Method,
             When = entry.When ?? DateTimeOffset.MinValue,
-            Resource = persisted ? null : entry.Resource,
-            StorageKey = persisted ? entry.Key.ToStorageKey() : null,
             IsPresent = entry.IsPresent,
-            Deleted = entry.IsDelete
+            IsDeleted = entry.IsDelete,
+            HasResource = entry.HasResource(),
+            ResourceId = entry.Resource?.Id
         };
         session.Store(entryEnvelope);
         await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -77,79 +121,56 @@ public class MartenFhirStore : IFhirStore
     }
 
     /// <inheritdoc />
-    public async Task<Entry?> Get(IKey key, CancellationToken cancellationToken = default)
+    public async Task<ResourceInfo?> Get(IKey key, CancellationToken cancellationToken = default)
     {
-        if (key == null)
-        {
-            return null;
-        }
-
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
         var result = key.HasVersionId()
-            ? await session.LoadAsync<EntryEnvelope>(key.ToStorageKey(), cancellationToken).ConfigureAwait(false)
-            : await session.Query<EntryEnvelope>()
+            ? await session.LoadAsync<ResourceInfo>(key.ToStorageKey(), cancellationToken).ConfigureAwait(false)
+            : await session.Query<ResourceInfo>()
                 .Where(
                     x => x.ResourceType == key.TypeName
-                         && x.Deleted == false
+                         && x.IsDeleted == false
                          && x.IsPresent
-                         && x.ResourceKey == key.WithoutVersion().ToStorageKey())
+                         && x.ResourceId == key.ResourceId)
                 .OrderByDescending(x => x.When)
                 .FirstOrDefaultAsync(token: cancellationToken)
                 .ConfigureAwait(false);
-
-        var resource = result?.Resource;
-        if (resource == null && result?.StorageKey != null)
-        {
-            resource = await _persistence.Get(Key.ParseOperationPath(result.StorageKey), cancellationToken).ConfigureAwait(false);
-        }
-        return result == null
-            ? null
-            : Entry.Create(
-                result.Method,
-                Key.Create(result.ResourceType, result.ResourceId, result.VersionId),
-                resource);
+        return result;
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<Entry> Get(
+    public Task<Resource?> Load(IKey key, CancellationToken cancellationToken = default)
+    {
+        return _persistence.Get(key, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<ResourceInfo> Get(
         IEnumerable<IKey> localIdentifiers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var localKeys = localIdentifiers.Select(x => x.ToStorageKey()).ToArray();
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        var results = session.Query<EntryEnvelope>()
+        var results = session.Query<ResourceInfo>()
             .Where(e => e.Id.IsOneOf(localKeys))
             .ToAsyncEnumerable(token: cancellationToken);
         await foreach (var result in results.WithCancellation(cancellationToken).ConfigureAwait(false))
         {
-            var resource = result.Resource;
-            if (resource == null && result.StorageKey != null)
-            {
-                resource = await _persistence.Get(Key.ParseOperationPath(result.StorageKey), cancellationToken).ConfigureAwait(false);
-            }
-            yield return Entry.Create(
-                result.Method,
-                Key.Create(result.ResourceType, result.ResourceId, result.VersionId),
-                resource);
+            yield return result;
         }
     }
 
     /// <inheritdoc />
     public async Task<bool> Exists(IKey key, CancellationToken cancellationToken = default)
     {
-        if (key == null)
-        {
-            return false;
-        }
-
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        var count = await session.Query<EntryEnvelope>()
+        var count = await session.Query<ResourceInfo>()
             .CountAsync(
                 x => x.ResourceType == key.TypeName
-                     && x.ResourceId == key.ResourceId
+                     && x.Id == key.ResourceId
                      && x.VersionId == key.VersionId,
                 token: cancellationToken)
             .ConfigureAwait(false);

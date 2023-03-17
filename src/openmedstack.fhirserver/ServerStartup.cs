@@ -1,103 +1,63 @@
 ﻿namespace OpenMedStack.FhirServer;
 
 using System;
-using System.Net.Http;
-using System.Text.Json;
-using DotAuth.Client;
-using DotAuth.Uma;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using OpenMedStack.SparkEngine.Interfaces;
-using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 using SparkEngine;
 using SparkEngine.Postgres;
 using SparkEngine.S3;
 using SparkEngine.Web;
+using Web.Autofac;
 
-public class ServerStartup
+internal class ServerStartup : IConfigureWebApplication
 {
-    private readonly IConfiguration _configuration;
+    private readonly FhirServerConfiguration _configuration;
 
-    public ServerStartup(IConfiguration configuration)
+    public ServerStartup(FhirServerConfiguration configuration)
     {
         _configuration = configuration;
     }
 
     public void ConfigureServices(IServiceCollection services)
     {
-        var authority = _configuration["AUTHORITY"]!;
         services.AddHttpClient()
-            .AddLogging(
-            l => l.AddJsonConsole(
-                o =>
-                {
-                    o.IncludeScopes = true;
-                    o.UseUtcTimestamp = true;
-                    o.JsonWriterOptions = new JsonWriterOptions { Indented = false };
-                }))
             .AddCors()
             .AddControllers();
         services.AddFhir<UmaFhirController>(
             new SparkSettings
             {
                 UseAsynchronousIO = true,
-                Endpoint = new Uri(_configuration["FHIR:ROOT"]!),
+                Endpoint = new Uri(_configuration.FhirRoot),
                 FhirRelease = FhirRelease.R5.ToString(),
                 ParserSettings = ParserSettings.CreateDefault(),
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
-        var s = _configuration["CONNECTIONSTRING"]!;
         services.AddPostgresFhirStore(new StoreSettings(
-                s,
+                _configuration.ConnectionString,
                 new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                DateFormatHandling = DateFormatHandling.IsoDateFormat,
-                DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore,
-                TypeNameHandling = TypeNameHandling.Auto,
-                Formatting = Formatting.None,
-                DateParseHandling = DateParseHandling.DateTimeOffset
-            }))
-            .AddS3Persistence(new S3PersistenceConfiguration(
-                _configuration["STORAGE:ACCESSKEY"]!,
-                _configuration["STORAGE:SECRETKEY"]!,
-                new Uri(_configuration["STORAGE:STORAGEURL"]!),
-                true,
-                true))
-            .AddSingleton<IGenerator, GuidGenerator>()
-            .AddSingleton<IPatchService, PatchService>()
-            .AddSingleton<ITokenClient>(
-                sp => new TokenClient(
-                    TokenCredentials.FromClientCredentials(_configuration["OAUTH:CLIENTID"]!, _configuration["OAUTH:CLIENTSECRET"]!),
-                    () =>
-                    {
-                        var factory = sp.GetRequiredService<IHttpClientFactory>();
-                        return factory.CreateClient();
-                    },
-                    new Uri(authority)))
-            .AddSingleton(
-                sp =>
                 {
-                    return new UmaClient(
-                        () =>
-                        {
-                            var factory = sp.GetRequiredService<IHttpClientFactory>();
-                            return factory.CreateClient();
-                        },
-                        new Uri(authority));
-                })
-            .AddSingleton<IUmaPermissionClient>(sp => sp.GetRequiredService<UmaClient>())
-            .AddTransient<IResourceMap>(_=>new DbSourceMap(s))
+                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                    DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                    DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                    NullValueHandling = NullValueHandling.Include,
+                    DefaultValueHandling = DefaultValueHandling.Include,
+                    TypeNameHandling = TypeNameHandling.Auto,
+                    Formatting = Formatting.None,
+                    DateParseHandling = DateParseHandling.DateTimeOffset
+                }))
+            .AddS3Persistence(new S3PersistenceConfiguration(
+                _configuration.AccessKey,
+                _configuration.AccessSecret,
+                _configuration.StorageServiceUrl,
+                true,
+                true,
+                _configuration.CompressStorage))
             .AddAuthentication(
                 options =>
                 {
@@ -109,19 +69,20 @@ public class ServerStartup
                 options =>
                 {
                     options.SaveToken = true;
-                    options.Authority = authority;
+                    options.Authority = _configuration.TokenService;
                     options.RequireHttpsMetadata = true;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateAudience = false,
                         ValidateIssuer = false,
                         ValidateIssuerSigningKey = false,
-                        ValidIssuers = new[] { authority }
+                        ValidIssuers = new[] { _configuration.TokenService }
                     };
                 });
     }
 
-    public void Configure(IApplicationBuilder app)
+    /// <inheritdoc />
+    public void ConfigureApplication(IApplicationBuilder app)
     {
         app.UseRouting()
             .UseCors(p => p.AllowAnyOrigin())

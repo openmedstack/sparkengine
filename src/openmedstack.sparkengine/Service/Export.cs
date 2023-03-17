@@ -41,7 +41,7 @@ internal class Export
         return entry;
     }
 
-    private void ExternalizeState(Entry entry)
+    private static void ExternalizeState(Entry entry)
     {
         entry.State = EntryState.External;
     }

@@ -20,20 +20,22 @@ using Interfaces;
 public class FhirResponseFactory : IFhirResponseFactory
 {
     private readonly IFhirResponseInterceptorRunner _interceptorRunner;
+    private readonly IFhirStore _fhirStore;
 
-    public FhirResponseFactory(IFhirResponseInterceptorRunner interceptorRunner)
+    public FhirResponseFactory(IFhirResponseInterceptorRunner interceptorRunner, IFhirStore fhirStore)
     {
         _interceptorRunner = interceptorRunner;
+        _fhirStore = fhirStore;
     }
 
-    public FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, IEnumerable<object>? parameters = null)
+    public async Task<FhirResponse> GetFhirResponse(ResourceInfo? entry, IKey? key = null, IEnumerable<object>? parameters = null)
     {
         if (entry == null)
         {
             return Respond.NotFound(key);
         }
 
-        if (entry.IsDeleted())
+        if (entry.IsDeleted)
         {
             return Respond.Gone(entry);
         }
@@ -45,32 +47,39 @@ public class FhirResponseFactory : IFhirResponseFactory
             response = _interceptorRunner.RunInterceptors(entry, parameters);
         }
 
-        return response ?? Respond.WithResource(entry);
+        if (response != null)
+        {
+            return response;
+        }
+
+        var resource = await _fhirStore.Load(Key.ParseOperationPath(entry.ResourceKey));
+        return Respond.WithResource(resource!);
     }
 
-    public FhirResponse GetFhirResponse(Entry? entry, IKey? key = null, params object[] parameters) =>
-        GetFhirResponse(entry, key, parameters.ToList());
+    public Task<FhirResponse> GetFhirResponse(ResourceInfo? entry, IKey? key = null, params object[] parameters) =>
+        GetFhirResponse(entry, key, parameters.AsEnumerable());
 
-    public FhirResponse GetMetadataResponse(Entry? entry, IKey? key = null)
+    public async Task<FhirResponse> GetMetadataResponse(ResourceInfo? entry, IKey? key = null)
     {
         if (entry == null)
         {
             return Respond.NotFound(key);
         }
 
-        if (entry.IsDeleted())
+        if (entry.IsDeleted)
         {
             return Respond.Gone(entry);
         }
 
-        return Respond.WithMeta(entry);
+        var resource = await _fhirStore.Load(key!);
+        return Respond.WithMeta(resource!.Meta);
     }
 
     public async Task<FhirResponse> GetFhirResponse(
         IAsyncEnumerable<Tuple<Entry, FhirResponse>> responses,
         Bundle.BundleType bundleType)
     {
-        var bundle = new Bundle {Type = bundleType};
+        var bundle = new Bundle { Type = bundleType };
         await foreach (var response in responses.ConfigureAwait(false))
         {
             bundle.Append(response.Item1, response.Item2);

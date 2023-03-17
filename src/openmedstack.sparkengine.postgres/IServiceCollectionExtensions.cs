@@ -19,34 +19,34 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddPostgresFhirStore(this IServiceCollection services, StoreSettings settings)
     {
-        services.AddSingleton<IDocumentStore>(sp => DocumentStore.For(
-            o =>
-            {
-                o.Serializer(sp.GetRequiredService<ISerializer>());
-                o.Connection(settings.ConnectionString);
-                o.Schema.Include<FhirRegistry>();
-                /*
-                 
-DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
-
-CREATE INDEX IF NOT EXISTS mt_doc_indexentry_idx_data_values
-    ON public.mt_doc_indexentry USING gin
-    ((data -> 'values'::text) jsonb_ops)
-    TABLESPACE pg_default;
-	
-REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
-
-                 */
-                o.AutoCreateSchemaObjects = AutoCreate.None;
-            }));
+        services.AddSingleton<IDocumentStore>(
+            sp => DocumentStore.For(
+                o =>
+                {
+                    o.Serializer(sp.GetRequiredService<ISerializer>());
+                    o.Connection(settings.ConnectionString);
+                    o.Schema.Include<FhirRegistry>();
+                    /*
+                     
+    DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
+    
+    CREATE INDEX IF NOT EXISTS mt_doc_indexentry_idx_data_values
+        ON public.mt_doc_indexentry USING gin
+        ((data -> 'values'::text) jsonb_ops)
+        TABLESPACE pg_default;
+        
+    REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
+    
+                     */
+                    o.AutoCreateSchemaObjects = AutoCreate.All;
+                }));
         services.TryAddSingleton(settings);
         services.TryAddTransient<ISerializer>(
             sp => new CustomSerializer(sp.GetRequiredService<StoreSettings>().SerializerSettings));
-        services.TryAddTransient(
-            sp => sp.GetRequiredService<StoreSettings>().SerializerSettings);
+        services.TryAddTransient(sp => sp.GetRequiredService<StoreSettings>().SerializerSettings);
         services.AddTransient<Func<IDocumentSession>>(
             sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
-        services.TryAddTransient<IResourcePersistence>(_ => NoOpPersistence.Get());
+        services.TryAddTransient<IResourcePersistence, MartenResourcePersistence>();
         services.TryAddTransient<IFhirStore, MartenFhirStore>();
         services.TryAddTransient<IFhirStorePagedReader, MartenFhirStorePagedReader>();
         services.TryAddTransient<IHistoryStore, MartenHistoryStore>();

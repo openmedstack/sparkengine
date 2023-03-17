@@ -18,7 +18,6 @@ using FhirResponseFactory;
 using Formatters;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Specification;
 using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +26,7 @@ using OpenMedStack.SparkEngine.Web.Persistence;
 using Search;
 using Service;
 using Service.FhirServiceExtensions;
+using Service.ServiceListeners;
 
 [Route("fhir")]
 public class DefaultFhirController : FhirController
@@ -88,6 +88,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ISnapshotPaginationProvider, SnapshotPaginationProvider>();
         services.AddTransient<ISnapshotPaginationCalculator, SnapshotPaginationCalculator>();
         services.AddTransient<IServiceListener, SearchService>(); // searchListener
+        services.AddTransient<IServiceListener, LogListener>(); // logListener
         services.AddTransient(provider => provider.GetServices<IServiceListener>().ToArray());
         services.AddTransient<ISearchService, SearchService>(); // search
         services.AddTransient<ITransactionService, AsyncTransactionService>(); // transaction

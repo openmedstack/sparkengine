@@ -30,7 +30,7 @@ public class MartenHistoryStore : IHistoryStore
     {
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        var query = session.Query<EntryEnvelope>().Where(e => e.ResourceType == typename);
+        var query = session.Query<ResourceInfo>().Where(e => e.ResourceType == typename);
         if (parameters.Since.HasValue)
         {
             query = query.Where(x => x.When > parameters.Since.Value);
@@ -43,11 +43,10 @@ public class MartenHistoryStore : IHistoryStore
             query = query.Take(parameters.Count.Value);
         }
 
-        var result = await query.Select(x => new { x.ResourceType, x.ResourceId, x.VersionId })
+        var keys = await query.Select(x => x.ResourceKey)
             .ToListAsync()
             .ConfigureAwait(false);
-        var keys = result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList();
-        return CreateSnapshot(keys, result.Count);
+        return CreateSnapshot(keys, keys.Count);
     }
 
     /// <inheritdoc />
@@ -56,7 +55,7 @@ public class MartenHistoryStore : IHistoryStore
         var storageKey = key.ToStorageKey();
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        var query = session.Query<EntryEnvelope>().Where(e => e.ResourceKey == storageKey);
+        var query = session.Query<ResourceInfo>().Where(e => e.ResourceKey == storageKey);
         if (parameters.Since.HasValue)
         {
             query = query.Where(x => x.When > parameters.Since.Value);
@@ -69,11 +68,11 @@ public class MartenHistoryStore : IHistoryStore
             query = query.Take(parameters.Count.Value);
         }
 
-        var result = await query.Select(x => new { x.ResourceType, x.ResourceId, x.VersionId })
+        var result = await query.Select(x => x.ResourceKey)
             .ToListAsync()
             .ConfigureAwait(false);
         return CreateSnapshot(
-            result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList(),
+            result,
             result.Count);
     }
 
@@ -82,7 +81,7 @@ public class MartenHistoryStore : IHistoryStore
     {
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
-        IQueryable<EntryEnvelope> query = session.Query<EntryEnvelope>();
+        IQueryable<ResourceInfo> query = session.Query<ResourceInfo>();
         if (parameters.Since.HasValue)
         {
             query = query.Where(x => x.When > parameters.Since.Value);
@@ -95,16 +94,16 @@ public class MartenHistoryStore : IHistoryStore
             query = query.Take(parameters.Count.Value);
         }
 
-        var result = await query.Select(x => new { x.ResourceType, x.ResourceId, x.VersionId })
+        var result = await query.Select(x => x.ResourceKey)
             .ToListAsync()
             .ConfigureAwait(false);
         return CreateSnapshot(
-            result.Select(x => Key.Create(x.ResourceType, x.ResourceId, x.VersionId).ToString()).ToList(),
+            result,
             result.Count);
     }
 
     private static Snapshot CreateSnapshot(
-        IList<string> keys,
+        IReadOnlyList<string> keys,
         int? count = null,
         IList<string>? includes = null,
         IList<string>? reverseIncludes = null) =>
