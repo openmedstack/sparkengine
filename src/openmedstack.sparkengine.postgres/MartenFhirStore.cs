@@ -18,55 +18,7 @@ using Core;
 using Hl7.Fhir.Model;
 using Interfaces;
 using Marten;
-using Microsoft.Extensions.Logging;
 using SparkEngine.Extensions;
-
-public class MartenResourcePersistence : IResourcePersistence
-{
-    private readonly Func<IDocumentSession> _sessionFunc;
-    private readonly ILogger<MartenResourcePersistence> _logger;
-
-    public MartenResourcePersistence(Func<IDocumentSession> sessionFunc, ILogger<MartenResourcePersistence> logger)
-    {
-        _sessionFunc = sessionFunc;
-        _logger = logger;
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> Store(Resource resource, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var session = _sessionFunc();
-            await using var _ = session.ConfigureAwait(false);
-            session.Store(resource);
-            await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{error}", ex.Message);
-            return false;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<Resource?> Get(IKey key, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var session = _sessionFunc();
-            await using var _ = session.ConfigureAwait(false);
-            var resource = await session.LoadAsync<Resource>(key.ResourceId!, cancellationToken).ConfigureAwait(false);
-            return resource;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{error}", ex.Message);
-            return null;
-        }
-    }
-}
 
 public class MartenFhirStore : IFhirStore
 {
@@ -92,7 +44,7 @@ public class MartenFhirStore : IFhirStore
         if (entry.IsPresent)
         {
             var existing = await session.Query<ResourceInfo>()
-                .Where(x => x.Id == entry.Key.ToStorageKey())
+                .Where(x => x.ResourceType == entry.Key.TypeName && x.ResourceId == entry.Key.ResourceId)
                 .ToListAsync(token: cancellationToken).ConfigureAwait(false);
             existing = existing.Select(envelope => envelope with { IsPresent = false }).ToArray();
 
