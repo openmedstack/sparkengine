@@ -5,6 +5,7 @@ using OpenMedStack;
 using OpenMedStack.Autofac;
 using OpenMedStack.Autofac.MassTransit;
 using OpenMedStack.FhirServer;
+using OpenMedStack.FhirServer.Handlers;
 using OpenMedStack.Web.Autofac;
 
 void CheckParameters(params string?[] values)
@@ -80,6 +81,7 @@ FhirServerConfiguration CreateConfiguration()
 }
 
 var chassis = Chassis.From(configuration)
+    .DefinedIn(typeof(ResourceCreatedEventHandler).Assembly)
     .AddAutofacModules((c, _) => new FhirModule(c))
     .UsingInMemoryMassTransit()
     .BindToUrls(configuration.Urls)

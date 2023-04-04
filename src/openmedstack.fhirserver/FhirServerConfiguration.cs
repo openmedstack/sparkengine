@@ -3,7 +3,7 @@
 using System;
 using Web.Autofac;
 
-internal class FhirServerConfiguration : WebDeploymentConfiguration
+public class FhirServerConfiguration : WebDeploymentConfiguration
 {
     public required string AccessKey { get; init; }
     public required string AccessSecret { get; init; }

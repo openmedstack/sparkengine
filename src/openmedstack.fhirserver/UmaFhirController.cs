@@ -1,5 +1,6 @@
 ﻿namespace OpenMedStack.FhirServer;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -11,10 +12,14 @@ using DotAuth.Shared.Models;
 using DotAuth.Shared.Requests;
 using DotAuth.Uma;
 using DotAuth.Uma.Web;
+using Events;
 using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using OpenMedStack.Events;
 using SparkEngine.Core;
+using SparkEngine.Extensions;
 using SparkEngine.Interfaces;
 using SparkEngine.Web.Controllers;
 
@@ -24,17 +29,23 @@ public class UmaFhirController : FhirController
     private readonly IAccessTokenCache _tokenCache;
     private readonly IUmaResourceSetClient _resourceSetClient;
     private readonly IResourceMap _resourceMap;
+    private readonly IPublishEvents _eventPublisher;
+    private readonly ILogger<UmaFhirController> _logger;
 
     public UmaFhirController(
         IFhirService fhirService,
         IAccessTokenCache tokenCache,
         IUmaResourceSetClient resourceSetClient,
-        IResourceMap resourceMap)
+        IResourceMap resourceMap,
+        IPublishEvents eventPublisher,
+        ILogger<UmaFhirController> logger)
         : base(fhirService)
     {
         _tokenCache = tokenCache;
         _resourceSetClient = resourceSetClient;
         _resourceMap = resourceMap;
+        _eventPublisher = eventPublisher;
+        _logger = logger;
     }
 
     [AllowAnonymous]
@@ -53,17 +64,17 @@ public class UmaFhirController : FhirController
 
     [AllowAnonymous]
     [UmaFilter("{0}", new[] { "type" }, allowedScope: "create")]
-    public override Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
+    public override async Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
     {
         var subject = User.GetSubject();
         if (string.IsNullOrWhiteSpace(subject))
         {
-            return System.Threading.Tasks.Task.FromResult<FhirResponse?>(new FhirResponse(HttpStatusCode.Forbidden));
+            return new FhirResponse(HttpStatusCode.Forbidden);
         }
 
         bool HasUserReference(ResourceReference reference)
         {
-            return reference.Reference == $"Patient/{subject}";
+            return reference.Reference == $"{ModelInfo.ResourceTypeToFhirTypeName(ResourceType.Patient)}/{subject}";
         }
 
         var allowed = resource switch
@@ -76,9 +87,23 @@ public class UmaFhirController : FhirController
             MedicationDispense m => HasDoctorRole(m.Performer.FirstOrDefault(), subject),
             _ => false
         };
-        return !allowed
+        var response = await (!allowed
             ? System.Threading.Tasks.Task.FromResult<FhirResponse?>(new FhirResponse(HttpStatusCode.Forbidden))
-            : base.Create(type, resource, cancellationToken);
+            : base.Create(type, resource, cancellationToken));
+
+        var token = Request.Headers.Authorization;
+        if (response?.StatusCode == HttpStatusCode.Created && token.Count > 0)
+        {
+            var key = resource.ExtractKey().ToStorageKey();
+            _logger.LogInformation("Registering resource {resourceId}", key);
+            var cmd = new ResourceCreatedEvent(
+                "fhir",
+                token[0]!,
+                key,
+                DateTimeOffset.UtcNow);
+            await _eventPublisher.Publish(cmd, cancellationToken: cancellationToken);
+        }
+        return response;
     }
 
     private static bool HasDoctorRole(MedicationDispense.PerformerComponent? performer, string subject)

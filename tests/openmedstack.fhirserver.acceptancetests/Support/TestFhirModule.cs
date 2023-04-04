@@ -1,19 +1,19 @@
-﻿namespace OpenMedStack.FhirServer;
+﻿namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
 using System;
 using System.Net.Http;
 using DotAuth.Client;
 using DotAuth.Uma;
 using global::Autofac;
-using Handlers;
-using SparkEngine.Interfaces;
-using SparkEngine.Service.FhirServiceExtensions;
+using OpenMedStack.FhirServer.Handlers;
+using OpenMedStack.SparkEngine.Interfaces;
+using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-internal class FhirModule : Module
+internal class TestFhirModule : Module
 {
     private readonly DeploymentConfiguration _configuration;
 
-    public FhirModule(DeploymentConfiguration configuration)
+    public TestFhirModule(DeploymentConfiguration configuration)
     {
         _configuration = configuration;
     }

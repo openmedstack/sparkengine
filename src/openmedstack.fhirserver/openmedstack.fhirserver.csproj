@@ -9,9 +9,10 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.3" />
 		<PackageReference Include="dotauth.uma.web" Version="1.2.1" />
-		<TrimmerRootAssembly Include="openmedstack.sparkengine"/>
-		<TrimmerRootAssembly Include="openmedstack.sparkengine.web"/>
-		<TrimmerRootAssembly Include="Hl7.Fhir.R5"/>
+		<TrimmerRootAssembly Include="openmedstack.sparkengine" />
+		<TrimmerRootAssembly Include="openmedstack.sparkengine.web" />
+		<TrimmerRootAssembly Include="Hl7.Fhir.R5" />
+		<PackageReference Include="openmedstack.domain" Version="1.5.2" />
 		<PackageReference Include="openmedstack.web.autofac" Version="1.5.2" />
 		<PackageReference Include="OpenMedStack.Autofac.MassTransit" Version="1.5.2" />
 	</ItemGroup>

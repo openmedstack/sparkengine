@@ -391,7 +391,7 @@ public class FhirService : IFhirService, IInteractionHandler
     private async Task<Entry> Store(Entry entry, CancellationToken cancellationToken)
     {
         var result = await _storageService.Add(entry, cancellationToken).ConfigureAwait(false);
-        await _serviceListener.Inform(entry).ConfigureAwait(false);
+        await _serviceListener.Inform(result).ConfigureAwait(false);
 
         return result;
     }

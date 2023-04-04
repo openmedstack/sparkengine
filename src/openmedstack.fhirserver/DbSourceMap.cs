@@ -1,12 +1,15 @@
 ﻿namespace OpenMedStack.FhirServer;
 
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using DotAuth.Uma;
+using Handlers;
 using Npgsql;
 using NpgsqlTypes;
 using Weasel.Postgresql;
 
-public class DbSourceMap : IResourceMap
+public class DbSourceMap : IResourceMap, IResourceMapper
 {
     private readonly string _connectionString;
 
@@ -45,5 +48,28 @@ public class DbSourceMap : IResourceMap
         await connection.CloseAsync().ConfigureAwait(false);
 
         return result as string;
+    }
+
+    /// <inheritdoc />
+    public async Task MapResource(
+        string resourceId,
+        string resourceSetId,
+        CancellationToken cancellationToken = default)
+    {
+        var connection = new NpgsqlConnection(_connectionString);
+        await using var _ = connection.ConfigureAwait(false);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        var command = connection.CreateCommand();
+        await using var __ = command.ConfigureAwait(false);
+        command.CommandText = "INSERT INTO resource_map VALUES (@resourceSetId, @resourceId)";
+        command.AddNamedParameter("resourceSetId", resourceSetId, NpgsqlDbType.Varchar);
+        command.AddNamedParameter("resourceId", resourceId, NpgsqlDbType.Varchar);
+        var inserted = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        if (inserted != 1)
+        {
+            throw new Exception("Failed to insert resource map");
+        }
+
+        await connection.CloseAsync().ConfigureAwait(false);
     }
 }
