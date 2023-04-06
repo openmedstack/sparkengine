@@ -19,6 +19,10 @@ public class ResourceCreatedEventHandler : EventHandlerBase<ResourceCreatedEvent
     private readonly IUmaResourceSetClient _resourceSetClient;
     private readonly IResourceMapper _resourceMapper;
 
+    static ResourceCreatedEventHandler()
+    {
+    }
+
     /// <inheritdoc />
     public ResourceCreatedEventHandler(
         IUmaResourceSetClient resourceSetClient,

@@ -6,6 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace OpenMedStack.SparkEngine.Web.Controllers;
 
 using System;
@@ -19,7 +21,6 @@ using Extensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
 using Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,6 @@ using SparkEngine.Extensions;
 using Utility;
 
 [Authorize]
-[ApiController]
 [EnableCors]
 public abstract class FhirController : ControllerBase
 {
@@ -82,7 +82,7 @@ public abstract class FhirController : ControllerBase
     }
 
     [HttpPost("{type}")]
-    public virtual async Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
+    public virtual async Task<FhirResponse?> Create(string type, [FromBody] Resource resource, CancellationToken cancellationToken)
     {
         resource.Id = Guid.NewGuid().ToString("N");
         var key = Key.Create(type, resource.Id);

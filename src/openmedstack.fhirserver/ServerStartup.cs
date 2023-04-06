@@ -71,9 +71,13 @@ internal class ServerStartup : IConfigureWebApplication
                 {
                     options.SaveToken = true;
                     options.Authority = _configuration.TokenService;
-                    options.RequireHttpsMetadata = true;
+                    options.RequireHttpsMetadata = false;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
+                        ValidateActor = false,
+                        ValidateLifetime = false,
+                        ValidateTokenReplay = false,
+                        LogValidationExceptions = true,
                         ValidateAudience = false,
                         ValidateIssuer = false,
                         ValidateIssuerSigningKey = false,

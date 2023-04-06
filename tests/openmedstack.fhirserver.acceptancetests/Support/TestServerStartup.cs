@@ -1,4 +1,10 @@
-﻿namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
+
+namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
 using System;
 using Hl7.Fhir.Serialization;
@@ -14,16 +20,19 @@ using OpenMedStack.Web.Autofac;
 internal class TestServerStartup : IConfigureWebApplication
 {
     private readonly FhirServerConfiguration _configuration;
+    private readonly ITestOutputHelper _outputHelper;
 
-    public TestServerStartup(FhirServerConfiguration configuration)
+    public TestServerStartup(FhirServerConfiguration configuration, ITestOutputHelper outputHelper)
     {
         _configuration = configuration;
+        _outputHelper = outputHelper;
     }
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddHttpClient()
+        services.AddLogging(builder => builder.AddXunit(_outputHelper))
             .AddCors()
+            .AddTransient<TestController>()
             .AddControllers();
         services.AddFhir<UmaFhirController>(
             new SparkSettings
@@ -48,8 +57,11 @@ internal class TestServerStartup : IConfigureWebApplication
                     options.SaveToken = true;
                     options.Authority = _configuration.TokenService;
                     options.RequireHttpsMetadata = true;
+                    options.SecurityTokenValidators.Clear();
+                    options.SecurityTokenValidators.Add(new TestSecurityTokenValidator());
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
+                        IssuerSigningKeyValidator = (s, k, p) => true,
                         ValidateAudience = false,
                         ValidateIssuer = false,
                         ValidateIssuerSigningKey = false,
@@ -69,5 +81,35 @@ internal class TestServerStartup : IConfigureWebApplication
             {
                 e.MapControllers();
             });
+    }
+}
+
+internal class TestSecurityTokenValidator:ISecurityTokenValidator
+{
+    public bool CanReadToken(string securityToken)
+    {
+        return true;
+    }
+
+    public ClaimsPrincipal ValidateToken(string securityToken, TokenValidationParameters validationParameters,
+        out SecurityToken validatedToken)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(securityToken);
+        validatedToken = jwt;
+        return new ClaimsPrincipal(new ClaimsIdentity(jwt.Claims, "Bearer"));
+    }
+
+    public bool CanValidateToken { get; } = true;
+    public int MaximumTokenSizeInBytes { get; set; } = int.MaxValue;
+}
+
+[Route("test")]
+public class TestController : ControllerBase
+{
+    [HttpGet("{id}")]
+    public string Get(string id)
+    {
+        return $"Hello {id}!";
     }
 }

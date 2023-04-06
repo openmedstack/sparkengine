@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
         {
             services.AddTransient<DefaultFhirController>();
         }
-        services.AddTransient<ControllerBase>(sp => sp.GetRequiredService<T>());
+        //services.AddTransient<ControllerBase>(sp => sp.GetRequiredService<T>());
         AddFhirHttpSearchParameters();
         services.SetContentTypeAsFhirMediaTypeOnValidationError();
         services.TryAddSingleton(new FhirJsonSerializer());

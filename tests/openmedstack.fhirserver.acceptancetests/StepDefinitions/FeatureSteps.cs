@@ -1,111 +1,149 @@
-namespace OpenMedStack.FhirServer.AcceptanceTests.StepDefinitions
+namespace OpenMedStack.FhirServer.AcceptanceTests.StepDefinitions;
+
+using System.Net.Http.Headers;
+using DotAuth.Client;
+using DotAuth.Shared;
+using DotAuth.Shared.Responses;
+using Microsoft.IdentityModel.Logging;
+using OpenMedStack.FhirServer.Events;
+using Xunit.Abstractions;
+
+using Autofac;
+using Autofac.MassTransit;
+using Handlers;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+using Support;
+using Web.Testing;
+
+public sealed class SharedContext
 {
-    using Autofac;
-    using Autofac.MassTransit;
-    using Handlers;
-    using Hl7.Fhir.Model;
-    using Hl7.Fhir.Rest;
-    using Support;
-    using Web.Autofac;
-    using Web.Testing;
+public Func<HttpMessageHandler> CreateHandler { get; set; } = null!;
+}
 
-    [Binding]
-    public partial class FeatureSteps
+[Binding]
+public partial class FeatureSteps
+{
+    private readonly ITestOutputHelper _outputHelper;
+    private readonly CancellationTokenSource _tokenSource = new();
+    private TestChassis _chassis = null!;
+    private IAsyncDisposable _service = null!;
+    private Patient _patient = null!;
+    private FhirClient _fhirClient = null!;
+    private FhirServerConfiguration _configuration = null!;
+    private TestResourceMap _map = null!;
+
+    public FeatureSteps(ITestOutputHelper outputHelper)
     {
-        private readonly CancellationTokenSource _tokenSource = new();
-        private TestChassis _chassis = null!;
-        private IAsyncDisposable _service = null!;
-        private Patient _patient = null!;
-        private FhirClient _fhirClient = null!;
+        _outputHelper = outputHelper;
+    }
 
-        [BeforeScenario]
-        public void Setup()
-        {
-            var configuration = CreateConfiguration();
-            _chassis = Chassis.From(configuration)
-                .DefinedIn(typeof(ResourceCreatedEventHandler).Assembly)
-                .AddAutofacModules((c, _) => new TestFhirModule(c))
-                .UsingInMemoryMassTransit()
-                .BindToUrls(configuration.Urls)
-                .UsingTestWebServer(new TestServerStartup(configuration));
-        }
+    [BeforeScenario]
+    public void Setup()
+    {
+        IdentityModelEventSource.ShowPII = true;
+        _configuration = CreateConfiguration();
+        _map = new TestResourceMap(new HashSet<KeyValuePair<string, string>>
+            { KeyValuePair.Create("abc", "123") });
+        var chassis = Chassis.From(_configuration)
+            .DefinedIn(typeof(ResourceCreatedEventHandler).Assembly)
+            .AddAutofacModules((c, _) => new TestFhirModule<FhirServerConfiguration>((FhirServerConfiguration)c, _map))
+            .UsingInMemoryMassTransit()
+            // .BindToUrls(_configuration.Urls)
+            .UsingTestWebServer(new TestServerStartup(_configuration, _outputHelper));
+        _chassis = chassis;
+    }
 
-        [AfterScenario]
-        public async ValueTask Teardown()
-        {
-            _tokenSource.Cancel();
-            await _service.DisposeAsync();
-            _chassis.Dispose();
-            _tokenSource.Dispose();
-        }
+    [AfterScenario]
+    public async ValueTask Teardown()
+    {
+        _tokenSource.Cancel();
+        await _service.DisposeAsync();
+        _chassis.Dispose();
+        _tokenSource.Dispose();
+    }
 
-        private static FhirServerConfiguration CreateConfiguration()
+    private static FhirServerConfiguration CreateConfiguration()
+    {
+        return new FhirServerConfiguration
         {
-            return new FhirServerConfiguration
-            {ClientId = "test",
-                ConnectionString = "",
-                Name = typeof(FeatureSteps).Assembly.GetName().Name,
-                RetryCount = 5,
-                QueueName = "test",
-                ServiceBus = new Uri("loopback://localhost"),
-                Urls = Array.Empty<string>(),
-                TokenService = "https://localhost",
-                AccessKey = "",
-                AccessSecret = "",
-                StorageServiceUrl = new Uri("loopback://localhost"),
-                FhirRoot = "https://localhost/fhir",
-                CompressStorage = false,
-                Bucket = ""
-            };
-        }
-
-        [Given(@"a running server setup")]
-        public void GivenARunningServerSetup()
-        {
-            _service = _chassis.Start(_tokenSource.Token);
-            Assert.NotNull(_service);
-        }
-
-        [Given(@"a FHIR client")]
-        public void GivenAFHIRClient()
-        {
-            _fhirClient = new FhirClient(
-                new Uri("https://localhost"),
-                _chassis.CreateClient(),
-                new FhirClientSettings());
-        }
-
-        [Given(@"a FHIR resource")]
-        public void GivenAFhirResource()
-        {
-            _patient = new Patient
+            ClientId = "test",
+            ConnectionString = "",
+            TenantPrefix = "test",
+            TopicMap = new Dictionary<string, string>
             {
-                Id = Guid.NewGuid().ToString("N"),
-                Name = new List<HumanName> { new() { Family = "Doe", Given = new List<string> { "John" } } },
-                Address = new List<Address>
+                { nameof(ResourceCreatedEvent), nameof(ResourceCreatedEvent) },
+                { nameof(FhirEntryEvent), nameof(FhirEntryEvent) }
+            },
+            Name = typeof(UmaFhirController).Assembly.GetName().Name!,
+            RetryCount = 5,
+            QueueName = "test",
+            ServiceBus = new Uri("loopback://localhost"),
+            Urls = new[] { "http://localhost" },
+            TokenService = "https://identity.reimers.dk",
+            AccessKey = "",
+            AccessSecret = "",
+            StorageServiceUrl = new Uri("loopback://localhost"),
+            FhirRoot = "http://localhost/fhir",
+            CompressStorage = false,
+            Bucket = ""
+        };
+    }
+
+    [Given(@"a running server setup")]
+    public void GivenARunningServerSetup()
+    {
+        _service = _chassis.Start(_tokenSource.Token);
+        Assert.NotNull(_service);
+    }
+
+    [Given(@"a FHIR client")]
+    public async System.Threading.Tasks.Task GivenAFHIRClient()
+    {
+        var tokenClient = new TestTokenClient(_configuration);
+        var option =
+            await tokenClient.GetToken(TokenRequest.FromScopes("write")) as Option<GrantedTokenResponse>.Result;
+        var token = option!.Item;
+
+        var httpClient = _chassis.CreateClient();
+        httpClient.Timeout = TimeSpan.FromMinutes(3);
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+
+        _fhirClient = new FhirClient(
+            new Uri("https://localhost/fhir"),
+            httpClient,
+            new FhirClientSettings { VerifyFhirVersion = false });
+    }
+
+    [Given(@"a FHIR resource")]
+    public void GivenAFhirResource()
+    {
+        _patient = new Patient
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = new List<HumanName> { new() { Family = "Doe", Given = new List<string> { "John" } } },
+            Address = new List<Address>
+            {
+                new()
                 {
-                    new()
-                    {
-                        Line = new List<string> { "Main Street 1" }, City = "New York", PostalCode = "12345"
-                    }
+                    Line = new List<string> { "Main Street 1" }, City = "New York", PostalCode = "12345"
                 }
-            };
-        }
+            }
+        };
+    }
 
-        [When(@"the resource is created")]
-        public async System.Threading.Tasks.Task WhenTheResourceIsCreated()
-        {
-            var response = await _fhirClient.CreateAsync(_patient, _tokenSource.Token);
+    [When(@"the resource is created")]
+    public async System.Threading.Tasks.Task WhenTheResourceIsCreated()
+    {
+        var response = await _fhirClient.CreateAsync(_patient, _tokenSource.Token);
+        Assert.NotNull(response);
 
-            Assert.NotNull(response);
+        _patient = response;
+    }
 
-            _patient = response!;
-        }
-
-        [Then(@"the resource is registered as a UMA resource")]
-        public void ThenTheResourceIsRegisteredAsAUMAResource()
-        {
-            throw new PendingStepException();
-        }
+    [Then(@"the resource is registered as a UMA resource")]
+    public void ThenTheResourceIsRegisteredAsAUMAResource()
+    {
+        Assert.Equal(1, _map.MappedResourcesCount);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.FhirServer;
+﻿using OpenMedStack.FhirServer.Handlers;
+
+namespace OpenMedStack.FhirServer;
 
 using System;
 using System.Threading.Tasks;
@@ -9,18 +11,20 @@ using SparkEngine.Interfaces;
 
 internal class FhirEventListener : IServiceListener
 {
-    private readonly IPublishEvents _eventPublisher;
+    private readonly IResourceMapper _mapper;
 
-    public FhirEventListener(IPublishEvents eventPublisher)
+
+    public FhirEventListener(IResourceMapper mapper)
     {
-        _eventPublisher = eventPublisher;
+        _mapper = mapper;
     }
 
     /// <inheritdoc />
-    public Task Inform(Uri location, Entry interaction)
+    public async Task Inform(Uri location, Entry interaction)
     {
-        var info = ResourceInfo.FromEntry(interaction);
-        var evt = new FhirEntryEvent("fhir", DateTimeOffset.UtcNow, info);
-        return _eventPublisher.Publish(evt);
+        await _mapper.MapResource(interaction.Resource!.Id, "123456");
+        // var info = ResourceInfo.FromEntry(interaction);
+        // var evt = new FhirEntryEvent("fhir", DateTimeOffset.UtcNow, info);
+        // return _eventPublisher.Publish(evt);
     }
 }

@@ -47,7 +47,7 @@ public class IndexingTests
                      })
                      .Where(x => x != null))
         {
-            yield return new object[] { resource };
+            yield return new object[] { resource! };
         }
     }
 }

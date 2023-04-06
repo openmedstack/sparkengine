@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 		README.md = README.md
 		shared.projinfo = shared.projinfo
+		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "openmedstack.sparkengine", "src\openmedstack.sparkengine\openmedstack.sparkengine.csproj", "{1D3CFD53-8193-4033-8BEC-EE58CF0F83B9}"
