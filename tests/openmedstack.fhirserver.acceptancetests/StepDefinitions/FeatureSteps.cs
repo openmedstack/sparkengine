@@ -7,7 +7,6 @@ using DotAuth.Shared.Responses;
 using Microsoft.IdentityModel.Logging;
 using OpenMedStack.FhirServer.Events;
 using Xunit.Abstractions;
-
 using Autofac;
 using Autofac.MassTransit;
 using Handlers;
@@ -18,7 +17,7 @@ using Web.Testing;
 
 public sealed class SharedContext
 {
-public Func<HttpMessageHandler> CreateHandler { get; set; } = null!;
+    public Func<HttpMessageHandler> CreateHandler { get; set; } = null!;
 }
 
 [Binding]
@@ -26,8 +25,7 @@ public partial class FeatureSteps
 {
     private readonly ITestOutputHelper _outputHelper;
     private readonly CancellationTokenSource _tokenSource = new();
-    private TestChassis _chassis = null!;
-    private IAsyncDisposable _service = null!;
+    private TestChassis<FhirServerConfiguration> _chassis = null!;
     private Patient _patient = null!;
     private FhirClient _fhirClient = null!;
     private FhirServerConfiguration _configuration = null!;
@@ -45,21 +43,18 @@ public partial class FeatureSteps
         _configuration = CreateConfiguration();
         _map = new TestResourceMap(new HashSet<KeyValuePair<string, string>>
             { KeyValuePair.Create("abc", "123") });
-        var chassis = Chassis.From(_configuration)
+        _chassis = Chassis.From(_configuration)
             .DefinedIn(typeof(ResourceCreatedEventHandler).Assembly)
-            .AddAutofacModules((c, _) => new TestFhirModule<FhirServerConfiguration>((FhirServerConfiguration)c, _map))
+            .AddAutofacModules((c, _) => new TestFhirModule<FhirServerConfiguration>(c, _map))
             .UsingInMemoryMassTransit()
-            // .BindToUrls(_configuration.Urls)
             .UsingTestWebServer(new TestServerStartup(_configuration, _outputHelper));
-        _chassis = chassis;
     }
 
     [AfterScenario]
     public async ValueTask Teardown()
     {
         _tokenSource.Cancel();
-        await _service.DisposeAsync();
-        _chassis.Dispose();
+        await _chassis.DisposeAsync().ConfigureAwait(false);
         _tokenSource.Dispose();
     }
 
@@ -93,8 +88,7 @@ public partial class FeatureSteps
     [Given(@"a running server setup")]
     public void GivenARunningServerSetup()
     {
-        _service = _chassis.Start(_tokenSource.Token);
-        Assert.NotNull(_service);
+        _chassis.Start();
     }
 
     [Given(@"a FHIR client")]
@@ -102,7 +96,7 @@ public partial class FeatureSteps
     {
         var tokenClient = new TestTokenClient(_configuration);
         var option =
-            await tokenClient.GetToken(TokenRequest.FromScopes("write")) as Option<GrantedTokenResponse>.Result;
+            await tokenClient.GetToken(TokenRequest.FromScopes("write")).ConfigureAwait(false) as Option<GrantedTokenResponse>.Result;
         var token = option!.Item;
 
         var httpClient = _chassis.CreateClient();
@@ -113,37 +107,5 @@ public partial class FeatureSteps
             new Uri("https://localhost/fhir"),
             httpClient,
             new FhirClientSettings { VerifyFhirVersion = false });
-    }
-
-    [Given(@"a FHIR resource")]
-    public void GivenAFhirResource()
-    {
-        _patient = new Patient
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            Name = new List<HumanName> { new() { Family = "Doe", Given = new List<string> { "John" } } },
-            Address = new List<Address>
-            {
-                new()
-                {
-                    Line = new List<string> { "Main Street 1" }, City = "New York", PostalCode = "12345"
-                }
-            }
-        };
-    }
-
-    [When(@"the resource is created")]
-    public async System.Threading.Tasks.Task WhenTheResourceIsCreated()
-    {
-        var response = await _fhirClient.CreateAsync(_patient, _tokenSource.Token);
-        Assert.NotNull(response);
-
-        _patient = response;
-    }
-
-    [Then(@"the resource is registered as a UMA resource")]
-    public void ThenTheResourceIsRegisteredAsAUMAResource()
-    {
-        Assert.Equal(1, _map.MappedResourcesCount);
     }
 }

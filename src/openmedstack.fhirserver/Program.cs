@@ -86,12 +86,11 @@ var chassis = Chassis.From(configuration)
     .UsingInMemoryMassTransit()
     .BindToUrls(configuration.Urls)
     .UsingWebServer(c => new ServerStartup((FhirServerConfiguration)c));
-var running = chassis.Start(tokenSource.Token);
+chassis.Start();
 try
 {
     waitHandle.Wait(tokenSource.Token);
-    await running.DisposeAsync().ConfigureAwait(false);
-    chassis.Dispose();
+    await chassis.DisposeAsync().ConfigureAwait(false);
 }
 catch (OperationCanceledException)
 {

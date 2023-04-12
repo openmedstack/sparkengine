@@ -22,7 +22,7 @@ internal class FhirEventListener : IServiceListener
     /// <inheritdoc />
     public async Task Inform(Uri location, Entry interaction)
     {
-        await _mapper.MapResource(interaction.Resource!.Id, "123456");
+        await _mapper.MapResource(interaction.Resource!.Id, "123456").ConfigureAwait(false);
         // var info = ResourceInfo.FromEntry(interaction);
         // var evt = new FhirEntryEvent("fhir", DateTimeOffset.UtcNow, info);
         // return _eventPublisher.Publish(evt);

@@ -89,7 +89,7 @@ public class UmaFhirController : FhirController
         };
         var response = await (!allowed
             ? System.Threading.Tasks.Task.FromResult<FhirResponse?>(new FhirResponse(HttpStatusCode.Forbidden))
-            : base.Create(type, resource, cancellationToken));
+            : base.Create(type, resource, cancellationToken)).ConfigureAwait(false);
 
         var token = Request.Headers.Authorization;
         if (response?.StatusCode == HttpStatusCode.Created && token.Count > 0)
@@ -101,7 +101,7 @@ public class UmaFhirController : FhirController
                 token[0]!,
                 key,
                 DateTimeOffset.UtcNow);
-            await _eventPublisher.Publish(cmd, cancellationToken: cancellationToken);
+            await _eventPublisher.Publish(cmd, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         return response;
     }

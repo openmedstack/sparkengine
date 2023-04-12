@@ -19,10 +19,6 @@ public class ResourceCreatedEventHandler : EventHandlerBase<ResourceCreatedEvent
     private readonly IUmaResourceSetClient _resourceSetClient;
     private readonly IResourceMapper _resourceMapper;
 
-    static ResourceCreatedEventHandler()
-    {
-    }
-
     /// <inheritdoc />
     public ResourceCreatedEventHandler(
         IUmaResourceSetClient resourceSetClient,
@@ -65,7 +61,7 @@ public class ResourceCreatedEventHandler : EventHandlerBase<ResourceCreatedEvent
                 Type = "FHIR Resource"
             },
             domainEvent.UserToken,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
         if (response is Option<AddResourceSetResponse>.Result result)
         {
             var resourceSetId = result.Item.Id;
