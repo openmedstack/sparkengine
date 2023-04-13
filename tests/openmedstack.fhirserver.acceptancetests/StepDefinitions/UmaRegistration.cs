@@ -13,14 +13,14 @@ public partial class FeatureSteps
         {
             Id = Guid.NewGuid().ToString("N"),
             Name = new List<HumanName> { new() { Family = "Doe", Given = new List<string> { "John" } } },
-            Address = new List<Address>
+            Address =
             {
                 new()
                 {
                     Line = new List<string> { "Main Street 1" }, City = "New York", PostalCode = "12345"
                 }
             },
-            Contact = new()
+            Contact =
             {
                 new Patient.ContactComponent
                 {
@@ -40,9 +40,10 @@ public partial class FeatureSteps
     }
 
     [Then(@"the resource is registered as a UMA resource")]
+    // ReSharper disable once InconsistentNaming
     public async Task ThenTheResourceIsRegisteredAsAUMAResource()
     {
-        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 3));
+        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 1));
         Assert.Equal(1, _map.MappedResourcesCount);
     }
 }

@@ -38,26 +38,30 @@ where T: DeploymentConfiguration
             .As<IResourceMap>()
             .As<IResourceMapper>()
             .InstancePerDependency();
-        builder.Register(
-                ctx =>
-                {
-                    return new UmaClient(
-                        () =>
-                        {
-                            var factory = ctx.Resolve<IHttpClientFactory>();
-                            return factory.CreateClient();
-                        },
-                        new Uri(_configuration.TokenService));
-                })
-            .AsSelf()
-            .AsImplementedInterfaces().InstancePerLifetimeScope();
         builder.Register(_ => new TestTokenClient(_configuration))
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
         builder.RegisterType<TestAccessTokenCache>().AsImplementedInterfaces().InstancePerDependency();
         builder.RegisterType<TestUmaResourceSetClient>().AsImplementedInterfaces().InstancePerDependency();
+        builder.RegisterType<TestUmaPermissionsClient>().AsImplementedInterfaces().InstancePerDependency();
     }
+}
+
+internal class TestUmaPermissionsClient:IUmaPermissionClient
+{
+    public async Task<Option<TicketResponse>> RequestPermission(string token, CancellationToken cancellationToken = new CancellationToken(),
+        params PermissionRequest[] requests)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<UmaConfiguration> GetUmaDocument(CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public Uri Authority { get; }
 }
 
 internal class TestUmaResourceSetClient : IUmaResourceSetClient

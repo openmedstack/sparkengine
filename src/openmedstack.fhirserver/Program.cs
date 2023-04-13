@@ -18,16 +18,8 @@ void CheckParameters(params string?[] values)
 
 using var waitHandle = new ManualResetEventSlim(false);
 using var tokenSource = new CancellationTokenSource();
-Console.CancelKeyPress += OnCancelKey;
-
-void OnCancelKey(object? sender, ConsoleCancelEventArgs e)
-{
-    // ReSharper disable once AccessToDisposedClosure
-    tokenSource.Cancel();
-}
 
 var configuration = CreateConfiguration();
-
 
 FhirServerConfiguration CreateConfiguration()
 {
@@ -85,7 +77,9 @@ var chassis = Chassis.From(configuration)
     .AddAutofacModules((c, _) => new FhirModule(c))
     .UsingInMemoryMassTransit()
     .BindToUrls(configuration.Urls)
-    .UsingWebServer(c => new ServerStartup((FhirServerConfiguration)c));
+    .UsingWebServer(c => new ServerStartup(c));
+Console.CancelKeyPress += OnCancelKey;
+
 chassis.Start();
 try
 {
@@ -100,4 +94,10 @@ finally
 {
     Console.CancelKeyPress -= OnCancelKey;
     Console.WriteLine(@"Shutting down");
+}
+
+void OnCancelKey(object? sender, ConsoleCancelEventArgs e)
+{
+    // ReSharper disable once AccessToDisposedClosure
+    tokenSource.Cancel();
 }

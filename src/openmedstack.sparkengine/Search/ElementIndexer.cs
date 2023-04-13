@@ -438,12 +438,35 @@ public class ElementIndexer
     private List<Expression> ToExpressions(Address element)
     {
         var values = new List<Expression>();
-        if (element.City != null) values.Add(new StringValue(element.City));
-        if (element.Country != null) values.Add(new StringValue(element.Country));
-        if (element.State != null) values.Add(new StringValue(element.State));
-        if (element.Text != null) values.Add(new StringValue(element.Text));
-        if (element.Use.HasValue) values.Add(new StringValue(_fhirModel.GetLiteralForEnum(element.Use.Value)));
-        if (element.PostalCode != null) values.Add(new StringValue(element.PostalCode));
+        if (element.City != null)
+        {
+            values.Add(new StringValue(element.City));
+        }
+
+        if (element.Country != null)
+        {
+            values.Add(new StringValue(element.Country));
+        }
+
+        if (element.State != null)
+        {
+            values.Add(new StringValue(element.State));
+        }
+
+        if (element.Text != null)
+        {
+            values.Add(new StringValue(element.Text));
+        }
+
+        if (element.Use.HasValue)
+        {
+            values.Add(new StringValue(_fhirModel.GetLiteralForEnum(element.Use.Value)));
+        }
+
+        if (element.PostalCode != null)
+        {
+            values.Add(new StringValue(element.PostalCode));
+        }
 
         values.AddRange(element.Line?.Select(line => new StringValue(line)) ?? Array.Empty<StringValue>());
 

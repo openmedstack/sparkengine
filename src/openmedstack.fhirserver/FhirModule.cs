@@ -53,6 +53,7 @@ internal class FhirModule : Module
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
-
+        builder.RegisterInstance(new TokenCache(_configuration.ClientId, _configuration.Secret,
+            new Uri(_configuration.TokenService))).AsSelf().AsImplementedInterfaces().SingleInstance();
     }
 }
