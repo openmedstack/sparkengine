@@ -1,4 +1,10 @@
-﻿namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
+﻿using Baseline.ImTools;
+using DotAuth.Shared;
+using DotAuth.Shared.Models;
+using DotAuth.Shared.Requests;
+using DotAuth.Shared.Responses;
+
+namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
 using System;
 using System.Net.Http;
@@ -24,7 +30,7 @@ where T: DeploymentConfiguration
     /// <inheritdoc />
     protected override void Load(ContainerBuilder builder)
     {
-        builder.RegisterType<T>().AsSelf().As<DeploymentConfiguration>();
+        builder.RegisterInstance(_configuration).As<DeploymentConfiguration>();
         builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
         builder.RegisterType<GuidGenerator>().As<IGenerator>().SingleInstance();
         builder.RegisterType<PatchService>().As<IPatchService>().SingleInstance();
@@ -49,5 +55,59 @@ where T: DeploymentConfiguration
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
+        builder.RegisterType<TestAccessTokenCache>().AsImplementedInterfaces().InstancePerDependency();
+        builder.RegisterType<TestUmaResourceSetClient>().AsImplementedInterfaces().InstancePerDependency();
     }
 }
+
+internal class TestUmaResourceSetClient : IUmaResourceSetClient
+{
+    public async Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(ResourceSet request, string token,
+        CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Option<AddResourceSetResponse>> AddResourceSet(ResourceSet request, string token, CancellationToken cancellationToken = new CancellationToken())
+    {
+        var response = new AddResourceSetResponse { Id  = Guid.NewGuid().ToString(), UserAccessPolicyUri = "http://localhost" };
+        return Task.FromResult<Option<AddResourceSetResponse>>(new Option<AddResourceSetResponse>.Result(response));
+    }
+
+    public async Task<Option> DeleteResource(string resourceSetId, string token, CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Option<string[]>> GetAllOwnResourceSets(string token, CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Option<ResourceSet>> GetResourceSet(string resourceSetId, string token, CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Option<PagedResult<ResourceSetDescription>>> SearchResources(SearchResourceSet parameter, string? token = null,
+        CancellationToken cancellationToken = new CancellationToken())
+    {
+        throw new NotImplementedException();
+    }
+}
+
+ internal class TestAccessTokenCache : IAccessTokenCache
+ {
+     private readonly ITokenClient _tokenClient;
+
+     public TestAccessTokenCache(ITokenClient tokenClient)
+     {
+         _tokenClient = tokenClient;
+     }
+
+     public async ValueTask<GrantedTokenResponse?> GetAccessToken(params string[] scopes)
+     {
+         var token = await _tokenClient.GetToken(TokenRequest.FromScopes(scopes)) as Option<GrantedTokenResponse>.Result;
+         return token!.Item;
+     }
+ }

@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Hl7.Fhir.Model;
+using Task = System.Threading.Tasks.Task;
 
 namespace OpenMedStack.FhirServer.AcceptanceTests.StepDefinitions;
 
@@ -17,6 +19,13 @@ public partial class FeatureSteps
                 {
                     Line = new List<string> { "Main Street 1" }, City = "New York", PostalCode = "12345"
                 }
+            },
+            Contact = new()
+            {
+                new Patient.ContactComponent
+                {
+                    Telecom = new() { new ContactPoint { System = ContactPoint.ContactPointSystem.Url, Value = "123" } }
+                }
             }
         };
     }
@@ -31,8 +40,9 @@ public partial class FeatureSteps
     }
 
     [Then(@"the resource is registered as a UMA resource")]
-    public void ThenTheResourceIsRegisteredAsAUMAResource()
+    public async Task ThenTheResourceIsRegisteredAsAUMAResource()
     {
+        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 3));
         Assert.Equal(1, _map.MappedResourcesCount);
     }
 }

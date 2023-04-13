@@ -32,17 +32,16 @@ internal class TestServerStartup : IConfigureWebApplication
     {
         services.AddLogging(builder => builder.AddXunit(_outputHelper))
             .AddCors()
-            .AddTransient<TestController>()
             .AddControllers();
         services.AddFhir<UmaFhirController>(
-            new SparkSettings
-            {
-                UseAsynchronousIO = true,
-                Endpoint = new Uri(_configuration.FhirRoot),
-                FhirRelease = FhirRelease.R5.ToString(),
-                ParserSettings = ParserSettings.CreateDefault(),
-                SerializerSettings = SerializerSettings.CreateDefault()
-            })
+                new SparkSettings
+                {
+                    UseAsynchronousIO = true,
+                    Endpoint = new Uri(_configuration.FhirRoot),
+                    FhirRelease = FhirRelease.R5.ToString(),
+                    ParserSettings = ParserSettings.CreateDefault(),
+                    SerializerSettings = SerializerSettings.CreateDefault()
+                })
             .AddInMemoryFhirStores()
             .AddAuthentication(
                 options =>
@@ -77,14 +76,11 @@ internal class TestServerStartup : IConfigureWebApplication
             .UseCors(p => p.AllowAnyOrigin())
             .UseAuthentication()
             .UseAuthorization()
-            .UseEndpoints(e =>
-            {
-                e.MapControllers();
-            });
+            .UseEndpoints(e => { e.MapControllers(); });
     }
 }
 
-internal class TestSecurityTokenValidator:ISecurityTokenValidator
+internal class TestSecurityTokenValidator : ISecurityTokenValidator
 {
     public bool CanReadToken(string securityToken)
     {
@@ -102,14 +98,4 @@ internal class TestSecurityTokenValidator:ISecurityTokenValidator
 
     public bool CanValidateToken { get; } = true;
     public int MaximumTokenSizeInBytes { get; set; } = int.MaxValue;
-}
-
-[Route("test")]
-public class TestController : ControllerBase
-{
-    [HttpGet("{id}")]
-    public string Get(string id)
-    {
-        return $"Hello {id}!";
-    }
 }

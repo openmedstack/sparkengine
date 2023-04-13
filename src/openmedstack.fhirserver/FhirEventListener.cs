@@ -11,20 +11,18 @@ using SparkEngine.Interfaces;
 
 internal class FhirEventListener : IServiceListener
 {
-    private readonly IResourceMapper _mapper;
+    private readonly IPublishEvents _eventPublisher;
 
-
-    public FhirEventListener(IResourceMapper mapper)
+    public FhirEventListener(IPublishEvents eventPublisher)
     {
-        _mapper = mapper;
+        _eventPublisher = eventPublisher;
     }
 
     /// <inheritdoc />
-    public async Task Inform(Uri location, Entry interaction)
+    public Task Inform(Uri location, Entry interaction)
     {
-        await _mapper.MapResource(interaction.Resource!.Id, "123456").ConfigureAwait(false);
-        // var info = ResourceInfo.FromEntry(interaction);
-        // var evt = new FhirEntryEvent("fhir", DateTimeOffset.UtcNow, info);
-        // return _eventPublisher.Publish(evt);
+        var info = ResourceInfo.FromEntry(interaction);
+        var evt = new FhirEntryEvent("fhir", DateTimeOffset.UtcNow, info);
+        return _eventPublisher.Publish(evt);
     }
 }

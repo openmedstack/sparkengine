@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace OpenMedStack.FhirServer.AcceptanceTests.StepDefinitions;
 
 using System.Net.Http.Headers;
@@ -79,9 +81,15 @@ public partial class FeatureSteps
             AccessKey = "",
             AccessSecret = "",
             StorageServiceUrl = new Uri("loopback://localhost"),
-            FhirRoot = "http://localhost/fhir",
+            FhirRoot = "http://localhost/uma",
             CompressStorage = false,
-            Bucket = ""
+            Bucket = "", Timeout = TimeSpan.FromMinutes(5),
+            Environment = "test",
+            Scope = "read",
+            Secret = "",
+            ServiceBusPassword = "",
+            ServiceBusUsername = "", Services = new Dictionary<Regex, Uri>(), ClusterHosts = Array.Empty<string>(),
+            ValidIssuers = new[] { "https://identity.reimers.dk" }
         };
     }
 
@@ -96,7 +104,8 @@ public partial class FeatureSteps
     {
         var tokenClient = new TestTokenClient(_configuration);
         var option =
-            await tokenClient.GetToken(TokenRequest.FromScopes("write")).ConfigureAwait(false) as Option<GrantedTokenResponse>.Result;
+            await tokenClient.GetToken(TokenRequest.FromScopes("write", "create")).ConfigureAwait(false) as
+                Option<GrantedTokenResponse>.Result;
         var token = option!.Item;
 
         var httpClient = _chassis.CreateClient();
@@ -104,7 +113,7 @@ public partial class FeatureSteps
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         _fhirClient = new FhirClient(
-            new Uri("https://localhost/fhir"),
+            new Uri(_configuration.FhirRoot),
             httpClient,
             new FhirClientSettings { VerifyFhirVersion = false });
     }

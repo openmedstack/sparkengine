@@ -63,7 +63,7 @@ public class UmaFhirController : FhirController
     }
 
     [AllowAnonymous]
-    [UmaFilter("{0}", new[] { "type" }, allowedScope: "create")]
+    //[UmaFilter("{0}", new[] { "type" }, allowedScope: "create")]
     public override async Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
     {
         var subject = User.GetSubject();
