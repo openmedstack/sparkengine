@@ -3,9 +3,8 @@ using System.Linq;
 using System.Threading;
 using OpenMedStack;
 using OpenMedStack.Autofac;
-using OpenMedStack.Autofac.MassTransit;
+using OpenMedStack.Autofac.MassTransit.RabbitMq;
 using OpenMedStack.FhirServer;
-using OpenMedStack.FhirServer.Handlers;
 using OpenMedStack.Web.Autofac;
 
 void CheckParameters(params string?[] values)
@@ -23,7 +22,7 @@ var configuration = CreateConfiguration();
 
 FhirServerConfiguration CreateConfiguration()
 {
-    var authority = Environment.GetEnvironmentVariable("AUTHORITY");
+    var authority = Environment.GetEnvironmentVariable("OAUTH__AUTHORITY");
     var fhirRoot = Environment.GetEnvironmentVariable("FHIR__ROOT");
     var clientId = Environment.GetEnvironmentVariable("OAUTH__CLIENTID");
     var clientSecret = Environment.GetEnvironmentVariable("OAUTH__CLIENTSECRET");
@@ -32,9 +31,12 @@ FhirServerConfiguration CreateConfiguration()
     var storageUrl = Environment.GetEnvironmentVariable("STORAGE__STORAGEURL");
     var storageCompress = Environment.GetEnvironmentVariable("STORAGE__COMPRESS");
     var storageBucket = Environment.GetEnvironmentVariable("STORAGE__BUCKET");
-    var connectionString = Environment.GetEnvironmentVariable("CONNECTIONSTRING");
+    var connectionString = Environment.GetEnvironmentVariable("DB__CONNECTIONSTRING");
     var serviceUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
-    var serviceBus = Environment.GetEnvironmentVariable("SERVICEBUS");
+    var serviceBusHost = Environment.GetEnvironmentVariable("BROKER__HOST");
+    var serviceBusUser = Environment.GetEnvironmentVariable("BROKER__USERNAME");
+    var serviceBusPassword = Environment.GetEnvironmentVariable("BROKER__PASSWORD");
+    var serviceBusQueue = Environment.GetEnvironmentVariable("BROKER__QUEUE");
 
     CheckParameters(
         authority,
@@ -48,16 +50,22 @@ FhirServerConfiguration CreateConfiguration()
         storageBucket,
         connectionString,
         serviceUrls,
-        serviceBus);
+        serviceBusHost,
+        serviceBusUser,
+        serviceBusPassword,
+        serviceBusQueue);
     return new FhirServerConfiguration
     {
-        QueueName = "fhir_server",
+        Environment = "Production",
+        QueueName = serviceBusQueue!,
+        ServiceBus = new Uri(serviceBusHost!),
+        ServiceBusUsername = serviceBusUser!,
+        ServiceBusPassword = serviceBusPassword!,
         ClientId = clientId!,
         Name = typeof(UmaFhirController).Assembly.GetName().Name!,
         RetryCount = 5,
         RetryInterval = TimeSpan.FromSeconds(5),
         Secret = clientSecret!,
-        ServiceBus = new Uri(serviceBus!),
         Timeout = TimeSpan.FromMinutes(5),
         TokenService = authority!,
         ValidIssuers = new[] { authority! },
@@ -73,9 +81,8 @@ FhirServerConfiguration CreateConfiguration()
 }
 
 var chassis = Chassis.From(configuration)
-    .DefinedIn(typeof(ResourceCreatedEventHandler).Assembly)
     .AddAutofacModules((c, _) => new FhirModule(c))
-    .UsingInMemoryMassTransit()
+    .UsingMassTransitOverRabbitMq()
     .BindToUrls(configuration.Urls)
     .UsingWebServer(c => new ServerStartup(c));
 Console.CancelKeyPress += OnCancelKey;

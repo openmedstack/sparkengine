@@ -8,6 +8,4 @@
 
 namespace OpenMedStack.SparkEngine;
 
-using Newtonsoft.Json;
-
-public record StoreSettings(string ConnectionString, JsonSerializerSettings SerializerSettings, string Schema = "public");
+public record StoreSettings(string ConnectionString, string Schema = "public");

@@ -6,6 +6,7 @@ using DotAuth.Shared;
 using DotAuth.Shared.Requests;
 using DotAuth.Shared.Responses;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
@@ -33,7 +34,8 @@ internal class TestTokenClient: ITokenClient
             new ClaimsIdentity(
                 new[]
                 {
-                    new Claim("sub", "123", ClaimValueTypes.String), new Claim("scope", "dcr", ClaimValueTypes.String)
+                    new Claim("sub", "123", ClaimValueTypes.String),
+                    new Claim("scope", "dcr", ClaimValueTypes.String)
                 }, "Bearer"), DateTime.UtcNow,
             DateTime.UtcNow.AddDays(1), DateTime.UtcNow,
             new SigningCredentials(jwk, SecurityAlgorithms.RsaSha256));

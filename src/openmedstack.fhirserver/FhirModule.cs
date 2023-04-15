@@ -5,15 +5,14 @@ using System.Net.Http;
 using DotAuth.Client;
 using DotAuth.Uma;
 using global::Autofac;
-using Handlers;
 using SparkEngine.Interfaces;
 using SparkEngine.Service.FhirServiceExtensions;
 
 internal class FhirModule : Module
 {
-    private readonly DeploymentConfiguration _configuration;
+    private readonly FhirServerConfiguration _configuration;
 
-    public FhirModule(DeploymentConfiguration configuration)
+    public FhirModule(FhirServerConfiguration configuration)
     {
         _configuration = configuration;
     }
@@ -55,5 +54,7 @@ internal class FhirModule : Module
             .InstancePerLifetimeScope();
         builder.RegisterInstance(new TokenCache(_configuration.ClientId, _configuration.Secret,
             new Uri(_configuration.TokenService))).AsSelf().AsImplementedInterfaces().SingleInstance();
+        builder.RegisterInstance(new ApplicationNameProvider(_configuration)).AsImplementedInterfaces()
+            .SingleInstance();
     }
 }

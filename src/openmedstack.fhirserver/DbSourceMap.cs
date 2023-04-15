@@ -4,7 +4,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using DotAuth.Uma;
-using Handlers;
 using Npgsql;
 using NpgsqlTypes;
 using Weasel.Postgresql;

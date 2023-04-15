@@ -1,5 +1,4 @@
-﻿using Baseline.ImTools;
-using DotAuth.Shared;
+﻿using DotAuth.Shared;
 using DotAuth.Shared.Models;
 using DotAuth.Shared.Requests;
 using DotAuth.Shared.Responses;
@@ -7,11 +6,9 @@ using DotAuth.Shared.Responses;
 namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
 using System;
-using System.Net.Http;
 using DotAuth.Client;
 using DotAuth.Uma;
 using global::Autofac;
-using OpenMedStack.FhirServer.Handlers;
 using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 

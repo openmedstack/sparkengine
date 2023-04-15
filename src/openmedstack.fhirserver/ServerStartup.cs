@@ -38,19 +38,18 @@ internal class ServerStartup : IConfigureWebApplication
                 ParserSettings = ParserSettings.CreateDefault(),
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
-        services.AddPostgresFhirStore(new StoreSettings(
-                _configuration.ConnectionString,
-                new JsonSerializerSettings
-                {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                    DateFormatHandling = DateFormatHandling.IsoDateFormat,
-                    DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                    NullValueHandling = NullValueHandling.Include,
-                    DefaultValueHandling = DefaultValueHandling.Include,
-                    TypeNameHandling = TypeNameHandling.Auto,
-                    Formatting = Formatting.None,
-                    DateParseHandling = DateParseHandling.DateTimeOffset
-                }))
+        services.AddSingleton(new JsonSerializerSettings
+                              {
+                                  ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                                  DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                                  DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+                                  NullValueHandling = NullValueHandling.Include,
+                                  DefaultValueHandling = DefaultValueHandling.Include,
+                                  TypeNameHandling = TypeNameHandling.Auto,
+                                  Formatting = Formatting.None,
+                                  DateParseHandling = DateParseHandling.DateTimeOffset
+                              });
+        services.AddPostgresFhirStore(new StoreSettings(_configuration.ConnectionString))
             .AddS3Persistence(new S3PersistenceConfiguration(
                 _configuration.AccessKey,
                 _configuration.AccessSecret,
@@ -93,9 +92,6 @@ internal class ServerStartup : IConfigureWebApplication
             .UseCors(p => p.AllowAnyOrigin())
             .UseAuthentication()
             .UseAuthorization()
-            .UseEndpoints(e =>
-            {
-                e.MapControllers();
-            });
+            .UseEndpoints(e => { e.MapControllers(); });
     }
 }

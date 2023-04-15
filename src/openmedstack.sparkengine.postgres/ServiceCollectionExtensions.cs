@@ -28,21 +28,19 @@ public static class ServiceCollectionExtensions
                     o.DatabaseSchemaName = settings.Schema;
                     o.Schema.Include<FhirRegistry>();
                     /*
-                     
+
     DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
-    
+
     CREATE INDEX IF NOT EXISTS mt_doc_indexentry_idx_data_values
         ON public.mt_doc_indexentry USING gin
         ((data -> 'values'::text) jsonb_ops)
         TABLESPACE pg_default;
-        
+
     REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
-    
+
                      */
                     o.AutoCreateSchemaObjects = AutoCreate.None;
                 }));
-        services.TryAddSingleton(settings);
-        services.TryAddTransient(sp => sp.GetRequiredService<StoreSettings>().SerializerSettings);
         services.TryAddTransient<ISerializer, CustomSerializer>();
         services.AddTransient<Func<IDocumentSession>>(
             sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());

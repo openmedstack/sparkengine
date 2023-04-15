@@ -7,11 +7,9 @@ using DotAuth.Client;
 using DotAuth.Shared;
 using DotAuth.Shared.Responses;
 using Microsoft.IdentityModel.Logging;
-using OpenMedStack.FhirServer.Events;
 using Xunit.Abstractions;
 using Autofac;
 using Autofac.MassTransit;
-using Handlers;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
 using Support;
@@ -46,7 +44,6 @@ public partial class FeatureSteps
         _map = new TestResourceMap(new HashSet<KeyValuePair<string, string>>
             { KeyValuePair.Create("abc", "123") });
         _chassis = Chassis.From(_configuration)
-            .DefinedIn(typeof(ResourceCreatedEventHandler).Assembly)
             .AddAutofacModules((c, _) => new TestFhirModule<FhirServerConfiguration>(c, _map))
             .UsingInMemoryMassTransit()
             .UsingTestWebServer(new TestServerStartup(_configuration, _outputHelper));
@@ -67,11 +64,7 @@ public partial class FeatureSteps
             ClientId = "test",
             ConnectionString = "",
             TenantPrefix = "test",
-            TopicMap = new Dictionary<string, string>
-            {
-                { nameof(ResourceCreatedEvent), nameof(ResourceCreatedEvent) },
-                { nameof(FhirEntryEvent), nameof(FhirEntryEvent) }
-            },
+            TopicMap = null,
             Name = typeof(UmaFhirController).Assembly.GetName().Name!,
             RetryCount = 5,
             QueueName = "test",
