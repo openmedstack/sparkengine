@@ -2,7 +2,6 @@
 
 namespace OpenMedStack.FhirServer;
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -14,14 +13,10 @@ using DotAuth.Shared.Models;
 using DotAuth.Shared.Requests;
 using DotAuth.Uma;
 using DotAuth.Uma.Web;
-using Events;
 using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using OpenMedStack.Events;
 using SparkEngine.Core;
-using SparkEngine.Extensions;
 using SparkEngine.Interfaces;
 using SparkEngine.Web.Controllers;
 
@@ -31,23 +26,17 @@ public class UmaFhirController : FhirController
     private readonly IAccessTokenCache _tokenCache;
     private readonly IUmaResourceSetClient _resourceSetClient;
     private readonly IResourceMap _resourceMap;
-    private readonly IPublishEvents _eventPublisher;
-    private readonly ILogger<UmaFhirController> _logger;
 
     public UmaFhirController(
         IFhirService fhirService,
         IAccessTokenCache tokenCache,
         IUmaResourceSetClient resourceSetClient,
-        IResourceMap resourceMap,
-        IPublishEvents eventPublisher,
-        ILogger<UmaFhirController> logger)
+        IResourceMap resourceMap)
         : base(fhirService)
     {
         _tokenCache = tokenCache;
         _resourceSetClient = resourceSetClient;
         _resourceMap = resourceMap;
-        _eventPublisher = eventPublisher;
-        _logger = logger;
     }
 
     [AllowAnonymous]
@@ -66,27 +55,9 @@ public class UmaFhirController : FhirController
 
     // [UmaFilter("{0}", new[] { "type" }, allowedScope: "create")]
     [OwnResourceFilter]
-    public override async Task<FhirResponse?> Create(string type, Resource resource,
-        CancellationToken cancellationToken)
+    public override Task<FhirResponse?> Create(string type, Resource resource, CancellationToken cancellationToken)
     {
-        var response = await base.Create(type, resource, cancellationToken).ConfigureAwait(false);
-
-        var token = Request.Headers.Authorization;
-        if (response?.StatusCode != HttpStatusCode.Created || token.Count <= 0)
-        {
-            return response;
-        }
-
-        var key = resource.ExtractKey().ToStorageKey();
-        _logger.LogInformation("Registering resource {resourceId}", key);
-        var cmd = new ResourceCreatedEvent(
-            "fhir",
-            token[0]!,
-            key,
-            DateTimeOffset.UtcNow);
-        await _eventPublisher.Publish(cmd, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        return response;
+        return base.Create(type, resource, cancellationToken);
     }
 
     [AllowAnonymous]

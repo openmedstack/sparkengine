@@ -1,5 +1,4 @@
 using DotAuth.Uma;
-using OpenMedStack.FhirServer.Handlers;
 
 namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
