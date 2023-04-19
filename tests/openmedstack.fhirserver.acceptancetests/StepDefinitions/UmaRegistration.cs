@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Net;
 using Hl7.Fhir.Model;
+using OpenMedStack.SparkEngine.Extensions;
 using Task = System.Threading.Tasks.Task;
 
 namespace OpenMedStack.FhirServer.AcceptanceTests.StepDefinitions;
@@ -39,11 +41,24 @@ public partial class FeatureSteps
         _patient = response;
     }
 
+    [When(@"the user registers it as a resource set")]
+    public async Task WhenTheUserRegistersItAsAResourceSet()
+    {
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri("http://localhost/register"),
+            Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["key"] = _patient.ExtractKey().ToStorageKey()  })
+        };
+        var response = await _httpClient.SendAsync(request, _tokenSource.Token).ConfigureAwait(false);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     [Then(@"the resource is registered as a UMA resource")]
     // ReSharper disable once InconsistentNaming
     public async Task ThenTheResourceIsRegisteredAsAUMAResource()
     {
-        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 1));
+        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 0.3));
         Assert.Equal(1, _map.MappedResourcesCount);
     }
 }

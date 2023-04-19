@@ -119,7 +119,8 @@ public class UmaFhirController : FhirController
 
 internal class OwnResourceFilter : ActionFilterAttribute
 {
-    public override System.Threading.Tasks.Task OnActionExecutionAsync(ActionExecutingContext context,
+    public override System.Threading.Tasks.Task OnActionExecutionAsync(
+        ActionExecutingContext context,
         ActionExecutionDelegate next)
     {
         if (!context.ActionArguments.TryGetValue("resource", out var resource))

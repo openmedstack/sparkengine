@@ -12,13 +12,12 @@ using global::Autofac;
 using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
-internal class TestFhirModule<T> : Module
-where T: DeploymentConfiguration
+internal class TestFhirModule : Module
 {
-    private readonly T _configuration;
+    private readonly FhirServerConfiguration _configuration;
     private readonly TestResourceMap _map;
 
-    public TestFhirModule(T configuration, TestResourceMap map)
+    public TestFhirModule(FhirServerConfiguration configuration, TestResourceMap map)
     {
         _configuration = configuration;
         _map = map;
@@ -42,12 +41,17 @@ where T: DeploymentConfiguration
         builder.RegisterType<TestAccessTokenCache>().AsImplementedInterfaces().InstancePerDependency();
         builder.RegisterType<TestUmaResourceSetClient>().AsImplementedInterfaces().InstancePerDependency();
         builder.RegisterType<TestUmaPermissionsClient>().AsImplementedInterfaces().InstancePerDependency();
+
+        builder.RegisterInstance(new ApplicationNameProvider(_configuration)).AsImplementedInterfaces()
+            .SingleInstance();
     }
 }
 
-internal class TestUmaPermissionsClient:IUmaPermissionClient
+internal class TestUmaPermissionsClient : IUmaPermissionClient
 {
-    public async Task<Option<TicketResponse>> RequestPermission(string token, CancellationToken cancellationToken = new CancellationToken(),
+    public async Task<Option<TicketResponse>> RequestPermission(
+        string token,
+        CancellationToken cancellationToken = new CancellationToken(),
         params PermissionRequest[] requests)
     {
         throw new NotImplementedException();
@@ -63,52 +67,68 @@ internal class TestUmaPermissionsClient:IUmaPermissionClient
 
 internal class TestUmaResourceSetClient : IUmaResourceSetClient
 {
-    public async Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(ResourceSet request, string token,
+    public async Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
+        ResourceSet request,
+        string token,
         CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 
-    public Task<Option<AddResourceSetResponse>> AddResourceSet(ResourceSet request, string token, CancellationToken cancellationToken = new CancellationToken())
+    public Task<Option<AddResourceSetResponse>> AddResourceSet(
+        ResourceSet request,
+        string token,
+        CancellationToken cancellationToken = new CancellationToken())
     {
-        var response = new AddResourceSetResponse { Id  = Guid.NewGuid().ToString(), UserAccessPolicyUri = "http://localhost" };
+        var response = new AddResourceSetResponse
+            { Id = Guid.NewGuid().ToString(), UserAccessPolicyUri = "http://localhost" };
         return Task.FromResult<Option<AddResourceSetResponse>>(new Option<AddResourceSetResponse>.Result(response));
     }
 
-    public async Task<Option> DeleteResource(string resourceSetId, string token, CancellationToken cancellationToken = new CancellationToken())
+    public async Task<Option> DeleteResource(
+        string resourceSetId,
+        string token,
+        CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Option<string[]>> GetAllOwnResourceSets(string token, CancellationToken cancellationToken = new CancellationToken())
+    public async Task<Option<string[]>> GetAllOwnResourceSets(
+        string token,
+        CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Option<ResourceSet>> GetResourceSet(string resourceSetId, string token, CancellationToken cancellationToken = new CancellationToken())
+    public async Task<Option<ResourceSet>> GetResourceSet(
+        string resourceSetId,
+        string token,
+        CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Option<PagedResult<ResourceSetDescription>>> SearchResources(SearchResourceSet parameter, string? token = null,
+    public async Task<Option<PagedResult<ResourceSetDescription>>> SearchResources(
+        SearchResourceSet parameter,
+        string? token = null,
         CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 }
 
- internal class TestAccessTokenCache : IAccessTokenCache
- {
-     private readonly ITokenClient _tokenClient;
+internal class TestAccessTokenCache : IAccessTokenCache
+{
+    private readonly ITokenClient _tokenClient;
 
-     public TestAccessTokenCache(ITokenClient tokenClient)
-     {
-         _tokenClient = tokenClient;
-     }
+    public TestAccessTokenCache(ITokenClient tokenClient)
+    {
+        _tokenClient = tokenClient;
+    }
 
-     public async ValueTask<GrantedTokenResponse?> GetAccessToken(params string[] scopes)
-     {
-         var token = await _tokenClient.GetToken(TokenRequest.FromScopes(scopes)) as Option<GrantedTokenResponse>.Result;
-         return token!.Item;
-     }
- }
+    public async ValueTask<GrantedTokenResponse?> GetAccessToken(params string[] scopes)
+    {
+        var token = await _tokenClient.GetToken(TokenRequest.FromScopes(scopes)) as Option<GrantedTokenResponse>.Result;
+        return token!.Item;
+    }
+}

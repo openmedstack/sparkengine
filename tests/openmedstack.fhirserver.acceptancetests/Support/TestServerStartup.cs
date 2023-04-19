@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
@@ -60,7 +59,7 @@ internal class TestServerStartup : IConfigureWebApplication
                     options.SecurityTokenValidators.Add(new TestSecurityTokenValidator());
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        IssuerSigningKeyValidator = (s, k, p) => true,
+                        IssuerSigningKeyValidator = (_, _, _) => true,
                         ValidateAudience = false,
                         ValidateIssuer = false,
                         ValidateIssuerSigningKey = false,

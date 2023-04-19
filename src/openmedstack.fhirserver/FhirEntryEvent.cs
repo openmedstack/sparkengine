@@ -2,7 +2,6 @@
 
 using System;
 using Events;
-using OpenMedStack.Events;
 using SparkEngine.Core;
 
 public record FhirEntryEvent : BaseEvent

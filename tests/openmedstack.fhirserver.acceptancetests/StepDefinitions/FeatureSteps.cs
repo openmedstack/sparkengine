@@ -15,11 +15,6 @@ using Hl7.Fhir.Rest;
 using Support;
 using Web.Testing;
 
-public sealed class SharedContext
-{
-    public Func<HttpMessageHandler> CreateHandler { get; set; } = null!;
-}
-
 [Binding]
 public partial class FeatureSteps
 {
@@ -30,6 +25,7 @@ public partial class FeatureSteps
     private FhirClient _fhirClient = null!;
     private FhirServerConfiguration _configuration = null!;
     private TestResourceMap _map = null!;
+    private HttpClient _httpClient = null!;
 
     public FeatureSteps(ITestOutputHelper outputHelper)
     {
@@ -44,7 +40,7 @@ public partial class FeatureSteps
         _map = new TestResourceMap(new HashSet<KeyValuePair<string, string>>
             { KeyValuePair.Create("abc", "123") });
         _chassis = Chassis.From(_configuration)
-            .AddAutofacModules((c, _) => new TestFhirModule<FhirServerConfiguration>(c, _map))
+            .AddAutofacModules((c, _) => new TestFhirModule(c, _map))
             .UsingInMemoryMassTransit()
             .UsingTestWebServer(new TestServerStartup(_configuration, _outputHelper));
     }
@@ -101,13 +97,13 @@ public partial class FeatureSteps
                 Option<GrantedTokenResponse>.Result;
         var token = option!.Item;
 
-        var httpClient = _chassis.CreateClient();
-        httpClient.Timeout = TimeSpan.FromMinutes(3);
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        _httpClient = _chassis.CreateClient();
+        _httpClient.Timeout = TimeSpan.FromMinutes(3);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
         _fhirClient = new FhirClient(
             new Uri(_configuration.FhirRoot),
-            httpClient,
+            _httpClient,
             new FhirClientSettings { VerifyFhirVersion = false });
     }
 }

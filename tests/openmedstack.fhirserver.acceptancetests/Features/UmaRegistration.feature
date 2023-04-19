@@ -7,4 +7,5 @@ Background: Normal running server
 Scenario: Register new FHIR resource as UMA resource
 	Given a FHIR resource
 	When the resource is created
+	And the user registers it as a resource set
 	Then the resource is registered as a UMA resource
