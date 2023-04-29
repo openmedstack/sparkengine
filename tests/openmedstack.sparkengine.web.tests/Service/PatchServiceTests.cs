@@ -118,7 +118,7 @@ public class PatchServiceTests
 
         resource = (MedicationRequest)_patchService.Apply(resource, parameters);
 
-        Assert.Equal(1m, resource.Dose.DosageInstruction[0].MaxDosePerLifetime.Value);
+        Assert.Equal(1m, resource.DosageInstruction[0].MaxDosePerLifetime.Value);
     }
 
     [Fact]

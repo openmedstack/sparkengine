@@ -38,7 +38,10 @@ public abstract class FhirController : ControllerBase
         FhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
 
     [HttpGet("{type}/{id}")]
-    public virtual async Task<ActionResult<FhirResponse>> Read(string type, string id, CancellationToken cancellationToken)
+    public virtual async Task<ActionResult<FhirResponse>> Read(
+        string type,
+        string id,
+        CancellationToken cancellationToken)
     {
         var ifModifiedSince = Request.Headers[HeaderNames.IfModifiedSince]
             .Aggregate(
@@ -59,7 +62,11 @@ public abstract class FhirController : ControllerBase
     }
 
     [HttpPut("{type}/{id?}")]
-    public virtual async Task<FhirResponse?> Update(string type, Resource resource, string? id = null, CancellationToken cancellationToken = default)
+    public virtual async Task<FhirResponse?> Update(
+        string type,
+        Resource resource,
+        string? id = null,
+        CancellationToken cancellationToken = default)
     {
         var versionId = Request.GetTypedHeaders().IfMatch.FirstOrDefault()?.Tag.Buffer;
         var key = Key.Create(type, id, versionId);
@@ -82,7 +89,10 @@ public abstract class FhirController : ControllerBase
     }
 
     [HttpPost("{type}")]
-    public virtual async Task<FhirResponse?> Create(string type, [FromBody] Resource resource, CancellationToken cancellationToken)
+    public virtual async Task<FhirResponse?> Create(
+        string type,
+        [FromBody] Resource resource,
+        CancellationToken cancellationToken)
     {
         resource.Id = Guid.NewGuid().ToString("N");
         var key = Key.Create(type, resource.Id);
@@ -93,7 +103,9 @@ public abstract class FhirController : ControllerBase
             var searchValues = searchQueryString.Keys.Cast<string>()
                 .Select(k => new Tuple<string, string?>(k, searchQueryString[k]));
 
-            return await FhirService.ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues), cancellationToken).ConfigureAwait(false);
+            return await FhirService
+                .ConditionalCreate(key, resource, SearchParams.FromUriParamList(searchValues), cancellationToken)
+                .ConfigureAwait(false);
         }
 
         var response = await FhirService.Create(key, resource, cancellationToken).ConfigureAwait(false);
@@ -125,7 +137,11 @@ public abstract class FhirController : ControllerBase
     // ============= Validate
 
     [HttpPost("{type}/{id}/$validate")]
-    public virtual Task<FhirResponse> Validate(string type, string id, Resource resource, CancellationToken cancellationToken)
+    public virtual Task<FhirResponse> Validate(
+        string type,
+        string id,
+        Resource resource,
+        CancellationToken cancellationToken)
     {
         var key = Key.Create(type, id);
         return FhirService.ValidateOperation(key, resource, cancellationToken);
@@ -145,14 +161,17 @@ public abstract class FhirController : ControllerBase
     {
         var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
         var searchparams = Request.GetSearchParams();
-        var pagesize = Request.GetParameter(FhirParameter.COUNT)?.ParseIntParameter() ?? 100;//Const.DEFAULT_PAGE_SIZE;
+        var pagesize = Request.GetParameter(FhirParameter.COUNT)?.ParseIntParameter() ?? 100; //Const.DEFAULT_PAGE_SIZE;
         var sortby = Request.GetParameter(FhirParameter.SORT);
-        searchparams = searchparams.LimitTo(pagesize).OrderBy(sortby);
+        searchparams = searchparams.LimitTo(pagesize).OrderBy(sortby ?? "");
         return FhirService.Search(type, searchparams, start, cancellationToken);
     }
 
     [HttpPost("{type}/_search")]
-    public virtual Task<FhirResponse> SearchWithOperator(string type, [FromForm(Name = FhirParameter.SNAPSHOT_INDEX)] int? start, CancellationToken cancellationToken)
+    public virtual Task<FhirResponse> SearchWithOperator(
+        string type,
+        [FromForm(Name = FhirParameter.SNAPSHOT_INDEX)] int? start,
+        CancellationToken cancellationToken)
     {
         // TODO: start index should be retrieved from the body.
         //var startIndex = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
@@ -180,7 +199,8 @@ public abstract class FhirController : ControllerBase
 
     [HttpPost]
     [Route("")]
-    public virtual Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken) => FhirService.Transaction(bundle, cancellationToken);
+    public virtual Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken) =>
+        FhirService.Transaction(bundle, cancellationToken);
 
     //[HttpPost, Route("Mailbox")]
     //public FhirResponse Mailbox(Bundle document)
@@ -202,7 +222,7 @@ public abstract class FhirController : ControllerBase
     public virtual Task<FhirResponse> Snapshot(CancellationToken cancellationToken)
     {
         var snapshot = Request.GetParameter(FhirParameter.SNAPSHOT_ID)
-                       ?? throw new ArgumentException("Missing snapshot id");
+         ?? throw new ArgumentException("Missing snapshot id");
         var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
         return FhirService.GetPage(snapshot, start, cancellationToken);
     }

@@ -14,7 +14,7 @@ using Model;
 public class FhirModel : IFhirModel
 {
     private readonly List<SearchParameter> _searchParameters;
-    
+
     public FhirModel()
         : this(ModelInfo.SearchParameters)
     {
@@ -87,16 +87,19 @@ public class FhirModel : IFhirModel
             Name = def.Name,
             Code =
                 def.Name, //CK: SearchParamDefinition has no Code, but in all current SearchParameter resources, name and code are equal.
-            Base = new List<AllResourceTypes?> { GetAllResourceTypesValueForResourceName(def.Resource!) },
+            Base = new List<VersionIndependentResourceTypesAll?>
+                { GetAllResourceTypesValueForResourceName(def.Resource!) },
             Type = def.Type,
-            Target = def.Target != null ? def.Target.ToList().Cast<ResourceType?>() : new List<ResourceType?>(),
+            Target = def.Target != null
+                ? def.Target.ToList().Cast<VersionIndependentResourceTypesAll?>()
+                : new List<VersionIndependentResourceTypesAll?>(),
             Description = def.Description
         };
-        // NOTE: This is a fix to handle an issue in firely-net-sdk 
-        // where the expression 'ConceptMap.source as uri' returns 
+        // NOTE: This is a fix to handle an issue in firely-net-sdk
+        // where the expression 'ConceptMap.source as uri' returns
         // a string instead of uri.
-        // FIXME: On a longer term we should refactor the 
-        // SearchParameter in-memory cache so we can more elegantly 
+        // FIXME: On a longer term we should refactor the
+        // SearchParameter in-memory cache so we can more elegantly
         // swap out a SearchParameter
         if (def.Resource == ResourceType.ConceptMap.GetLiteral())
         {
@@ -127,10 +130,10 @@ public class FhirModel : IFhirModel
         public bool Equals(ComparableSearchParameter? other)
         {
             return string.Equals(Name, other?.Name)
-                   && string.Equals(Code, other?.Code)
-                   && object.Equals(Base, other?.Base)
-                   && object.Equals(Type, other.Type)
-                   && string.Equals(Description, other.Description);
+             && string.Equals(Code, other?.Code)
+             && object.Equals(Base, other?.Base)
+             && object.Equals(Type, other.Type)
+             && string.Equals(Description, other.Description);
             //&& string.Equals(Xpath, other.Xpath);
         }
 
@@ -175,7 +178,6 @@ public class FhirModel : IFhirModel
     public string? GetResourceNameForType(Type type)
     {
         return GetFhirTypeNameForType(type);
-
     }
 
     public Type? GetTypeForResourceName(string name)
@@ -183,9 +185,9 @@ public class FhirModel : IFhirModel
         return GetTypeForFhirType(name);
     }
 
-    public AllResourceTypes GetAllResourceTypesValueForResourceName(string name)
+    public VersionIndependentResourceTypesAll GetAllResourceTypesValueForResourceName(string name)
     {
-        return (AllResourceTypes)Enum.Parse(typeof(AllResourceTypes), name, true);
+        return (VersionIndependentResourceTypesAll)Enum.Parse(typeof(VersionIndependentResourceTypesAll), name, true);
     }
 
     public static ResourceType GetResourceTypeForResourceName(string name)
@@ -211,7 +213,7 @@ public class FhirModel : IFhirModel
             ? Enumerable.Empty<SearchParameter>()
             : SearchParameters.Where(
                 sp => sp.Base.Contains(GetAllResourceTypesValueForResourceName(resourceName))
-                      || sp.Base.Any(b => b == AllResourceTypes.Resource));
+                 || sp.Base.Any(b => b == VersionIndependentResourceTypesAll.Resource));
     }
 
     public IEnumerable<SearchParameter> FindSearchParameters(ResourceType resourceType)
@@ -266,7 +268,7 @@ public class FhirModel : IFhirModel
                 "CarePlan.performer"
                 //,"CareTeam.patient"
                 //,"CareTeam.participant"
-                ,
+               ,
                 "Claim.patientidentifier",
                 "Claim.patientreference",
                 "ClinicalImpression.patient",
@@ -298,7 +300,7 @@ public class FhirModel : IFhirModel
                 "Goal.patient",
                 "Group.member"
                 //,"ImagingExcerpt.patient"
-                ,
+               ,
                 "ImagingObjectSelection.patient",
                 "ImagingObjectSelection.author",
                 "ImagingStudy.patient",
@@ -307,7 +309,7 @@ public class FhirModel : IFhirModel
                 "List.subject",
                 "List.source"
                 //,"MeasureReport.patient"
-                ,
+               ,
                 "Media.subject",
                 "MedicationAdministration.patient",
                 "MedicationDispense.patient",

@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.SparkEngine.Disk;
+﻿using Hl7.Fhir.Serialization;
+
+namespace OpenMedStack.SparkEngine.Disk;
 
 using Core;
 using Hl7.Fhir.Model;
