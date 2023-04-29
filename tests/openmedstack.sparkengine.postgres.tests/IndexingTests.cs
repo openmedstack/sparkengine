@@ -30,6 +30,7 @@ public class IndexingTests
         Assert.NotNull(indexEntry);
     }
 
+
     public static IEnumerable<object[]> GetTestResources()
     {
         var deserializer = new FhirJsonPocoDeserializer();

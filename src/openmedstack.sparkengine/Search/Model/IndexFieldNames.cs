@@ -17,6 +17,7 @@ public static class IndexFieldNames
         SELFLINK = "internal_selflink",
         CONTAINER = "internal_container",
         RESOURCE = "internal_resource",
+        FOR_RESOURCE = "internal_forResource",
         LEVEL = "internal_level",
         TAG = "internal_tag",
         TAGSCHEME = "scheme",

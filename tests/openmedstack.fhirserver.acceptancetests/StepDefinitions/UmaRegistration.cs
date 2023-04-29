@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Net;
+using DotAuth.Shared.Responses;
 using Hl7.Fhir.Model;
+using Newtonsoft.Json;
 using OpenMedStack.SparkEngine.Extensions;
 using Task = System.Threading.Tasks.Task;
 
@@ -48,7 +50,7 @@ public partial class FeatureSteps
         {
             Method = HttpMethod.Post,
             RequestUri = new Uri("http://localhost/register"),
-            Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["key"] = _patient.ExtractKey().ToStorageKey()  })
+            Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["key"] = _patient.GetKey()  })
         };
         var response = await _httpClient.SendAsync(request, _tokenSource.Token).ConfigureAwait(false);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -60,5 +62,15 @@ public partial class FeatureSteps
     {
         await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 0.3));
         Assert.Equal(1, _map.MappedResourcesCount);
+    }
+}
+
+internal static class ResourceExtensions
+{
+    public static string GetKey(this Resource resource)
+    {
+        return resource.HasVersionId
+            ? $"{resource.TypeName}/{resource.Id}/_history/{resource.VersionId}"
+            : $"{resource.TypeName}/{resource.Id}";
     }
 }

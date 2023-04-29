@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.SparkEngine.Postgres;
+﻿using OpenMedStack.SparkEngine.Search.Model;
+
+namespace OpenMedStack.SparkEngine.Postgres;
 
 using System;
 using System.Linq;
@@ -12,9 +14,9 @@ internal static class IndexEntryBuilder
         var values = indexValue.IndexValues()
             .Where(x => x.Name != null)
             .ToDictionary(x => x.Name!, x => x.Values.Select(GetValue).Distinct().ToArray());
-        var id = values["internal_forResource"][0].ToString()!;
-        var resourceType = values["internal_resource"][0].ToString()!;
-        var canonicalId = values["internal_id"][0].ToString()!;
+        var id = values[IndexFieldNames.FOR_RESOURCE][0].ToString()!;
+        var resourceType = values[IndexFieldNames.RESOURCE][0].ToString()!;
+        var canonicalId = values[IndexFieldNames.ID][0].ToString()!;
         var toRemove = values.Keys
             .Where(x => x[0] == '_' || x.StartsWith("internal_", StringComparison.OrdinalIgnoreCase))
             .ToArray();

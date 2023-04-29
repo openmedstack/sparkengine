@@ -10,8 +10,6 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using SparkEngine;
-using SparkEngine.Postgres;
-using SparkEngine.S3;
 using SparkEngine.Web;
 using Web.Autofac;
 
@@ -26,9 +24,32 @@ internal class ServerStartup : IConfigureWebApplication
 
     public void ConfigureServices(IServiceCollection services)
     {
+        var jsonSerializerSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+            NullValueHandling = NullValueHandling.Include,
+            DefaultValueHandling = DefaultValueHandling.Include,
+            TypeNameHandling = TypeNameHandling.Auto,
+            Formatting = Formatting.None,
+            DateParseHandling = DateParseHandling.DateTimeOffset
+        };
         services.AddHttpClient()
             .AddCors()
-            .AddControllers();
+            .AddControllers()
+            .AddNewtonsoftJson(o =>
+            {
+                o.SerializerSettings.ContractResolver = jsonSerializerSettings.ContractResolver;
+                o.SerializerSettings.DateFormatHandling = jsonSerializerSettings.DateFormatHandling;
+                o.SerializerSettings.DateTimeZoneHandling = jsonSerializerSettings.DateTimeZoneHandling;
+                o.SerializerSettings.NullValueHandling = jsonSerializerSettings.NullValueHandling;
+                o.SerializerSettings.DefaultValueHandling = jsonSerializerSettings.DefaultValueHandling;
+                o.SerializerSettings.TypeNameHandling = jsonSerializerSettings.TypeNameHandling;
+                o.SerializerSettings.Formatting = jsonSerializerSettings.Formatting;
+                o.SerializerSettings.DateParseHandling = jsonSerializerSettings.DateParseHandling;
+            });
+        services.AddSingleton(jsonSerializerSettings);
         services.AddFhir<UmaFhirController>(
             new SparkSettings
             {
@@ -38,26 +59,16 @@ internal class ServerStartup : IConfigureWebApplication
                 ParserSettings = ParserSettings.CreateDefault(),
                 SerializerSettings = SerializerSettings.CreateDefault()
             });
-        services.AddSingleton(new JsonSerializerSettings
-                              {
-                                  ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                                  DateFormatHandling = DateFormatHandling.IsoDateFormat,
-                                  DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
-                                  NullValueHandling = NullValueHandling.Include,
-                                  DefaultValueHandling = DefaultValueHandling.Include,
-                                  TypeNameHandling = TypeNameHandling.Auto,
-                                  Formatting = Formatting.None,
-                                  DateParseHandling = DateParseHandling.DateTimeOffset
-                              });
-        services.AddPostgresFhirStore(new StoreSettings(_configuration.ConnectionString))
-            .AddS3Persistence(new S3PersistenceConfiguration(
-                _configuration.AccessKey,
-                _configuration.AccessSecret,
-                _configuration.Bucket,
-                _configuration.StorageServiceUrl,
-                true,
-                true,
-                _configuration.CompressStorage))
+            services.AddInMemoryFhirStores()
+//        services.AddPostgresFhirStore(new StoreSettings(_configuration.ConnectionString))
+//            .AddS3Persistence(new S3PersistenceConfiguration(
+//                _configuration.AccessKey,
+//                _configuration.AccessSecret,
+//                _configuration.Bucket,
+//                _configuration.StorageServiceUrl,
+//                true,
+//                true,
+//                _configuration.CompressStorage))
             .AddAuthentication(
                 options =>
                 {

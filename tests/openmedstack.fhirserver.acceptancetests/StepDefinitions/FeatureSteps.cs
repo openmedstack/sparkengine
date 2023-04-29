@@ -23,9 +23,11 @@ public partial class FeatureSteps
     private TestChassis<FhirServerConfiguration> _chassis = null!;
     private Patient _patient = null!;
     private FhirClient _fhirClient = null!;
+    private FhirClient _umaFhirClient = null!;
     private FhirServerConfiguration _configuration = null!;
     private TestResourceMap _map = null!;
     private HttpClient _httpClient = null!;
+    private TestTokenClient _tokenClient = null!;
 
     public FeatureSteps(ITestOutputHelper outputHelper)
     {
@@ -38,7 +40,7 @@ public partial class FeatureSteps
         IdentityModelEventSource.ShowPII = true;
         _configuration = CreateConfiguration();
         _map = new TestResourceMap(new HashSet<KeyValuePair<string, string>>
-            { KeyValuePair.Create("abc", "123") });
+            { KeyValuePair.Create("Patient/abc", "123") });
         _chassis = Chassis.From(_configuration)
             .AddAutofacModules((c, _) => new TestFhirModule(c, _map))
             .UsingInMemoryMassTransit()
@@ -70,7 +72,8 @@ public partial class FeatureSteps
             AccessKey = "",
             AccessSecret = "",
             StorageServiceUrl = new Uri("loopback://localhost"),
-            FhirRoot = "http://localhost/uma",
+            FhirRoot = "http://localhost/fhir",
+            UmaRoot = "http://localhost/uma",
             CompressStorage = false,
             Bucket = "", Timeout = TimeSpan.FromMinutes(5),
             Environment = "test",
@@ -88,12 +91,17 @@ public partial class FeatureSteps
         _chassis.Start();
     }
 
+    [Given(@"a token provider")]
+    public void GivenATokenProvider()
+    {
+        _tokenClient = new TestTokenClient(_configuration);
+    }
+
     [Given(@"a FHIR client")]
     public async System.Threading.Tasks.Task GivenAFHIRClient()
     {
-        var tokenClient = new TestTokenClient(_configuration);
         var option =
-            await tokenClient.GetToken(TokenRequest.FromScopes("write", "create")).ConfigureAwait(false) as
+            await _tokenClient.GetToken(TokenRequest.FromScopes("write", "create")).ConfigureAwait(false) as
                 Option<GrantedTokenResponse>.Result;
         var token = option!.Item;
 
@@ -105,5 +113,15 @@ public partial class FeatureSteps
             new Uri(_configuration.FhirRoot),
             _httpClient,
             new FhirClientSettings { VerifyFhirVersion = false });
+    }
+
+    [Given(@"a UMA FHIR client")]
+    public void GivenAumafhirClient()
+    {
+        var client = _chassis.CreateClient();
+        _umaFhirClient = new UmaFhirClient(
+            new Uri(_configuration.UmaRoot),
+            client,
+            new FhirClientSettings { VerifyFhirVersion = false, PreferredFormat = ResourceFormat.Json });
     }
 }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using OpenMedStack;
 using OpenMedStack.Autofac;
@@ -24,6 +26,7 @@ FhirServerConfiguration CreateConfiguration()
 {
     var authority = Environment.GetEnvironmentVariable("OAUTH__AUTHORITY");
     var fhirRoot = Environment.GetEnvironmentVariable("FHIR__ROOT");
+    var umaRoot = Environment.GetEnvironmentVariable("UMA__ROOT");
     var clientId = Environment.GetEnvironmentVariable("OAUTH__CLIENTID");
     var clientSecret = Environment.GetEnvironmentVariable("OAUTH__CLIENTSECRET");
     var accessKey = Environment.GetEnvironmentVariable("STORAGE__ACCESSKEY");
@@ -56,6 +59,7 @@ FhirServerConfiguration CreateConfiguration()
         serviceBusQueue);
     return new FhirServerConfiguration
     {
+        TenantPrefix = "fhir",
         Environment = "Production",
         QueueName = serviceBusQueue!,
         ServiceBus = new Uri(serviceBusHost!),
@@ -75,14 +79,17 @@ FhirServerConfiguration CreateConfiguration()
         Bucket = storageBucket!,
         CompressStorage = bool.TryParse(storageCompress, out var compress) && compress,
         FhirRoot = fhirRoot!,
+        UmaRoot = umaRoot!,
         ConnectionString = connectionString!,
-        Urls = serviceUrls!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        Urls = serviceUrls!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+        Services = new Dictionary<Regex, Uri>()
     };
 }
 
 var chassis = Chassis.From(configuration)
     .AddAutofacModules((c, _) => new FhirModule(c))
     .UsingMassTransitOverRabbitMq()
+//    .UsingInMemoryMassTransit()
     .BindToUrls(configuration.Urls)
     .UsingWebServer(c => new ServerStartup(c));
 Console.CancelKeyPress += OnCancelKey;

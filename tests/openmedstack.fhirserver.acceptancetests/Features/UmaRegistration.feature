@@ -2,6 +2,7 @@ Feature: Registration of created FHIR resources as UMA resources
 
 Background: Normal running server
 	Given a running server setup
+	And a token provider
 	And a FHIR client
 
 Scenario: Register new FHIR resource as UMA resource

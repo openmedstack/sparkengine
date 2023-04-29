@@ -6,13 +6,11 @@ using DotAuth.Client;
 using DotAuth.Shared;
 using DotAuth.Shared.Models;
 using DotAuth.Shared.Responses;
-using DotAuth.Uma;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
-using OpenMedStack.SparkEngine.Interfaces;
 
 namespace OpenMedStack.FhirServer;
 
@@ -43,25 +41,26 @@ public class RegisterController : ControllerBase
         var k = Key.ParseOperationPath(key);
         var id = k.ToStorageKey();
         var token = Request.Headers.Authorization[0];
+        token = token!.Replace("Bearer ", "");
         const string fhirResource = "FHIR Resource";
-        var option = await _resourceSetClient.AddResourceSet(new ResourceSet
+        var resourceSet = new ResourceSet
+        {
+            AuthorizationPolicies = new[]
             {
-                AuthorizationPolicies = new[]
+                new PolicyRule
                 {
-                    new PolicyRule
-                    {
-                        ClientIdsAllowed = new[] { _applicationNameProvider.ClientId },
-                        OpenIdProvider = _applicationNameProvider.Authority,
-                        Scopes = new[] { "read" },
-                        IsResourceOwnerConsentNeeded = true
-                    }
-                },
-                Description = fhirResource,
-                Type = k.TypeName ?? fhirResource,
-                Name = id,
-                Scopes = new[] { "read" }
-            }, token!,
-            cancellationToken);
+                    ClientIdsAllowed = new[] { _applicationNameProvider.ClientId },
+                    OpenIdProvider = _applicationNameProvider.Authority,
+                    Scopes = new[] { "read" },
+                    IsResourceOwnerConsentNeeded = true
+                }
+            },
+            Description = fhirResource,
+            Type = k.TypeName ?? fhirResource,
+            Name = id,
+            Scopes = new[] { "read" }
+        };
+        var option = await _resourceSetClient.AddResourceSet(resourceSet, token, cancellationToken);
         switch (option)
         {
             case Option<AddResourceSetResponse>.Result result:

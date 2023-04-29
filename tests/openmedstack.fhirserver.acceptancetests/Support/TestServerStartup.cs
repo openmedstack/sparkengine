@@ -65,6 +65,11 @@ internal class TestServerStartup : IConfigureWebApplication
                         ValidateIssuerSigningKey = false,
                         ValidIssuers = new[] { _configuration.TokenService }
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnForbidden = ctx => Task.CompletedTask,
+                        OnAuthenticationFailed = ctx => Task.CompletedTask,
+                    };
                 });
     }
 

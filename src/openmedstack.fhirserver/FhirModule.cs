@@ -20,6 +20,8 @@ internal class FhirModule : Module
     /// <inheritdoc />
     protected override void Load(ContainerBuilder builder)
     {
+        builder.RegisterInstance(_configuration).AsSelf().As<DeploymentConfiguration>()
+            .IfNotRegistered(typeof(DeploymentConfiguration));
         builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
         builder.RegisterType<GuidGenerator>().As<IGenerator>().SingleInstance();
         builder.RegisterType<PatchService>().As<IPatchService>().SingleInstance();
@@ -27,27 +29,21 @@ internal class FhirModule : Module
             .As<IResourceMap>()
             .As<IResourceMapper>()
             .InstancePerDependency();
+        builder.Register<Func<HttpClient>>(ctx =>
+        {
+            var factory = ctx.Resolve<IHttpClientFactory>();
+            return factory.CreateClient;
+        }).As<Func<HttpClient>>().InstancePerLifetimeScope();
         builder.Register(
-                ctx =>
-                {
-                    return new UmaClient(
-                        () =>
-                        {
-                            var factory = ctx.Resolve<IHttpClientFactory>();
-                            return factory.CreateClient();
-                        },
-                        new Uri(_configuration.TokenService));
-                })
+                ctx => new UmaClient(
+                    ctx.Resolve<Func<HttpClient>>(),
+                    new Uri(_configuration.TokenService)))
             .AsSelf()
             .AsImplementedInterfaces().InstancePerLifetimeScope();
         builder.Register(
                 sp => new TokenClient(
                     TokenCredentials.FromClientCredentials(_configuration.ClientId, _configuration.Secret),
-                    () =>
-                    {
-                        var factory = sp.Resolve<IHttpClientFactory>();
-                        return factory.CreateClient();
-                    },
+                    sp.Resolve<Func<HttpClient>>(),
                     new Uri(_configuration.TokenService)))
             .AsSelf()
             .AsImplementedInterfaces()

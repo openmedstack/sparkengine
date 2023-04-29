@@ -30,10 +30,10 @@ internal class TestFhirModule : Module
         builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
         builder.RegisterType<GuidGenerator>().As<IGenerator>().SingleInstance();
         builder.RegisterType<PatchService>().As<IPatchService>().SingleInstance();
-        builder.Register(_ => _map)
+        builder.RegisterInstance(_map)
             .As<IResourceMap>()
             .As<IResourceMapper>()
-            .InstancePerDependency();
+            .SingleInstance();
         builder.Register(_ => new TestTokenClient(_configuration))
             .AsSelf()
             .AsImplementedInterfaces()
@@ -54,20 +54,21 @@ internal class TestUmaPermissionsClient : IUmaPermissionClient
         CancellationToken cancellationToken = new CancellationToken(),
         params PermissionRequest[] requests)
     {
-        throw new NotImplementedException();
+        await Task.Yield();
+        return new TicketResponse { TicketId = "ticket" };
     }
 
-    public async Task<UmaConfiguration> GetUmaDocument(CancellationToken cancellationToken = new CancellationToken())
+    public Task<UmaConfiguration> GetUmaDocument(CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 
-    public Uri Authority { get; }
+    public Uri Authority { get; } = new Uri("https://localhost");
 }
 
 internal class TestUmaResourceSetClient : IUmaResourceSetClient
 {
-    public async Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
+    public Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
         ResourceSet request,
         string token,
         CancellationToken cancellationToken = new CancellationToken())
@@ -85,7 +86,7 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
         return Task.FromResult<Option<AddResourceSetResponse>>(new Option<AddResourceSetResponse>.Result(response));
     }
 
-    public async Task<Option> DeleteResource(
+    public Task<Option> DeleteResource(
         string resourceSetId,
         string token,
         CancellationToken cancellationToken = new CancellationToken())
@@ -93,14 +94,14 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
         throw new NotImplementedException();
     }
 
-    public async Task<Option<string[]>> GetAllOwnResourceSets(
+    public Task<Option<string[]>> GetAllOwnResourceSets(
         string token,
         CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Option<ResourceSet>> GetResourceSet(
+    public Task<Option<ResourceSet>> GetResourceSet(
         string resourceSetId,
         string token,
         CancellationToken cancellationToken = new CancellationToken())
@@ -108,7 +109,7 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
         throw new NotImplementedException();
     }
 
-    public async Task<Option<PagedResult<ResourceSetDescription>>> SearchResources(
+    public Task<Option<PagedResult<ResourceSetDescription>>> SearchResources(
         SearchResourceSet parameter,
         string? token = null,
         CancellationToken cancellationToken = new CancellationToken())

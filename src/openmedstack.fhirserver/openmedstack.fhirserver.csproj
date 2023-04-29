@@ -12,6 +12,7 @@
 		<TrimmerRootAssembly Include="openmedstack.sparkengine" />
 		<TrimmerRootAssembly Include="openmedstack.sparkengine.web" />
 		<TrimmerRootAssembly Include="Hl7.Fhir.R5" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.5" />
 		<PackageReference Include="openmedstack.domain" Version="1.7.0" />
 		<PackageReference Include="openmedstack.web.autofac" Version="1.7.0" />
 		<PackageReference Include="OpenMedStack.Autofac.MassTransit.RabbitMq" Version="1.7.0" />
