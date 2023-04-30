@@ -29,6 +29,9 @@
     <None Update="TestData\R2\patient-example.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Examples\careplan-example-f201-renal_r5.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

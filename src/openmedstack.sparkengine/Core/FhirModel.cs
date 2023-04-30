@@ -91,7 +91,8 @@ public class FhirModel : IFhirModel
                 { GetAllResourceTypesValueForResourceName(def.Resource!) },
             Type = def.Type,
             Target = def.Target != null
-                ? def.Target.ToList().Cast<VersionIndependentResourceTypesAll?>()
+                ? def.Target.Select(x => GetAllResourceTypesValueForResourceName(GetResourceNameForResourceType(x)))
+                    .Cast<VersionIndependentResourceTypesAll?>()
                 : new List<VersionIndependentResourceTypesAll?>(),
             Description = def.Description
         };

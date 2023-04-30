@@ -43,8 +43,8 @@ public class IndexServiceTests
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}patient-example.json");
         _exampleAppointmentJson = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}appointment-example2doctors.json");
-        _carePlanWithContainedGoal = File.ReadAllText(
-            $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}careplan-example-f201-renal.json");
+        _carePlanWithContainedGoal = File.ReadAllText(Path.Combine("Examples", "careplan-example-f201-renal_r5.json"));
+//            $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}careplan-example-f201-renal.json");
         _exampleObservationJson = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}observation-example-bloodpressure.json");
         var spPatientName = new SearchParamDefinition
@@ -69,7 +69,7 @@ public class IndexServiceTests
                 "Patient.name.extension.where(url='http://hl7.no/fhir/StructureDefinition/no-basis-middlename')"
         };
         var searchParameters = new List<SearchParamDefinition> { spPatientName, spMiddleName };
-        
+
         // For this test setup we want a limited available types and search parameters.
         IFhirModel limitedFhirModel = new FhirModel(searchParameters);
         var limitedElementIndexer = new ElementIndexer(limitedFhirModel, new Mock<ILogger<ElementIndexer>>().Object);
@@ -171,7 +171,7 @@ public class IndexServiceTests
     public async Task TestIndexResourceCarePlanWithContainedGoal()
     {
         var parser = new FhirJsonParser();
-        var cpResource = parser.Parse<Resource>(_carePlanWithContainedGoal);
+        var cpResource = parser.Parse<CarePlan>(_carePlanWithContainedGoal);
 
         IKey cpKey = new Key("http://localhost/", "Careplan", "f002", null);
 
