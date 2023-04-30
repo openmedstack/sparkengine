@@ -73,9 +73,10 @@ public class FhirModel : IFhirModel
             }
         };
         var genericSearchParameters =
-            genericSearchParamDefinitions.Select(spd => CreateSearchParameterFromSearchParamDefinition(spd));
+            genericSearchParamDefinitions.Select(CreateSearchParameterFromSearchParamDefinition)
+                .Except(_searchParameters);
 
-        _searchParameters.AddRange(genericSearchParameters.Except(_searchParameters));
+        _searchParameters.AddRange(genericSearchParameters);
         //We have no control over the incoming list of searchParameters (in the constructor), so these generic parameters may or may not be in there.
         //So we apply the Except operation to make sure these parameters are not added twice.
     }
@@ -91,9 +92,10 @@ public class FhirModel : IFhirModel
                 { GetAllResourceTypesValueForResourceName(def.Resource!) },
             Type = def.Type,
             Target = def.Target != null
-                ? def.Target.Select(x => GetAllResourceTypesValueForResourceName(GetResourceNameForResourceType(x)))
-                    .Cast<VersionIndependentResourceTypesAll?>()
-                : new List<VersionIndependentResourceTypesAll?>(),
+                ? def.Target.Select(GetResourceNameForResourceType)
+                    .Select(x => GetAllResourceTypesValueForResourceName(x))
+                    .Cast<VersionIndependentResourceTypesAll?>().ToArray()
+                : Array.Empty<VersionIndependentResourceTypesAll?>(),
             Description = def.Description
         };
         // NOTE: This is a fix to handle an issue in firely-net-sdk
@@ -186,14 +188,14 @@ public class FhirModel : IFhirModel
         return GetTypeForFhirType(name);
     }
 
-    public VersionIndependentResourceTypesAll GetAllResourceTypesValueForResourceName(string name)
+    public VersionIndependentResourceTypesAll GetAllResourceTypesValueForResourceName(ReadOnlySpan<char> name)
     {
-        return (VersionIndependentResourceTypesAll)Enum.Parse(typeof(VersionIndependentResourceTypesAll), name, true);
+        return Enum.Parse<VersionIndependentResourceTypesAll>(name, true);
     }
 
-    public static ResourceType GetResourceTypeForResourceName(string name)
+    private static ResourceType GetResourceTypeForResourceName(ReadOnlySpan<char> name)
     {
-        return (ResourceType)Enum.Parse(typeof(ResourceType), name, true);
+        return Enum.Parse<ResourceType>(name, true);
     }
 
     public string GetResourceNameForResourceType(ResourceType type)

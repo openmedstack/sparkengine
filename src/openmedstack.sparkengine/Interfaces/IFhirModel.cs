@@ -36,7 +36,7 @@ public interface IFhirModel
     /// </summary>
     /// <param name="name"></param>
     /// <returns>Enum value of ResourceType matching the name</returns>
-    VersionIndependentResourceTypesAll GetAllResourceTypesValueForResourceName(string name);
+    VersionIndependentResourceTypesAll GetAllResourceTypesValueForResourceName(ReadOnlySpan<char> name);
 
     /// <summary>
     ///     Hl7.Fhir.Model.ResourceType.Patient -> "Patient"
