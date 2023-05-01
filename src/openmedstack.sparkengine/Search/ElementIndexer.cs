@@ -42,17 +42,11 @@ public class ElementIndexer
         _logger = logger;
         _referenceNormalizationService = referenceNormalizationService;
     }
-    
-    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Expression))]
-    private static List<Expression> ListOf(params Expression?[] args)
-    {
-        if (!args.Any())
-        {
-            return new List<Expression>();
-        }
 
-        var result = new List<Expression>();
-        result.AddRange(args.Where(x => x != null).Select(x => x!));
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Expression))]
+    private static Expression[] ListOf(params Expression?[] args)
+    {
+        var result = args.Where(x => x != null).Select(x => x!).ToArray();
         return result;
     }
 
@@ -61,19 +55,17 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns>List of Expression, empty List if no mapping was possible.</returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Element))]
-    public List<Expression> Map(Element element)
+    public Expression[] Map(Element element)
     {
-        var result = new List<Expression>();
         try
         {
             // TODO: How to handle composite SearchParameter type
             //if (element is Sequence.VariantComponent) return result;
-            List<Expression> expressions = ToExpressions((dynamic)element);
-            if (expressions != null)
+            var expressions = ToExpressions((dynamic)element);
+            if (expressions is Expression[])
             {
-                result.AddRange(expressions);
+                return expressions;
             }
         }
         catch (RuntimeBinderException)
@@ -81,18 +73,18 @@ public class ElementIndexer
             _logger.LogError("ElementIndexer.Map: Mapping of type {type}", element.GetType().Name);
         }
 
-        return result;
+        return Array.Empty<Expression>();
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Age))]
-    private List<Expression> ToExpressions(Age element) => ToExpressions(element as Quantity);
-    
+    private Expression[] ToExpressions(Age element) => ToExpressions(element as Quantity);
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Location.PositionComponent))]
-    private static List<Expression> ToExpressions(Location.PositionComponent element)
+    private static Expression[] ToExpressions(Location.PositionComponent element)
     {
         if (element.Latitude == null || element.Longitude == null)
         {
-            return new List<Expression>();
+            return Array.Empty<Expression>();
         }
 
         var position = new List<IndexValue>
@@ -103,100 +95,100 @@ public class ElementIndexer
 
         return ListOf(new CompositeValue(position));
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Base64Binary))]
-    private static List<Expression> ToExpressions(Base64Binary element) =>
+    private static Expression[] ToExpressions(Base64Binary element) =>
         element.Value.Length == 0
-            ? new()
+            ? Array.Empty<Expression>()
             : ToExpressions(new FhirString(element.ToString()));
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Attachment))]
-    private static List<Expression> ToExpressions(Attachment element) => ToExpressions(element.UrlElement);
-    
+    private static Expression[] ToExpressions(Attachment element) => ToExpressions(element.UrlElement);
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Timing))]
-    private static List<Expression> ToExpressions(Timing element)
+    private static Expression[] ToExpressions(Timing element)
     {
         if (element.Repeat?.Bounds == null)
         {
-            return new();
+            return Array.Empty<Expression>();
         }
 
         // TODO: Should I handle Duration?
-        return element.Repeat.Bounds is Period p ? ToExpressions(p) : new();
+        return element.Repeat.Bounds is Period p ? ToExpressions(p) : Array.Empty<Expression>();
     }
 
 #pragma warning disable IL2026 // Using dynamic types might cause types or members to be removed by trimmer.
-    private List<Expression> ToExpressions(Extension element) =>
-        (List<Expression>)ToExpressions((dynamic)element.Value);
+    private Expression[] ToExpressions(Extension element) =>
+        (Expression[])ToExpressions((dynamic)element.Value);
 #pragma warning restore IL2026 // Using dynamic types might cause types or members to be removed by trimmer.
 
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Markdown))]
-    private static List<Expression> ToExpressions(Markdown element) =>
-        string.IsNullOrWhiteSpace(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(Markdown element) =>
+        string.IsNullOrWhiteSpace(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Id))]
-    private static List<Expression> ToExpressions(Id element) =>
-        string.IsNullOrWhiteSpace(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(Id element) =>
+        string.IsNullOrWhiteSpace(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Oid))]
-    private static List<Expression> ToExpressions(Oid element) =>
-        string.IsNullOrWhiteSpace(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(Oid element) =>
+        string.IsNullOrWhiteSpace(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Integer))]
-    private static List<Expression> ToExpressions(Integer element) =>
-        !element.Value.HasValue ? new() : ListOf(new NumberValue(element.Value.Value));
-    
+    private static Expression[] ToExpressions(Integer element) =>
+        !element.Value.HasValue ? Array.Empty<Expression>() : ListOf(new NumberValue(element.Value.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(UnsignedInt))]
-    private static List<Expression> ToExpressions(UnsignedInt element) =>
-        !element.Value.HasValue ? new() : ListOf(new NumberValue(element.Value.Value));
-    
+    private static Expression[] ToExpressions(UnsignedInt element) =>
+        !element.Value.HasValue ? Array.Empty<Expression>() : ListOf(new NumberValue(element.Value.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(PositiveInt))]
-    private static List<Expression> ToExpressions(PositiveInt element) =>
-        !element.Value.HasValue ? new() : ListOf(new NumberValue(element.Value.Value));
-    
+    private static Expression[] ToExpressions(PositiveInt element) =>
+        !element.Value.HasValue ? Array.Empty<Expression>() : ListOf(new NumberValue(element.Value.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Instant))]
-    private static List<Expression> ToExpressions(Instant element)
+    private static Expression[] ToExpressions(Instant element)
     {
         if (!element.Value.HasValue)
         {
-            return new();
+            return Array.Empty<Expression>();
         }
 
         var fdt = new FhirDateTime(element.Value.Value);
         return ToExpressions(fdt);
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Time))]
-    private static List<Expression> ToExpressions(Time element) =>
-        string.Empty.Equals(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(Time element) =>
+        string.Empty.Equals(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FhirUrl))]
-    private static List<Expression> ToExpressions(FhirUrl element) =>
-        string.Empty.Equals(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(FhirUrl element) =>
+        string.Empty.Equals(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FhirUri))]
-    private static List<Expression> ToExpressions(FhirUri element) =>
-        string.Empty.Equals(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(FhirUri element) =>
+        string.Empty.Equals(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Canonical))]
-    private static List<Expression> ToExpressions(Canonical element) =>
-        string.Empty.Equals(element.Value) ? new() : ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(Canonical element) =>
+        string.Empty.Equals(element.Value) ? Array.Empty<Expression>() : ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Date))]
-    private static List<Expression> ToExpressions(Date element)
+    private static Expression[] ToExpressions(Date element)
     {
         if (string.Empty.Equals(element.Value))
         {
-            return new();
+            return Array.Empty<Expression>();
         }
 
         var fdt = new FhirDateTime(element.Value);
         return ToExpressions(fdt);
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FhirDecimal))]
-    private static List<Expression> ToExpressions(FhirDecimal element) =>
-        !element.Value.HasValue ? new() : ListOf(new NumberValue(element.Value.Value));
+    private static Expression[] ToExpressions(FhirDecimal element) =>
+        !element.Value.HasValue ? Array.Empty<Expression>() : ListOf(new NumberValue(element.Value.Value));
 
     /// <summary>
     ///     { start : lowerbound-of-fhirdatetime, end : upperbound-of-fhirdatetime }
@@ -204,9 +196,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FhirDateTime))]
-    private static List<Expression> ToExpressions(FhirDateTime element)
+    private static Expression[] ToExpressions(FhirDateTime element)
     {
         var bounds = new List<IndexValue>
         {
@@ -223,13 +214,12 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Period))]
-    private static List<Expression> ToExpressions(Period element)
+    private static Expression[] ToExpressions(Period element)
     {
         if (element.StartElement == null && element.EndElement == null)
         {
-            return new();
+            return Array.Empty<Expression>();
         }
 
         var bounds = new List<IndexValue>();
@@ -245,11 +235,11 @@ public class ElementIndexer
 
         return ListOf(new CompositeValue(bounds));
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Code))]
-    private static List<Expression> ToExpressions(Code code)
+    private static Expression[] ToExpressions(Code code)
     {
-        return new List<Expression> { new StringValue(code.Value) };
+        return new Expression[] { new StringValue(code.Value) };
     }
 
     /// <summary>
@@ -257,9 +247,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Coding))]
-    private static List<Expression> ToExpressions(Coding element)
+    private static Expression[] ToExpressions(Coding element)
     {
         var values = new List<IndexValue>();
         if (element.Code != null)
@@ -285,9 +274,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Identifier))]
-    private static List<Expression> ToExpressions(Identifier element)
+    private static Expression[] ToExpressions(Identifier element)
     {
         var values = new List<IndexValue>();
         if (element.Value != null)
@@ -317,9 +305,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(CodeableConcept))]
-    private static List<Expression> ToExpressions(CodeableConcept element)
+    private static Expression[] ToExpressions(CodeableConcept element)
     {
         var result = new List<Expression>();
         if (element.Coding != null && element.Coding.Any())
@@ -332,7 +319,7 @@ public class ElementIndexer
             result.Add(new IndexValue("text", new StringValue(element.Text)));
         }
 
-        return result;
+        return result.ToArray();
     }
 
     /// <summary>
@@ -340,9 +327,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ContactPoint))]
-    private List<Expression> ToExpressions(ContactPoint element)
+    private Expression[] ToExpressions(ContactPoint element)
     {
         var values = new List<IndexValue>();
         if (element.Value != null)
@@ -368,13 +354,12 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FhirBoolean))]
-    private static List<Expression> ToExpressions(FhirBoolean element)
+    private static Expression[] ToExpressions(FhirBoolean element)
     {
         if (element.Value == null)
         {
-            return new();
+            return Array.Empty<Expression>();
         }
 
         var values = new List<IndexValue>
@@ -386,9 +371,9 @@ public class ElementIndexer
 
         //TODO: Include implied system: http://hl7.org/fhir/special-values ?
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(ResourceReference))]
-    private List<Expression>? ToExpressions(ResourceReference? element)
+    private Expression[]? ToExpressions(ResourceReference? element)
     {
         if (element == null)
         {
@@ -405,7 +390,7 @@ public class ElementIndexer
                 var stringValue = new StringValue(uri.ToString());
 
                 // normalize reference value to be able to use normalized criteria for search.
-                // https://github.com/FirelyTeam/spark/issues/35 
+                // https://github.com/FirelyTeam/spark/issues/35
                 value = _referenceNormalizationService != null
                     ? _referenceNormalizationService.GetNormalizedReferenceValue(stringValue, null)
                     : stringValue;
@@ -433,9 +418,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Address))]
-    private List<Expression> ToExpressions(Address element)
+    private Expression[] ToExpressions(Address element)
     {
         var values = new List<Expression>();
         if (element.City != null)
@@ -470,7 +454,7 @@ public class ElementIndexer
 
         values.AddRange(element.Line?.Select(line => new StringValue(line)) ?? Array.Empty<StringValue>());
 
-        return values;
+        return values.ToArray();
     }
 
     /// <summary>
@@ -478,9 +462,8 @@ public class ElementIndexer
     /// </summary>
     /// <param name="element"></param>
     /// <returns></returns>
-    
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(HumanName))]
-    private List<Expression> ToExpressions(HumanName element)
+    private Expression[] ToExpressions(HumanName element)
     {
         var values = new List<Expression>();
         values.AddRange(ToExpressions(element.GivenElement));
@@ -503,11 +486,11 @@ public class ElementIndexer
             }
         }
 
-        return values;
+        return values.ToArray();
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Quantity))]
-    private List<Expression> ToExpressions(Quantity element)
+    private Expression[] ToExpressions(Quantity element)
     {
         try
         {
@@ -521,30 +504,33 @@ public class ElementIndexer
                 element.Unit,
                 element.Value);
 
-            return new();
+            return Array.Empty<Expression>();
         }
     }
-    
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(FhirString))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(StringValue))]
-    private static List<Expression> ToExpressions(FhirString element) => ListOf(new StringValue(element.Value));
-    
+    private static Expression[] ToExpressions(FhirString element) => ListOf(new StringValue(element.Value));
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Element))]
-    private List<Expression> ToExpressions(IEnumerable<Element> elements) => elements.SelectMany(Map).ToList();
-    
+    private Expression[] ToExpressions(IEnumerable<Element> elements) => elements.SelectMany(Map).ToArray();
+
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Code<>))]
-    private List<Expression> ToExpressions<T>(Code<T> element)
+    private Expression[] ToExpressions<T>(Code<T> element)
         where T : struct, Enum
     {
-        if (element.Value is Enum e)
+        switch (element.Value)
         {
-            var values = new List<IndexValue>
+            case Enum e:
             {
-                new("code", new StringValue(_fhirModel.GetLiteralForEnum(e)))
-            };
-            return ListOf(new CompositeValue(values));
+                var values = new List<IndexValue>
+                {
+                    new("code", new StringValue(_fhirModel.GetLiteralForEnum(e)))
+                };
+                return ListOf(new CompositeValue(values));
+            }
+            default:
+                return Array.Empty<Expression>();
         }
-
-        return new();
     }
 }

@@ -8,7 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
-		<PackageReference Include="dotauth.uma.web" Version="1.2.1" />
+		<PackageReference Include="dotauth.uma.web" Version="1.3.0" />
 		<TrimmerRootAssembly Include="openmedstack.sparkengine" />
 		<TrimmerRootAssembly Include="openmedstack.sparkengine.web" />
 		<TrimmerRootAssembly Include="Hl7.Fhir.R5" />

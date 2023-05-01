@@ -18,7 +18,7 @@ public class DbSourceMap : IResourceMap, IResourceMapper
     }
 
     /// <inheritdoc />
-    public async Task<string?> GetResourceSetId(string resourceId)
+    public async Task<string?> GetResourceSetId(string resourceId, CancellationToken cancellationToken = default)
     {
         var connection = new NpgsqlConnection(_connectionString);
         await using var _ = connection.ConfigureAwait(false);
@@ -34,7 +34,7 @@ public class DbSourceMap : IResourceMap, IResourceMapper
     }
 
     /// <inheritdoc />
-    public async Task<string?> GetResourceId(string resourceSetId)
+    public async Task<string?> GetResourceId(string resourceSetId, CancellationToken cancellationToken = default)
     {
         var connection = new NpgsqlConnection(_connectionString);
         await using var _ = connection.ConfigureAwait(false);

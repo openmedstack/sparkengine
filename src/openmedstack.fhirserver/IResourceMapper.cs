@@ -1,13 +1,5 @@
 ﻿namespace OpenMedStack.FhirServer;
 
-using System.Threading;
-using System.Threading.Tasks;
-
-public interface IResourceMapper
-{
-    Task MapResource(string resourceId, string resourceSetId, CancellationToken cancellationToken = default);
-}
-
 public interface IProvideApplicationName
 {
     string ApplicationName { get; }

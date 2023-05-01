@@ -6,6 +6,7 @@ using DotAuth.Client;
 using DotAuth.Shared;
 using DotAuth.Shared.Models;
 using DotAuth.Shared.Responses;
+using DotAuth.Uma;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

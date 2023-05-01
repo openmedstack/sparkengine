@@ -23,3 +23,4 @@ User interactions with UMA resource sets
         And an invalid UMA token
         When the resource is requested with an id token
         Then an UMA ticket is returned
+        And ticket can be used to get token

@@ -79,11 +79,11 @@ public class ElementIndexerTests
         var input = new FhirDecimal(1081.54M);
         var result = _sut.Map(input);
         Assert.Single(result);
-        Assert.IsType<NumberValue>(result.First());
-        Assert.Equal(1081.54M, ((NumberValue) result.First()).Value);
+        Assert.IsType<NumberValue>(result[0]);
+        Assert.Equal(1081.54M, ((NumberValue) result[0]).Value);
     }
 
-    private static void CheckPeriod(List<Expression> result, string start, string end)
+    private static void CheckPeriod(IReadOnlyCollection<Expression> result, string start, string end)
     {
         var nrOfComponents = 0;
         if (!string.IsNullOrWhiteSpace(start))
@@ -236,7 +236,7 @@ public class ElementIndexerTests
 
         var result = _sut.Map(input);
 
-        Assert.Equal(3, result.Count); //1 with text and 2 with the codings it
+        Assert.Equal(3, result.Length); //1 with text and 2 with the codings it
 
         //Check wether CodeableConcept.Text is in the result.
         var textIVs = result.Where(c => c.GetType() == typeof(IndexValue) && (c as IndexValue).Name == "text")
@@ -248,7 +248,7 @@ public class ElementIndexerTests
         Assert.IsType<StringValue>(textIv.Values[0]);
         Assert.Equal("bla text", (textIv.Values[0] as StringValue).Value);
 
-        //Check wether both codings are in the result.
+        //Check whether both codings are in the result.
         var codeIVs = result.Where(c => c.GetType() == typeof(CompositeValue)).ToList();
         Assert.Equal(2, codeIVs.Count);
 
@@ -352,7 +352,7 @@ public class ElementIndexerTests
 
         var result = _sut.Map(input);
 
-        Assert.Equal(5, result.Count); //2 line elements + city, country and postalcode.
+        Assert.Equal(5, result.Length); //2 line elements + city, country and postalcode.
         foreach (var res in result)
         {
             Assert.IsType<StringValue>(res);
@@ -373,7 +373,7 @@ public class ElementIndexerTests
 
         var result = _sut.Map(input);
 
-        Assert.Equal(2, result.Count); //2 line elements + city, country and postalcode.
+        Assert.Equal(2, result.Length); //2 line elements + city, country and postalcode.
         foreach (var res in result)
         {
             Assert.IsType<StringValue>(res);
@@ -401,7 +401,7 @@ public class ElementIndexerTests
     }
 
     private static void CheckQuantity(
-        List<Expression> result,
+        IReadOnlyList<Expression> result,
         decimal? value,
         string unit,
         string system,
