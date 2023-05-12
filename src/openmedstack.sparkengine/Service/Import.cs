@@ -32,7 +32,10 @@ internal class Import
         _generator = generator;
     }
 
-    public async Task<Entry> Internalize(Entry entry, Mapper<string, IKey>? mapper = null, CancellationToken cancellationToken = default)
+    public async Task<Entry> Internalize(
+        Entry entry,
+        Mapper<string, IKey>? mapper = null,
+        CancellationToken cancellationToken = default)
     {
         var m = mapper ?? new Mapper<string, IKey>();
         await InternalizeKey(entry, m, cancellationToken).ConfigureAwait(false);
@@ -64,7 +67,10 @@ internal class Import
         return newKey;
     }
 
-    private async Task<IKey> RemapHistoryOnly(IKey key, Mapper<string, IKey> mapper, CancellationToken cancellationToken)
+    private async Task<IKey> RemapHistoryOnly(
+        IKey key,
+        Mapper<string, IKey> mapper,
+        CancellationToken cancellationToken)
     {
         IKey newKey = await _generator.NextHistoryKey(key, cancellationToken).ConfigureAwait(false);
         AddKeyToInternalMapping(key, newKey.WithoutBase(), mapper);
@@ -74,17 +80,16 @@ internal class Import
     private void AddKeyToInternalMapping(IKey localKey, IKey generatedKey, Mapper<string, IKey> mapper)
     {
         mapper.Remap(
-            _localhost.GetKeyKind(localKey) == KeyKind.Temporary ? localKey.ResourceId ?? throw new NullReferenceException("Missing resource id") : localKey.ToString()!,
+            _localhost.GetKeyKind(localKey) == KeyKind.Temporary
+                ? localKey.ResourceId ?? throw new NullReferenceException("Missing resource id")
+                : localKey.ToString()!,
             generatedKey.WithoutVersion());
     }
 
     private async Task InternalizeKey(Entry entry, Mapper<string, IKey> mapper, CancellationToken cancellationToken)
     {
         var key = entry.Key;
-        if (key == null)
-        {
-            return;
-        }
+
         switch (_localhost.GetKeyKind(key))
         {
             case KeyKind.Foreign:
@@ -116,6 +121,7 @@ internal class Import
                 {
                     entry.Key = await Remap(entry.Resource, mapper, cancellationToken).ConfigureAwait(false);
                 }
+
                 return;
             }
             default:

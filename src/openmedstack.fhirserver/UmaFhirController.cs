@@ -37,12 +37,14 @@ public class UmaFhirController : FhirController
         _resourceMap = resourceMap;
     }
 
+    /// <inheritdoc />
     [UmaFilter("{0}/{1}", new[] { "type", "id" }, resourceSetAccessScope: "read")]
     public override Task<ActionResult<FhirResponse>> Read(string type, string id, CancellationToken cancellationToken)
     {
         return base.Read(type, id, cancellationToken);
     }
 
+    /// <inheritdoc />
     [UmaFilter("{0}/{1}/_history/{2}", new[] { "type", "id", "vid" }, resourceSetAccessScope: "read")]
     public override Task<FhirResponse> VRead(string type, string id, string vid, CancellationToken cancellationToken)
     {
@@ -100,7 +102,7 @@ public class UmaFhirController : FhirController
 
         var availableIds = new HashSet<string>(
             (await Task.WhenAll(
-                    resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id)))
+                    resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id, cancellationToken)))
                 .ConfigureAwait(false)).Where(s => s != null)
             .Select(s => s!));
         var entries = bundle.Entry.Where(x => availableIds.Contains(x.Resource.Id));

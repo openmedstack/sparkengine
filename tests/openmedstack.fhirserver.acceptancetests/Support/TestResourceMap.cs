@@ -8,9 +8,10 @@ internal class TestResourceMap : StaticResourceMap, IResourceMapper
     {
     }
 
-    public Task MapResource(string resourceId, string resourceSetId, CancellationToken cancellationToken = default)
+    public new Task MapResource(string resourceId, string resourceSetId, CancellationToken cancellationToken = default)
     {
         MappedResourcesCount++;
+        base.MapResource(resourceId, resourceSetId, cancellationToken);
         return Task.CompletedTask;
     }
 

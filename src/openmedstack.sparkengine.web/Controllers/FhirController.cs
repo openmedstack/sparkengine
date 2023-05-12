@@ -37,6 +37,14 @@ public abstract class FhirController : ControllerBase
     protected FhirController(IFhirService fhirService) =>
         FhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
 
+    /// <summary>
+    /// The read interaction accesses the current contents of a resource.
+    /// </summary>
+    /// <param name="type">The <see cref="Resource"/> type.</param>
+    /// <param name="id">The <see cref="Resource"/> id.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> for the async operation.</param>
+    /// <para>Reading a <see cref="Resource"/> requires the `read` scope access.</para>
+    /// <returns>The requested <see cref="Resource"/> as a <see cref="FhirResponse"/>.</returns>
     [HttpGet("{type}/{id}")]
     public virtual async Task<ActionResult<FhirResponse>> Read(
         string type,

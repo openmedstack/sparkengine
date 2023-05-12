@@ -6,6 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
+using System;
+
 namespace OpenMedStack.SparkEngine.Interfaces;
 
 using System.Threading;
@@ -15,6 +17,9 @@ using Hl7.Fhir.Model;
 public interface IGenerator
 {
     Task<string> NextResourceId(Resource resource, CancellationToken cancellationToken);
-    Task<string> NextVersionId(string resourceIdentifier, CancellationToken cancellationToken);
-    Task<string> NextVersionId(string resourceType, string resourceIdentifier, CancellationToken cancellationToken);
+    Task<string> NextVersionId(
+        ReadOnlyMemory<char> resourceType,
+        ReadOnlyMemory<char> resourceIdentifier,
+        ReadOnlyMemory<char> currentVersion,
+        CancellationToken cancellationToken);
 }

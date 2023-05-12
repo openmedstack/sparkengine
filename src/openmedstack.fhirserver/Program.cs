@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using OpenMedStack;
 using OpenMedStack.Autofac;
+using OpenMedStack.Autofac.MassTransit;
 using OpenMedStack.Autofac.MassTransit.RabbitMq;
 using OpenMedStack.FhirServer;
 using OpenMedStack.Web.Autofac;
@@ -88,8 +89,8 @@ FhirServerConfiguration CreateConfiguration()
 
 var chassis = Chassis.From(configuration)
     .AddAutofacModules((c, _) => new FhirModule(c))
-    .UsingMassTransitOverRabbitMq()
-//    .UsingInMemoryMassTransit()
+//    .UsingMassTransitOverRabbitMq()
+    .UsingInMemoryMassTransit()
     .BindToUrls(configuration.Urls)
     .UsingWebServer(c => new ServerStartup(c));
 Console.CancelKeyPress += OnCancelKey;

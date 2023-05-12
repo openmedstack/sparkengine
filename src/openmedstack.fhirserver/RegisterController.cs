@@ -1,3 +1,5 @@
+namespace OpenMedStack.FhirServer;
+
 using System;
 using System.Net;
 using System.Threading;
@@ -12,8 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
-
-namespace OpenMedStack.FhirServer;
 
 [Authorize]
 [Route("register")]

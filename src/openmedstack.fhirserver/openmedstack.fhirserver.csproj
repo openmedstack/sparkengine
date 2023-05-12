@@ -1,27 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-	<Import Project="../../shared.projinfo" />
-	<PropertyGroup>
-		<RootNamespace>OpenMedStack.FhirServer</RootNamespace>
-		<TieredPGO>true</TieredPGO>
-	</PropertyGroup>
+    <Import Project="../../shared.projinfo" />
+    <PropertyGroup>
+        <RootNamespace>OpenMedStack.FhirServer</RootNamespace>
+        <TieredPGO>true</TieredPGO>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
-		<PackageReference Include="dotauth.uma.web" Version="1.3.0" />
-		<TrimmerRootAssembly Include="openmedstack.sparkengine" />
-		<TrimmerRootAssembly Include="openmedstack.sparkengine.web" />
-		<TrimmerRootAssembly Include="Hl7.Fhir.R5" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.5" />
-		<PackageReference Include="openmedstack.domain" Version="1.7.0" />
-		<PackageReference Include="openmedstack.web.autofac" Version="1.7.0" />
-		<PackageReference Include="OpenMedStack.Autofac.MassTransit.RabbitMq" Version="1.7.0" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="7.0.5" />
+        <PackageReference Include="dotauth.uma.web" Version="1.3.0" />
+        <TrimmerRootAssembly Include="openmedstack.sparkengine" />
+        <TrimmerRootAssembly Include="openmedstack.sparkengine.web" />
+        <TrimmerRootAssembly Include="Hl7.Fhir.R5" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.5" />
+        <PackageReference Include="openmedstack.domain" Version="1.7.0" />
+        <PackageReference Include="openmedstack.linq2fhir.R5" Version="0.1.0" />
+        <PackageReference Include="openmedstack.web.autofac" Version="1.7.0" />
+        <PackageReference Include="OpenMedStack.Autofac.MassTransit.RabbitMq" Version="1.7.0" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\openmedstack.sparkengine.postgres\openmedstack.sparkengine.postgres.csproj" />
-		<ProjectReference Include="..\openmedstack.sparkengine.s3\openmedstack.sparkengine.s3.csproj" />
-		<ProjectReference Include="..\openmedstack.sparkengine.web\openmedstack.sparkengine.web.csproj" />
-	</ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\openmedstack.sparkengine.postgres\openmedstack.sparkengine.postgres.csproj" />
+        <ProjectReference Include="..\openmedstack.sparkengine.s3\openmedstack.sparkengine.s3.csproj" />
+        <ProjectReference Include="..\openmedstack.sparkengine.web\openmedstack.sparkengine.web.csproj" />
+    </ItemGroup>
 
 </Project>
