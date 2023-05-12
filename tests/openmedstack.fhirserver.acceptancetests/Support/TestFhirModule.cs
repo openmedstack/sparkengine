@@ -129,7 +129,7 @@ internal class TestAccessTokenCache : IAccessTokenCache
 
     public async ValueTask<GrantedTokenResponse?> GetAccessToken(params string[] scopes)
     {
-        var token = await _tokenClient.GetToken(TokenRequest.FromScopes(scopes)) as Option<GrantedTokenResponse>.Result;
+        var token = await _tokenClient.GetToken(TokenRequest.FromScopes(scopes)).ConfigureAwait(false) as Option<GrantedTokenResponse>.Result;
         return token!.Item;
     }
 }

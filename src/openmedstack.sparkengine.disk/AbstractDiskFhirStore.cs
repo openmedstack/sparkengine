@@ -13,12 +13,12 @@ public abstract class AbstractDiskFhirStore : IFhirStore
     protected string EntryPath { get; }
     protected FhirJsonSerializer Serializer { get; }
 
-    protected AbstractDiskFhirStore(DiskPersistenceConfiguration configuration)
+    protected AbstractDiskFhirStore(DiskPersistenceConfiguration configuration, IProvideTenant tenantProvider)
     {
         Serializer = new FhirJsonSerializer();
         Deserializer = new FhirJsonPocoDeserializer();
-        ResourcePath = Path.GetFullPath(Path.Combine(configuration.RootPath, "resources"));
-        EntryPath = Path.GetFullPath(Path.Combine(configuration.RootPath, "entries"));
+        ResourcePath = Path.GetFullPath(Path.Combine(configuration.RootPath, tenantProvider.GetTenantName(), "resources"));
+        EntryPath = Path.GetFullPath(Path.Combine(configuration.RootPath, tenantProvider.GetTenantName(), "entries"));
         if (configuration.CreateDirectoryIfNotExists)
         {
             Directory.CreateDirectory(ResourcePath);
@@ -34,7 +34,7 @@ public abstract class AbstractDiskFhirStore : IFhirStore
 
     /// <inheritdoc />
     public abstract Task<Resource?> Load(IKey key, CancellationToken cancellationToken = default);
-    
+
     /// <inheritdoc />
     public async IAsyncEnumerable<ResourceInfo> Get(
         IEnumerable<IKey> localIdentifiers,

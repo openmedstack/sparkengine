@@ -16,11 +16,12 @@ public class CompressedDiskSnapshotStore : ISnapshotStore
     public CompressedDiskSnapshotStore(
         DiskPersistenceConfiguration configuration,
         JsonSerializerSettings serializerSettings,
-        ILogger<DiskSnapshotStore> logger)
+        ILogger<DiskSnapshotStore> logger,
+        IProvideTenant tenantProvider)
     {
         _serializerSettings = serializerSettings;
         _logger = logger;
-        _rootPath = Path.Combine(configuration.RootPath, "snapshot");
+        _rootPath = Path.Combine(configuration.RootPath, tenantProvider.GetTenantName(), "snapshot");
         if (configuration.CreateDirectoryIfNotExists)
         {
             Directory.CreateDirectory(_rootPath);
@@ -41,7 +42,7 @@ public class CompressedDiskSnapshotStore : ISnapshotStore
         await using var __ = gzip.ConfigureAwait(false);
         var writer = new StreamWriter(gzip, Encoding.UTF8, leaveOpen: true);
         await using var ___ = writer.ConfigureAwait(false);
-        using var jsonWriter = new JsonTextWriter(writer);
+        await using var jsonWriter = new JsonTextWriter(writer);
         var serializer = JsonSerializer.Create(_serializerSettings);
         serializer.Serialize(jsonWriter, snapshot, typeof(Snapshot));
         await jsonWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -64,7 +65,7 @@ public class CompressedDiskSnapshotStore : ISnapshotStore
         var gzip = new GZipStream(fileStream, CompressionMode.Decompress, true);
         await using var __ = gzip.ConfigureAwait(false);
         using var reader = new StreamReader(gzip, Encoding.UTF8, leaveOpen: true);
-        using var jsonReader = new JsonTextReader(reader);
+        await using var jsonReader = new JsonTextReader(reader);
         var serializer = JsonSerializer.Create(_serializerSettings);
         var snapshot = serializer.Deserialize<Snapshot>(jsonReader);
         return snapshot;

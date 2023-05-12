@@ -6,7 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddS3Persistence(this IServiceCollection services, S3PersistenceConfiguration configuration)
+    public static IServiceCollection AddS3Persistence(
+        this IServiceCollection services,
+        S3PersistenceConfiguration configuration)
     {
         services.AddSingleton(configuration);
         var resourcePersistence = services.Where(s => s.ServiceType == typeof(IResourcePersistence));
@@ -16,8 +18,9 @@ public static class ServiceCollectionExtensions
         {
             services.Remove(serviceDescriptor);
         }
-        services.AddTransient<IResourcePersistence,S3ResourcePersistence>();
-        services.AddTransient<ISnapshotStore, S3SnapshotStore>();
+
+        services.AddScoped<IResourcePersistence, S3ResourcePersistence>();
+        services.AddScoped<ISnapshotStore, S3SnapshotStore>();
         return services;
     }
 }

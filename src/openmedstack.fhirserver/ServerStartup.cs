@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.OAuth;
+﻿namespace OpenMedStack.FhirServer;
 
-namespace OpenMedStack.FhirServer;
-
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
@@ -70,24 +69,6 @@ internal class ServerStartup : IConfigureWebApplication
 //                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 //                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 //                })
-//            .AddJwtBearer(
-//                options =>
-//                {
-//                    options.SaveToken = true;
-//                    options.Authority = _configuration.TokenService;
-//                    options.RequireHttpsMetadata = false;
-//                    options.TokenValidationParameters = new TokenValidationParameters
-//                    {
-//                        ValidateActor = false,
-//                        ValidateLifetime = true,
-//                        ValidateTokenReplay = true,
-//                        LogValidationExceptions = true,
-//                        ValidateAudience = false,
-//                        ValidateIssuer = false,
-//                        ValidateIssuerSigningKey = false,
-//                        ValidIssuers = new[] { _configuration.TokenService }
-//                    };
-//                })
             .AddAuthentication(o =>
             {
                 o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -95,6 +76,24 @@ internal class ServerStartup : IConfigureWebApplication
                 o.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             })
             .AddCookie()
+            .AddJwtBearer(
+                options =>
+                {
+                    options.SaveToken = true;
+                    options.Authority = _configuration.TokenService;
+                    options.RequireHttpsMetadata = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateActor = false,
+                        ValidateLifetime = true,
+                        ValidateTokenReplay = true,
+                        LogValidationExceptions = true,
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateIssuerSigningKey = false,
+                        ValidIssuers = new[] { _configuration.TokenService }
+                    };
+                })
 //            .AddOAuth(OAuthDefaults.DisplayName, OAuthDefaults.DisplayName, options =>
 //            {
 //                var authority = "https://identity.reimers.dk";
@@ -124,13 +123,13 @@ internal class ServerStartup : IConfigureWebApplication
                 options.ResponseMode = OpenIdConnectResponseMode.Query;
                 options.ProtocolValidator.RequireNonce = true;
                 options.ProtocolValidator.RequireState = false;
-                //options.CallbackPath = "/callback";
                 options.ClientId = _configuration.ClientId;
                 options.ClientSecret = _configuration.Secret;
             });
         services.ConfigureOptions<ConfigureMvcNewtonsoftJsonOptions>();
         services.ConfigureOptions<ConfigureOpenIdConnectOptions>();
         services.ConfigureOptions<ConfigureOAuthOptions>();
+        services.AddScoped<IProvideTenant, HostTenantProvider>();
     }
 
     /// <inheritdoc />

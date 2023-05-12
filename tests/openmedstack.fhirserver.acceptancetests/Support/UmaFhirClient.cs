@@ -31,7 +31,7 @@ public class UmaFhirClient : FhirClient
                 }
             }
 
-            var response = await _innerClient.SendAsync(request, cancellationToken);
+            var response = await _innerClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             return response;
         }
     }

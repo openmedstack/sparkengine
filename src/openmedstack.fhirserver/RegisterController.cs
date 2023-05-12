@@ -61,11 +61,11 @@ public class RegisterController : ControllerBase
             Name = id,
             Scopes = new[] { "read" }
         };
-        var option = await _resourceSetClient.AddResourceSet(resourceSet, token, cancellationToken);
+        var option = await _resourceSetClient.AddResourceSet(resourceSet, token, cancellationToken).ConfigureAwait(false);
         switch (option)
         {
             case Option<AddResourceSetResponse>.Result result:
-                await _resourceMap.MapResource(id, result.Item.Id, cancellationToken);
+                await _resourceMap.MapResource(id, result.Item.Id, cancellationToken).ConfigureAwait(false);
                 return Ok(result.Item);
             case Option<AddResourceSetResponse>.Error error:
                 _logger.LogError("{title}: {detail}", error.Details.Title, error.Details.Detail);

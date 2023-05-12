@@ -20,12 +20,14 @@ public class S3SnapshotStore : ISnapshotStore
     private readonly bool _compress;
     private readonly JsonSerializerSettings _serializerSettings;
     private readonly ILogger<S3SnapshotStore> _logger;
+    private readonly IProvideTenant _tenantProvider;
     private readonly AmazonS3Client _client;
 
     public S3SnapshotStore(
         S3PersistenceConfiguration configuration,
         JsonSerializerSettings serializerSettings,
-        ILogger<S3SnapshotStore> logger)
+        ILogger<S3SnapshotStore> logger,
+        IProvideTenant tenantProvider)
     {
         _compress = configuration.Compress;
         _client = new AmazonS3Client(
@@ -39,6 +41,7 @@ public class S3SnapshotStore : ISnapshotStore
         _bucket = configuration.Bucket;
         _serializerSettings = serializerSettings;
         _logger = logger;
+        _tenantProvider = tenantProvider;
     }
 
     /// <inheritdoc />
@@ -53,7 +56,7 @@ public class S3SnapshotStore : ISnapshotStore
             await using var ___ = gzip.ConfigureAwait(false);
             var writer = _compress ? new StreamWriter(gzip) : new StreamWriter(stream);
             await using var _ = writer.ConfigureAwait(false);
-            using var jsonWriter = new JsonTextWriter(writer);
+            await using var jsonWriter = new JsonTextWriter(writer);
             serializer.Serialize(jsonWriter, snapshot, typeof(Snapshot));
             await jsonWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
             await writer.FlushAsync().ConfigureAwait(false);
@@ -64,7 +67,7 @@ public class S3SnapshotStore : ISnapshotStore
                     new PutObjectRequest
                     {
                         AutoResetStreamPosition = false,
-                        Key = snapshot.Id,
+                        Key = $"{_tenantProvider.GetTenantName()}/{snapshot.Id}",
                         BucketName = _bucket,
                         ContentType = _compress ? "application/gzip" : "application/json",
                         InputStream = stream,
@@ -89,14 +92,14 @@ public class S3SnapshotStore : ISnapshotStore
         {
             var serializer = JsonSerializer.Create(_serializerSettings);
             var response = await _client.GetObjectAsync(
-                    new GetObjectRequest { Key = snapshotId, BucketName = _bucket },
+                    new GetObjectRequest { Key = $"{_tenantProvider.GetTenantName()}/{snapshotId}", BucketName = _bucket },
                     cancellationToken)
                 .ConfigureAwait(false);
 
             var gzip = new GZipStream(response.ResponseStream, CompressionMode.Decompress, false);
             await using var _ = gzip.ConfigureAwait(false);
             using var streamReader = _compress ? new StreamReader(gzip) : new StreamReader(response.ResponseStream);
-            using var jsonTextReader = new JsonTextReader(streamReader);
+            await using var jsonTextReader = new JsonTextReader(streamReader);
             var snapshot = serializer.Deserialize<Snapshot>(jsonTextReader);
             return snapshot;
         }

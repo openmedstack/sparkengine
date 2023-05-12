@@ -15,7 +15,10 @@ public class DiskFhirStore : AbstractDiskFhirStore
 {
     private readonly ILogger<DiskFhirStore> _logger;
 
-    public DiskFhirStore(DiskPersistenceConfiguration configuration, ILogger<DiskFhirStore> logger) : base(configuration)
+    public DiskFhirStore(
+        DiskPersistenceConfiguration configuration,
+        ILogger<DiskFhirStore> logger,
+        IProvideTenant tenantProvider) : base(configuration, tenantProvider)
     {
         _logger = logger;
     }
@@ -72,13 +75,14 @@ public class DiskFhirStore : AbstractDiskFhirStore
         {
             var path = Path.Combine(EntryPath, $"{k.ToFileName()}.json");
             var info = File.Exists(path)
-                ? JsonConvert.DeserializeObject<ResourceInfo>(await File.ReadAllTextAsync(path, token).ConfigureAwait(false))
+                ? JsonConvert.DeserializeObject<ResourceInfo>(await File.ReadAllTextAsync(path, token)
+                    .ConfigureAwait(false))
                 : null;
             return info;
         }
 
         var entry = await GetEntry(key, cancellationToken).ConfigureAwait(false)
-                    ?? await GetEntry(key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
+         ?? await GetEntry(key.WithoutVersion(), cancellationToken).ConfigureAwait(false);
 
         return entry;
     }

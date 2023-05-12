@@ -147,7 +147,7 @@ public class IndexServiceTests
         var s = new FhirJsonSerializer();
         var stringWriter = new StringWriter();
         await using var _ = stringWriter.ConfigureAwait(false);
-        using var jsonTextWriter = new JsonTextWriter(stringWriter);
+        await using var jsonTextWriter = new JsonTextWriter(stringWriter);
         await s.SerializeAsync(g, jsonTextWriter).ConfigureAwait(false);
         await jsonTextWriter.FlushAsync().ConfigureAwait(false);
         await stringWriter.FlushAsync().ConfigureAwait(false);

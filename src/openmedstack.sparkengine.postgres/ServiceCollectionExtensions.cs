@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
                     o.Connection(settings.ConnectionString);
                     o.DatabaseSchemaName = settings.Schema;
                     o.Schema.Include<FhirRegistry>();
+                    o.Policies.AllDocumentsAreMultiTenanted();
                     /*
 
     DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
@@ -39,11 +40,15 @@ public static class ServiceCollectionExtensions
     REINDEX INDEX public.mt_doc_indexentry_idx_data_values;
 
                      */
-                    o.AutoCreateSchemaObjects = AutoCreate.None;
+                    o.AutoCreateSchemaObjects = AutoCreate.All;
                 }));
         services.TryAddTransient<ISerializer, CustomSerializer>();
         services.AddTransient<Func<IDocumentSession>>(
-            sp => () => sp.GetRequiredService<IDocumentStore>().OpenSession());
+            sp =>
+            {
+                var tenantId = sp.GetRequiredService<IProvideTenant>().GetTenantName();
+                return () => sp.GetRequiredService<IDocumentStore>().LightweightSession(tenantId);
+            });
         services.TryAddTransient<IResourcePersistence, MartenResourcePersistence>();
         services.TryAddTransient<IFhirStore, MartenFhirStore>();
         services.TryAddTransient<IFhirStorePagedReader, MartenFhirStorePagedReader>();

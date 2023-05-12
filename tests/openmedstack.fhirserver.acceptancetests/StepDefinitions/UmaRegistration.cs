@@ -60,7 +60,7 @@ public partial class FeatureSteps
     // ReSharper disable once InconsistentNaming
     public async Task ThenTheResourceIsRegisteredAsAUMAResource()
     {
-        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 0.3));
+        await Task.Delay(TimeSpan.FromSeconds(Debugger.IsAttached ? 60 : 0.3)).ConfigureAwait(false);
         Assert.Equal(1, _map.MappedResourcesCount);
     }
 }

@@ -16,8 +16,8 @@ public class CompressedDiskFhirStore : AbstractDiskFhirStore
     private readonly ILogger<CompressedDiskFhirStore> _logger;
 
     /// <inheritdoc />
-    public CompressedDiskFhirStore(DiskPersistenceConfiguration configuration, ILogger<CompressedDiskFhirStore> logger)
-        : base(configuration)
+    public CompressedDiskFhirStore(DiskPersistenceConfiguration configuration, ILogger<CompressedDiskFhirStore> logger, IProvideTenant tenantProvider)
+        : base(configuration, tenantProvider)
     {
         _logger = logger;
     }

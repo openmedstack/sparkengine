@@ -32,12 +32,14 @@ public class S3ResourcePersistence : IResourcePersistence
     private readonly FhirJsonSerializer _serializer;
     private readonly FhirJsonParser _parser;
     private readonly ILogger<S3ResourcePersistence> _logger;
+    private readonly IProvideTenant _tenantProvider;
 
     public S3ResourcePersistence(
         S3PersistenceConfiguration configuration,
         FhirJsonSerializer serializer,
         FhirJsonParser parser,
-        ILogger<S3ResourcePersistence> logger)
+        ILogger<S3ResourcePersistence> logger,
+        IProvideTenant tenantProvider)
     {
         _compress = configuration.Compress;
         _client = new AmazonS3Client(
@@ -52,6 +54,7 @@ public class S3ResourcePersistence : IResourcePersistence
         _serializer = serializer;
         _parser = parser;
         _logger = logger;
+        _tenantProvider = tenantProvider;
     }
 
     /// <inheritdoc />
@@ -62,9 +65,12 @@ public class S3ResourcePersistence : IResourcePersistence
             using var stream = new MemoryStream();
             var gzip = new GZipStream(stream, CompressionLevel.Optimal, true);
             await using var __ = gzip.ConfigureAwait(false);
-            var writer = _compress ? new StreamWriter(gzip, leaveOpen: true) : new StreamWriter(stream, leaveOpen: true);
+            var writer = _compress
+                ? new StreamWriter(gzip, leaveOpen: true)
+                : new StreamWriter(stream, leaveOpen: true);
             await using var _ = writer.ConfigureAwait(false);
-            using var jsonWriter = new JsonTextWriter(writer);
+            var jsonWriter = new JsonTextWriter(writer);
+            await using var ___ = jsonWriter.ConfigureAwait(false);
             await _serializer.SerializeAsync(resource, jsonWriter).ConfigureAwait(false);
             await jsonWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
             await writer.FlushAsync().ConfigureAwait(false);
@@ -74,7 +80,7 @@ public class S3ResourcePersistence : IResourcePersistence
                     new PutObjectRequest
                     {
                         AutoResetStreamPosition = false,
-                        Key = resource.ExtractKey().ToStorageKey(),
+                        Key = $"{_tenantProvider.GetTenantName()}/{resource.ExtractKey().ToStorageKey()}",
                         BucketName = _bucket,
                         ContentType = _compress ? "application/gzip" : "application/json",
                         InputStream = stream,
@@ -98,14 +104,14 @@ public class S3ResourcePersistence : IResourcePersistence
         try
         {
             var response = await _client.GetObjectAsync(
-                    new GetObjectRequest { Key = key.ToStorageKey(), BucketName = _bucket },
+                    new GetObjectRequest { Key = $"{_tenantProvider.GetTenantName()}/{key.ToStorageKey()}", BucketName = _bucket },
                     cancellationToken)
                 .ConfigureAwait(false);
 
             var gzip = new GZipStream(response.ResponseStream, CompressionMode.Decompress, true);
             await using var _ = gzip.ConfigureAwait(false);
             using var streamReader = _compress ? new StreamReader(gzip) : new StreamReader(response.ResponseStream);
-            using var jsonTextReader = new JsonTextReader(streamReader);
+            await using var jsonTextReader = new JsonTextReader(streamReader);
             var resource = await _parser.ParseAsync<Resource>(jsonTextReader).ConfigureAwait(false);
             return resource;
         }

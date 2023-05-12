@@ -17,9 +17,12 @@ public class FhirRegistry : MartenRegistry
 {
     public FhirRegistry()
     {
-        For<Resource>().AddSubClassHierarchy().Identity(x => x.Id).Index(x => x.TypeName).Index(x => x.VersionId);
+        For<Resource>()
+            .AddSubClassHierarchy()
+            .Identity(x => x.Id)
+            .Index(x => x.TypeName)
+            .Index(x => x.VersionId);
         For<ResourceInfo>()
-            .MultiTenanted()
             .Index(x => x.Id)
             .Index(x => x.ResourceId!)
             .Index(x => x.ResourceType!)
@@ -29,7 +32,6 @@ public class FhirRegistry : MartenRegistry
             .Index(x => x.When!)
             .GinIndexJsonData();
         For<IndexEntry>()
-            .MultiTenanted()
             .Identity(x => x.Id)
             .Index(x => x.CanonicalId)
             .Index(x => x.ResourceType)

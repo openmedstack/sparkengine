@@ -1,11 +1,17 @@
-﻿namespace OpenMedStack.SparkEngine.Disk;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
+namespace OpenMedStack.SparkEngine.Disk;
 
 using Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddDiskPersistence(this IServiceCollection services, DiskPersistenceConfiguration configuration)
+    public static IServiceCollection AddDiskPersistence(
+        this IServiceCollection services,
+        DiskPersistenceConfiguration configuration)
     {
         var resourcePersistence = services.Where(s => s.ServiceType == typeof(IResourcePersistence));
         var snapshotStore = services.Where(s => s.ServiceType == typeof(ISnapshotStore));
@@ -14,9 +20,10 @@ public static class ServiceCollectionExtensions
         {
             services.Remove(serviceDescriptor);
         }
+
         services.AddSingleton(configuration);
-        services.AddSingleton<IFhirStore, DiskFhirStore>();
-        services.AddSingleton<ISnapshotStore, DiskSnapshotStore>();
+        services.AddScoped<IFhirStore, DiskFhirStore>();
+        services.AddScoped<ISnapshotStore, DiskSnapshotStore>();
 
         return services;
     }

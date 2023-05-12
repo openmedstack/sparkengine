@@ -28,7 +28,7 @@ public partial class FeatureSteps
     [Given(@"a valid UMA token")]
     public async Task GivenAValidUmaToken()
     {
-        var option = await _tokenClient.GetToken(TokenRequest.FromTicketId("123", "token"));
+        var option = await _tokenClient.GetToken(TokenRequest.FromTicketId("123", "token")).ConfigureAwait(false);
         var grantedToken = Assert.IsType<Option<GrantedTokenResponse>.Result>(option);
         _umaToken = grantedToken.Item;
     }
@@ -36,7 +36,7 @@ public partial class FeatureSteps
     [Given(@"an invalid UMA token")]
     public async Task GivenAnInvalidUmaToken()
     {
-        var option = await _tokenClient.GetToken(TokenRequest.FromScopes("read", "uma_protection"));
+        var option = await _tokenClient.GetToken(TokenRequest.FromScopes("read", "uma_protection")).ConfigureAwait(false);
         var grantedToken = Assert.IsType<Option<GrantedTokenResponse>.Result>(option);
         _umaToken = grantedToken.Item;
     }
@@ -98,7 +98,7 @@ public partial class FeatureSteps
     [Then(@"ticket can be used to get token")]
     public async Task ThenTicketCanBeUsedToGetToken()
     {
-        var token = await _tokenClient.GetToken(TokenRequest.FromTicketId(_ticketInfo.TicketId, ""));
+        var token = await _tokenClient.GetToken(TokenRequest.FromTicketId(_ticketInfo.TicketId, "")).ConfigureAwait(false);
         var grantedToken = Assert.IsType<Option<GrantedTokenResponse>.Result>(token);
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(grantedToken.Item.AccessToken);

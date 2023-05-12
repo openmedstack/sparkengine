@@ -11,11 +11,15 @@ public class DiskSnapshotStore : ISnapshotStore
     private readonly ILogger<DiskSnapshotStore> _logger;
     private readonly string _rootPath;
 
-    public DiskSnapshotStore(DiskPersistenceConfiguration configuration, JsonSerializerSettings serializerSettings, ILogger<DiskSnapshotStore> logger)
+    public DiskSnapshotStore(
+        DiskPersistenceConfiguration configuration,
+        JsonSerializerSettings serializerSettings,
+        ILogger<DiskSnapshotStore> logger,
+        IProvideTenant tenantProvider)
     {
         _serializerSettings = serializerSettings;
         _logger = logger;
-        _rootPath = Path.Combine(configuration.RootPath, "snapshot");
+        _rootPath = Path.Combine(configuration.RootPath, tenantProvider.GetTenantName(), "snapshot");
         if (configuration.CreateDirectoryIfNotExists)
         {
             Directory.CreateDirectory(_rootPath);
