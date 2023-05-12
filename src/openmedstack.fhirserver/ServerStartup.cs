@@ -129,7 +129,6 @@ internal class ServerStartup : IConfigureWebApplication
         services.ConfigureOptions<ConfigureMvcNewtonsoftJsonOptions>();
         services.ConfigureOptions<ConfigureOpenIdConnectOptions>();
         services.ConfigureOptions<ConfigureOAuthOptions>();
-        services.AddScoped<IProvideTenant, HostTenantProvider>();
     }
 
     /// <inheritdoc />

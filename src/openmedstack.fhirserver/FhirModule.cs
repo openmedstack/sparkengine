@@ -20,6 +20,7 @@ internal class FhirModule : Module
     /// <inheritdoc />
     protected override void Load(ContainerBuilder builder)
     {
+        builder.RegisterType<HostTenantProvider>().As<IProvideTenant>().InstancePerRequest();
         builder.RegisterInstance(_configuration).AsSelf().As<DeploymentConfiguration>()
             .IfNotRegistered(typeof(DeploymentConfiguration));
         builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
@@ -48,8 +49,7 @@ internal class FhirModule : Module
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
-        builder.RegisterInstance(new TokenCache(_configuration.ClientId, _configuration.Secret,
-            new Uri(_configuration.TokenService))).AsSelf().AsImplementedInterfaces().SingleInstance();
+        builder.RegisterType<TokenCache>().AsSelf().AsImplementedInterfaces().SingleInstance();
         builder.RegisterInstance(new ApplicationNameProvider(_configuration)).AsImplementedInterfaces()
             .SingleInstance();
     }

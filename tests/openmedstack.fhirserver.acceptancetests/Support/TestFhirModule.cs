@@ -1,10 +1,9 @@
-﻿using DotAuth.Shared;
+﻿namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
+
+using DotAuth.Shared;
 using DotAuth.Shared.Models;
 using DotAuth.Shared.Requests;
 using DotAuth.Shared.Responses;
-
-namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
-
 using System;
 using DotAuth.Client;
 using DotAuth.Uma;
@@ -38,7 +37,7 @@ internal class TestFhirModule : Module
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
-        builder.RegisterType<TestAccessTokenCache>().AsImplementedInterfaces().InstancePerDependency();
+//        builder.RegisterType<TestAccessTokenCache>().AsImplementedInterfaces().InstancePerDependency();
         builder.RegisterType<TestUmaResourceSetClient>().AsImplementedInterfaces().InstancePerDependency();
         builder.RegisterType<TestUmaPermissionsClient>().AsImplementedInterfaces().InstancePerDependency();
 
@@ -63,7 +62,7 @@ internal class TestUmaPermissionsClient : IUmaPermissionClient
         throw new NotImplementedException();
     }
 
-    public Uri Authority { get; } = new Uri("https://localhost");
+    public Uri Authority { get; } = new ("https://localhost");
 }
 
 internal class TestUmaResourceSetClient : IUmaResourceSetClient
@@ -71,7 +70,7 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
     public Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
         ResourceSet request,
         string token,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -79,7 +78,7 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
     public Task<Option<AddResourceSetResponse>> AddResourceSet(
         ResourceSet request,
         string token,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = default)
     {
         var response = new AddResourceSetResponse
             { Id = Guid.NewGuid().ToString(), UserAccessPolicyUri = "http://localhost" };
@@ -89,14 +88,14 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
     public Task<Option> DeleteResource(
         string resourceSetId,
         string token,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
     public Task<Option<string[]>> GetAllOwnResourceSets(
         string token,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -104,7 +103,7 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
     public Task<Option<ResourceSet>> GetResourceSet(
         string resourceSetId,
         string token,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -115,21 +114,5 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
         CancellationToken cancellationToken = new CancellationToken())
     {
         throw new NotImplementedException();
-    }
-}
-
-internal class TestAccessTokenCache : IAccessTokenCache
-{
-    private readonly ITokenClient _tokenClient;
-
-    public TestAccessTokenCache(ITokenClient tokenClient)
-    {
-        _tokenClient = tokenClient;
-    }
-
-    public async ValueTask<GrantedTokenResponse?> GetAccessToken(params string[] scopes)
-    {
-        var token = await _tokenClient.GetToken(TokenRequest.FromScopes(scopes)).ConfigureAwait(false) as Option<GrantedTokenResponse>.Result;
-        return token!.Item;
     }
 }

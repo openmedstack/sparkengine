@@ -21,18 +21,15 @@ using Task = System.Threading.Tasks.Task;
 [Route("uma")]
 public class UmaFhirController : FhirController
 {
-    private readonly IAccessTokenCache _tokenCache;
     private readonly IUmaResourceSetClient _resourceSetClient;
     private readonly IResourceMap _resourceMap;
 
     public UmaFhirController(
         IFhirService fhirService,
-        IAccessTokenCache tokenCache,
         IUmaResourceSetClient resourceSetClient,
         IResourceMap resourceMap)
         : base(fhirService)
     {
-        _tokenCache = tokenCache;
         _resourceSetClient = resourceSetClient;
         _resourceMap = resourceMap;
     }
@@ -72,10 +69,13 @@ public class UmaFhirController : FhirController
 
     /// <inheritdoc />
     [UmaFilter("{0}", new[] { "type" }, resourceSetAccessScope: "search")]
-    public override async Task<FhirResponse> Search(string type, CancellationToken cancellationToken)
+    public override async Task<FhirResponse> Search(
+        string type,
+        CancellationToken cancellationToken)
     {
+        var patToken = Request.Headers["X-PAT-TOKEN"].FirstOrDefault();
         var idToken = Request.Headers["X-ID-TOKEN"].FirstOrDefault();
-        if (idToken == null)
+        if (string.IsNullOrWhiteSpace(patToken) || string.IsNullOrWhiteSpace(idToken))
         {
             return new FhirResponse(HttpStatusCode.Forbidden);
         }
@@ -88,11 +88,10 @@ public class UmaFhirController : FhirController
 
         var bundle = (response.Resource as Bundle)!;
         var ids = bundle.GetResources().Select(x => x.HasVersionId ? x.VersionId : x.Id).ToArray();
-        var accessToken = await _tokenCache.GetAccessToken("uma_protection").ConfigureAwait(false);
 
         var resourceOptions = await _resourceSetClient.SearchResources(
                 new SearchResourceSet { IdToken = idToken, Terms = ids },
-                accessToken?.AccessToken,
+                patToken,
                 cancellationToken)
             .ConfigureAwait(false);
         if (resourceOptions is not Option<PagedResult<ResourceSetDescription>>.Result resources)
@@ -100,11 +99,9 @@ public class UmaFhirController : FhirController
             return new FhirResponse(HttpStatusCode.BadRequest, Key.Create(type));
         }
 
-        var availableIds = new HashSet<string>(
-            (await Task.WhenAll(
-                    resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id, cancellationToken)))
-                .ConfigureAwait(false)).Where(s => s != null)
-            .Select(s => s!));
+        var tasks = resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id, cancellationToken));
+        var whenAll = await Task.WhenAll(tasks).ConfigureAwait(false);
+        var availableIds = new HashSet<string>(whenAll.Where(s => s != null).Select(s => s!));
         var entries = bundle.Entry.Where(x => availableIds.Contains(x.Resource.Id));
         var resultingBundle = new Bundle { Type = bundle.Type, Total = availableIds.Count };
         resultingBundle.Entry.AddRange(entries);
