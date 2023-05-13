@@ -80,8 +80,8 @@ internal class SnapshotPaginationService : ISnapshotPagination
         var resources =
             await System.Threading.Tasks.Task.WhenAll(infos.Select(i => _fhirStore.Load(i.GetKey(), cancellationToken))).ConfigureAwait(false);
         var entries = infos.Select(
-                i => Entry.Create(i.Method, i.GetKey(), resources.FirstOrDefault(r => r!.ExtractKey().Equals(i.GetKey()))))
-            .ToList();
+                i => Entry.Create(i.Method, i.GetKey(), resources.FirstOrDefault(r => r!.ExtractKey().WithoutBase().Equals(i.GetKey()))))
+            .ToArray();
 
         foreach (var entry in entries)
         {
@@ -92,7 +92,7 @@ internal class SnapshotPaginationService : ISnapshotPagination
         {
             bundle.Append(_transfer.Externalize(entry));
         }
-        
+
         BuildLinks(bundle, start);
 
         return bundle;

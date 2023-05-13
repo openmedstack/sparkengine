@@ -208,15 +208,21 @@ public class FhirModel : IFhirModel
         return FindSearchParameters(GetResourceNameForType(resourceType));
     }
 
+    private readonly Dictionary<string, SearchParameter[]> _searchParametersByResourceName = new();
+
     public IEnumerable<SearchParameter> FindSearchParameters(string? resourceName)
     {
-        //DEBUG var resourceTypes = SearchParameters.SelectMany(x => x.Base).Select(x => x.ToString()).ToArray();
-        //return SearchParameters.Where(sp => sp.Base == GetAllResourceTypesValueForResourceName(resourceName) || sp.Base == ResourceType.Resource);
-        return resourceName == null
-            ? Enumerable.Empty<SearchParameter>()
-            : SearchParameters.Where(
+        if (resourceName == null)
+        {
+            return Array.Empty<SearchParameter>();
+        }
+        if(!_searchParametersByResourceName.ContainsKey(resourceName))
+        {
+            _searchParametersByResourceName[resourceName] = SearchParameters.Where(
                 sp => sp.Base.Contains(GetAllResourceTypesValueForResourceName(resourceName))
-                 || sp.Base.Any(b => b == VersionIndependentResourceTypesAll.Resource));
+                 || sp.Base.Any(b => b == VersionIndependentResourceTypesAll.Resource)).ToArray();
+        }
+        return _searchParametersByResourceName[resourceName];
     }
 
     public IEnumerable<SearchParameter> FindSearchParameters(ResourceType resourceType)

@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.FhirServer;
+﻿using System;
+
+namespace OpenMedStack.FhirServer;
 
 using System.Collections.Generic;
 using System.Linq;
@@ -21,17 +23,9 @@ using Task = System.Threading.Tasks.Task;
 [Route("uma")]
 public class UmaFhirController : FhirController
 {
-    private readonly IUmaResourceSetClient _resourceSetClient;
-    private readonly IResourceMap _resourceMap;
-
-    public UmaFhirController(
-        IFhirService fhirService,
-        IUmaResourceSetClient resourceSetClient,
-        IResourceMap resourceMap)
-        : base(fhirService)
+    public UmaFhirController(IFhirService fhirService, IFhirModel model)
+        : base(fhirService, model)
     {
-        _resourceSetClient = resourceSetClient;
-        _resourceMap = resourceMap;
     }
 
     /// <inheritdoc />
@@ -69,42 +63,16 @@ public class UmaFhirController : FhirController
 
     /// <inheritdoc />
     [UmaFilter("{0}", new[] { "type" }, resourceSetAccessScope: "search")]
-    public override async Task<FhirResponse> Search(
+    public override Task<FhirResponse> Search(
         string type,
         CancellationToken cancellationToken)
     {
-        var patToken = Request.Headers["X-PAT-TOKEN"].FirstOrDefault();
-        var idToken = Request.Headers["X-ID-TOKEN"].FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(patToken) || string.IsNullOrWhiteSpace(idToken))
-        {
-            return new FhirResponse(HttpStatusCode.Forbidden);
-        }
+        return base.Search(type, cancellationToken);
+    }
 
-        var response = await base.Search(type, cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            return response;
-        }
-
-        var bundle = (response.Resource as Bundle)!;
-        var ids = bundle.GetResources().Select(x => x.HasVersionId ? x.VersionId : x.Id).ToArray();
-
-        var resourceOptions = await _resourceSetClient.SearchResources(
-                new SearchResourceSet { IdToken = idToken, Terms = ids },
-                patToken,
-                cancellationToken)
-            .ConfigureAwait(false);
-        if (resourceOptions is not Option<PagedResult<ResourceSetDescription>>.Result resources)
-        {
-            return new FhirResponse(HttpStatusCode.BadRequest, Key.Create(type));
-        }
-
-        var tasks = resources.Item.Content.Select(d => _resourceMap.GetResourceId(d.Id, cancellationToken));
-        var whenAll = await Task.WhenAll(tasks).ConfigureAwait(false);
-        var availableIds = new HashSet<string>(whenAll.Where(s => s != null).Select(s => s!));
-        var entries = bundle.Entry.Where(x => availableIds.Contains(x.Resource.Id));
-        var resultingBundle = new Bundle { Type = bundle.Type, Total = availableIds.Count };
-        resultingBundle.Entry.AddRange(entries);
-        return new FhirResponse(response.StatusCode, response.Key, resultingBundle);
+    [UmaFilter("transaction", new string[0], resourceSetAccessScope: "transaction")]
+    public override Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken)
+    {
+        return base.Transaction(bundle, cancellationToken);
     }
 }

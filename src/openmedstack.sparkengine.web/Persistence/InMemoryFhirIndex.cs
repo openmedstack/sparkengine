@@ -43,6 +43,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         {
             _indexValues.Add(indexValue);
         }
+
         return Task.CompletedTask;
     }
 
@@ -55,9 +56,10 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
                 x => x.Values.OfType<IndexValue>()
                     .Any(
                         v => v.Name == "internal_id"
-                             && v.Values.OfType<StringValue>()
-                                 .All(sv => sv.Value == entry.Key?.WithoutVersion().ToStorageKey())));
+                         && v.Values.OfType<StringValue>()
+                                .All(sv => sv.Value == entry.Key?.WithoutVersion().ToStorageKey())));
         }
+
         return Task.CompletedTask;
     }
 
@@ -124,6 +126,15 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
 
     private IEnumerable<string> GetIndexValues(string resource, SearchParams searchCommand)
     {
+        bool Predicate(Expression exp, string value) =>
+            exp switch
+            {
+                StringValue stringValue => stringValue.Value == value,
+                CompositeValue compositeValue => compositeValue.Components.Any(c => Predicate(c, value)),
+                IndexValue indexValue => indexValue.Values.Any(v => Predicate(v, value)),
+                _ => false
+            };
+
         lock (_indexValues)
         {
             return _indexValues
@@ -131,14 +142,14 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
                     x => x.Values.OfType<IndexValue>()
                         .Any(
                             v => v.Name == "internal_resource"
-                                 && v.Values.OfType<StringValue>().First().Value == resource))
+                             && v.Values.OfType<StringValue>().First().Value == resource))
                 .Where(
                     x => searchCommand.Parameters.All(
                         kv => x.Values.OfType<IndexValue>()
                             .Any(
                                 // TODO: Apply proper criteria evaluation
                                 v => v.Name == kv.Item1
-                                     && v.Values.OfType<StringValue>().Any(v2 => v2.Value.Equals(kv.Item2)))))
+                                 && v.Values.Any(exp => Predicate(exp, kv.Item2)))))
                 .SelectMany(
                     iv => iv.Values.OfType<IndexValue>()
                         .Where(v => v.Name is "internal_id" or "internal_selflink")

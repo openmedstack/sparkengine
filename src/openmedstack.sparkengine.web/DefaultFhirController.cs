@@ -16,8 +16,8 @@ using Microsoft.AspNetCore.Mvc;
 public class DefaultFhirController : FhirController
 {
     /// <inheritdoc />
-    public DefaultFhirController(IFhirService fhirService)
-        : base(fhirService)
+    public DefaultFhirController(IFhirService fhirService, IFhirModel model)
+        : base(fhirService, model)
     {
     }
 }

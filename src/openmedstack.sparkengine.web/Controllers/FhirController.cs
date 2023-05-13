@@ -32,10 +32,14 @@ using Utility;
 [EnableCors]
 public abstract class FhirController : ControllerBase
 {
+    private readonly IFhirModel _model;
     protected IFhirService FhirService { get; }
 
-    protected FhirController(IFhirService fhirService) =>
+    protected FhirController(IFhirService fhirService, IFhirModel model)
+    {
+        _model = model;
         FhirService = fhirService ?? throw new ArgumentNullException(nameof(fhirService));
+    }
 
     /// <summary>
     /// The read interaction accesses the current contents of a resource.
@@ -169,6 +173,28 @@ public abstract class FhirController : ControllerBase
     {
         var start = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
         var searchparams = Request.GetSearchParams();
+        var resourceParameters = _model.FindSearchParameters(type).Select(x => x.Name).ToHashSet();
+        foreach (var param in searchparams.Parameters)
+        {
+            if (!resourceParameters.Contains(param.Item1))
+            {
+                return System.Threading.Tasks.Task.FromResult(new FhirResponse(HttpStatusCode.BadRequest,
+                    resource: new OperationOutcome
+                    {
+                        Issue =
+                        {
+                            new OperationOutcome.IssueComponent
+                            {
+                                Severity = OperationOutcome.IssueSeverity.Error,
+                                Code = OperationOutcome.IssueType.Invalid,
+                                Diagnostics =
+                                    $"Invalid search parameter: {param.Item1}"
+                            }
+                        }
+                    }));
+            }
+        }
+
         var pagesize = Request.GetParameter(FhirParameter.COUNT)?.ParseIntParameter() ?? 100; //Const.DEFAULT_PAGE_SIZE;
         var sortby = Request.GetParameter(FhirParameter.SORT);
         searchparams = searchparams.LimitTo(pagesize).OrderBy(sortby ?? "");
@@ -178,11 +204,10 @@ public abstract class FhirController : ControllerBase
     [HttpPost("{type}/_search")]
     public virtual Task<FhirResponse> SearchWithOperator(
         string type,
-        [FromForm(Name = FhirParameter.SNAPSHOT_INDEX)] int? start,
+        [FromForm(Name = FhirParameter.SNAPSHOT_INDEX)]
+        int? start,
         CancellationToken cancellationToken)
     {
-        // TODO: start index should be retrieved from the body.
-        //var startIndex = Request.GetParameter(FhirParameter.SNAPSHOT_INDEX)?.ParseIntParameter() ?? 0;
         var searchParams = Request.GetSearchParamsFromBody();
 
         return FhirService.Search(type, searchParams, start ?? 0, cancellationToken);

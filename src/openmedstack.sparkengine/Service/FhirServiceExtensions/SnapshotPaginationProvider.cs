@@ -80,10 +80,16 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
         var resources = await System.Threading.Tasks.Task.WhenAll(infos.Select(x => _fhirStore.Load(x.GetKey(), cancellationToken)))
             .ConfigureAwait(false);
         var entries = infos.Select(
-                x => Entry.Create(
-                    x.Method,
-                    x.GetKey(),
-                    resources.Where(x => x != null).FirstOrDefault(r => r!.ExtractKey().Equals(x.GetKey()))))
+                x =>
+                {
+                    var infoKey = x.GetKey();
+                    var resource = resources.Where(resource => resource != null)
+                        .FirstOrDefault(r => r!.ExtractKey().WithoutBase().Equals(infoKey));
+                    return Entry.Create(
+                        x.Method,
+                        infoKey,
+                        resource);
+                })
             .ToArray();
         var included = await GetIncludesRecursiveFor(entries, _snapshot.Includes, cancellationToken)
             .ToListAsync(cancellationToken: cancellationToken)
