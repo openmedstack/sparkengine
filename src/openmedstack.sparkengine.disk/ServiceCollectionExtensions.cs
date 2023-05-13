@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-
-namespace OpenMedStack.SparkEngine.Disk;
+﻿namespace OpenMedStack.SparkEngine.Disk;
 
 using Interfaces;
 using Microsoft.Extensions.DependencyInjection;

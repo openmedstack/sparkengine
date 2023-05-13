@@ -1,9 +1,6 @@
 using System.Diagnostics;
 using System.Net;
-using DotAuth.Shared.Responses;
 using Hl7.Fhir.Model;
-using Newtonsoft.Json;
-using OpenMedStack.SparkEngine.Extensions;
 using Task = System.Threading.Tasks.Task;
 
 namespace OpenMedStack.FhirServer.AcceptanceTests.StepDefinitions;

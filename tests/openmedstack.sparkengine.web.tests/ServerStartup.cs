@@ -1,15 +1,11 @@
 ﻿namespace OpenMedStack.SparkEngine.Web.Tests;
 
 using System;
-using S3;
 using Hl7.Fhir.Serialization;
 using Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using Postgres;
 using SparkEngine.Service.FhirServiceExtensions;
 
 public class ServerStartup

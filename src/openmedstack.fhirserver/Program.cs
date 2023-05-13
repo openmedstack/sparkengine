@@ -6,7 +6,6 @@ using System.Threading;
 using OpenMedStack;
 using OpenMedStack.Autofac;
 using OpenMedStack.Autofac.MassTransit;
-using OpenMedStack.Autofac.MassTransit.RabbitMq;
 using OpenMedStack.FhirServer;
 using OpenMedStack.Web.Autofac;
 

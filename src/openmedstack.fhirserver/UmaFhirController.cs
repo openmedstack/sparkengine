@@ -1,24 +1,13 @@
-﻿using System;
+﻿namespace OpenMedStack.FhirServer;
 
-namespace OpenMedStack.FhirServer;
-
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using DotAuth.Client;
-using DotAuth.Shared;
-using DotAuth.Shared.Models;
-using DotAuth.Shared.Requests;
-using DotAuth.Uma;
 using DotAuth.Uma.Web;
 using Hl7.Fhir.Model;
 using Microsoft.AspNetCore.Mvc;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Web.Controllers;
-using Task = System.Threading.Tasks.Task;
 
 [Route("uma")]
 public class UmaFhirController : FhirController

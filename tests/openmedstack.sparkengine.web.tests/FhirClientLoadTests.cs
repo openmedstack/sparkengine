@@ -70,7 +70,8 @@ public class FhirClientLoadTests : IDisposable
         var ids = await Task.WhenAll(tasks).ConfigureAwait(false);
         stopwatch.Stop();
 
-        _outputHelper.WriteLine($"Inserted {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        _outputHelper.WriteLine(
+            $"Inserted {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
         var elapsed = stopwatch.Elapsed;
         stopwatch.Restart();
         var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
@@ -79,7 +80,8 @@ public class FhirClientLoadTests : IDisposable
 
         elapsed += stopwatch.Elapsed;
 
-        _outputHelper.WriteLine($"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
+        _outputHelper.WriteLine(
+            $"Read {count} records at {((double)count * 1000 / stopwatch.ElapsedMilliseconds)} per second");
         _outputHelper.WriteLine($"Inserting and reading {count} records took {elapsed}.");
     }
 
@@ -108,14 +110,17 @@ public class FhirClientLoadTests : IDisposable
                 })
             .RuleFor(x => x.BirthDateElement, f => new Date(f.Date.PastDateOnly(75).Year))
             .RuleFor(x => x.Address,
-                f => new List<Address> { new()
+                f => new List<Address>
                 {
-                    City = f.Address.City(),
-                    Country = f.Address.Country(),
-                    District = f.Address.County(),
-                    PostalCode = f.Address.ZipCode(),
-                    Use = Address.AddressUse.Home
-                }});
+                    new()
+                    {
+                        City = f.Address.City(),
+                        Country = f.Address.Country(),
+                        District = f.Address.County(),
+                        PostalCode = f.Address.ZipCode(),
+                        Use = Address.AddressUse.Home
+                    }
+                });
     }
 
     [Theory]
@@ -145,12 +150,13 @@ public class FhirClientLoadTests : IDisposable
                 VerifyFhirVersion = false
             });
 
+        await client.CreateAsync(new Patient { Name = { new HumanName { Given = new[] { "Roxane" } } } });
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
         var searchParams = new SearchParams("name", "Roxane") { Sort = { ("name", SortOrder.Descending) } };
-        var u = searchParams.ToUriParamList();
-        var queryResult = await client.SearchAsync(searchParams, "Patient").ConfigureAwait(false);
+
+        var queryResult = await client.SearchAsync<Patient>(searchParams).ConfigureAwait(false);
         Assert.True(queryResult.Total > 0);
 
         stopwatch.Stop();
@@ -166,6 +172,6 @@ public class FhirClientLoadTests : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        //Directory.Delete(Path.GetFullPath(Path.Combine(".", "fhir")), true);
+        _server?.Server.Dispose();
     }
 }
