@@ -17,33 +17,9 @@ using Hl7.Fhir.Model;
 
 public static class OperationOutcomeExtensions
 {
-    //internal static Func<string, string> pascalToCamelCase = (pascalCase) => $"{char.ToLower(pascalCase[0])}{pascalCase[1..]}";
-
-    //public static OperationOutcome AddValidationProblems(this OperationOutcome outcome, Type resourceType, HttpStatusCode code, ValidationProblemDetails validationProblems)
-    //{
-    //    if (resourceType == null) throw new ArgumentNullException(nameof(resourceType));
-    //    if (validationProblems == null) throw new ArgumentNullException(nameof(ValidationProblemDetails));
-
-    //    OperationOutcome.IssueSeverity severity = IssueSeverityOf(code);
-    //    foreach (var error in validationProblems.Errors)
-    //    {
-    //        var expression = FhirPathUtil.ResolveToFhirPathExpression(resourceType, error.Key);
-    //        outcome.Issue.Add(new OperationOutcome.IssueComponent
-    //        {
-    //            Severity = severity,
-    //            Code = OperationOutcome.IssueType.Required,
-    //            Diagnostics = error.Value.FirstOrDefault(),
-    //            Expression = new[] { expression },
-    //            Location = new[] { FhirPathUtil.ConvertToXPathExpression(expression) }
-    //        });
-    //    }
-
-    //    return outcome;
-    //}
-
     internal static OperationOutcome.IssueSeverity IssueSeverityOf(HttpStatusCode code)
     {
-        var range = (int) code / 100;
+        var range = (int)code / 100;
         return range switch
         {
             1 => OperationOutcome.IssueSeverity.Information,
@@ -55,21 +31,13 @@ public static class OperationOutcomeExtensions
         };
     }
 
-    public static OperationOutcome Init(this OperationOutcome outcome)
-    {
-        outcome.Issue ??= new List<OperationOutcome.IssueComponent>();
-        return outcome;
-    }
-
     public static OperationOutcome AddError(this OperationOutcome outcome, Exception exception)
     {
-        string message;
-
-        message = exception is SparkException
+        var message = exception is SparkException
             ? exception.Message
             : $"{exception.GetType().Name}: {exception.Message}";
 
-        outcome.AddError(message);
+        outcome = outcome.AddError(message);
 
         // Don't add a stacktrace if this is an acceptable logical-level error
         if (Debugger.IsAttached && !(exception is SparkException))
@@ -86,11 +54,11 @@ public static class OperationOutcomeExtensions
 
     public static OperationOutcome AddAllInnerErrors(this OperationOutcome outcome, Exception exception)
     {
-        AddError(outcome, exception);
+        outcome = outcome.AddError(exception);
         while (exception.InnerException != null)
         {
             exception = exception.InnerException;
-            AddError(outcome, exception);
+            outcome = outcome.AddError(exception);
         }
 
         return outcome;
@@ -106,10 +74,10 @@ public static class OperationOutcomeExtensions
     {
         if (outcome.Issue == null)
         {
-            outcome.Init();
+            outcome.Issue = new List<OperationOutcome.IssueComponent>();
         }
 
-        var item = new OperationOutcome.IssueComponent {Severity = severity, Diagnostics = message};
+        var item = new OperationOutcome.IssueComponent { Severity = severity, Diagnostics = message };
         outcome.Issue!.Add(item);
         return outcome;
     }

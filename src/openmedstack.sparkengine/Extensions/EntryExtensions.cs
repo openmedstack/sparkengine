@@ -30,9 +30,9 @@ public static class EntryExtensions
         }
 
         if (key != null
-            && string.IsNullOrEmpty(key.ResourceId)
-            && entry.FullUrl != null
-            && UriHelper.IsTemporaryUri(entry.FullUrl))
+         && string.IsNullOrEmpty(key.ResourceId)
+         && entry.FullUrl != null
+         && UriHelper.IsTemporaryUri(entry.FullUrl))
         {
             key.ResourceId = entry.FullUrl;
         }
@@ -87,10 +87,7 @@ public static class EntryExtensions
 
         bundleEntry.Request ??= new Bundle.RequestComponent();
         bundleEntry.Request.Method = entry.Method;
-        if (entry.Key != null)
-        {
-            bundleEntry.Request.Url = entry.Key.ToUri().ToString();
-        }
+        bundleEntry.Request.Url = entry.Key.ToUri().ToString();
 
         SetBundleEntryResource(entry, bundleEntry);
 
@@ -101,7 +98,7 @@ public static class EntryExtensions
     {
         if (entry.HasResource())
         {
-            entry.Key?.ApplyTo(entry.Resource);
+            entry.Key.ApplyTo(entry.Resource);
             bundleEntry.Resource = entry.Resource;
             bundleEntry.FullUrl = entry.Key.ToUriString();
         }
@@ -148,7 +145,7 @@ public static class EntryExtensions
         return resource.TypeName == name;
     }
 
-    public static IEnumerable<string> GetReferences(this Resource resource, string path)
+    private static IEnumerable<string> GetReferences(this Resource resource, string path)
     {
         if (!IsValidResourcePath(path, resource))
         {
@@ -176,32 +173,14 @@ public static class EntryExtensions
         return list;
     }
 
-    public static IEnumerable<string> GetReferences(this IEnumerable<Resource> resources, string path)
+    private static IEnumerable<string> GetReferences(this IEnumerable<Resource> resources, string path)
     {
         return resources.SelectMany(r => r.GetReferences(path));
-        //foreach (Resource entry in resources)
-        //{
-        //    IEnumerable<string> list = GetLocalReferences(entry, include);
-        //    foreach (Uri value in list)
-        //    {
-        //        if (value != null)
-        //            yield return value;
-        //    }
-        //}
     }
 
     public static IAsyncEnumerable<string> GetReferences(this IAsyncEnumerable<Resource> resources, string path)
     {
         return resources.SelectMany(r => r.GetReferences(path).ToAsyncEnumerable());
-        //foreach (Resource entry in resources)
-        //{
-        //    IEnumerable<string> list = GetLocalReferences(entry, include);
-        //    foreach (Uri value in list)
-        //    {
-        //        if (value != null)
-        //            yield return value;
-        //    }
-        //}
     }
 
     public static IEnumerable<string> GetReferences(this IEnumerable<Resource> resources, IEnumerable<string> paths)
@@ -210,12 +189,8 @@ public static class EntryExtensions
     }
 
     // If an interaction has no base, you should be able to supplement it (from the containing bundle for example)
-    public static void SupplementBase(this Entry entry, string @base)
+    private static void SupplementBase(this Entry entry, string @base)
     {
-        if (entry.Key == null)
-        {
-            return;
-        }
         var key = entry.Key.Clone();
         if (!key.HasBase())
         {

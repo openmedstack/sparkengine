@@ -160,7 +160,7 @@ public partial class ElementQuery
                     var feAtt = segment.Property?.GetCustomAttribute<FhirElementAttribute>();
                     if (feAtt != null)
                     {
-                        if (feAtt.Choice == ChoiceType.DatatypeChoice || feAtt.Choice == ChoiceType.ResourceChoice)
+                        if (feAtt.Choice is ChoiceType.DatatypeChoice or ChoiceType.ResourceChoice)
                         {
                             var atAtt = segment.Property?.GetCustomAttribute<AllowedTypesAttribute>();
                             if (atAtt != null)
@@ -255,7 +255,7 @@ public partial class ElementQuery
 
                 if (fhirElementName?.StartsWith(feAtt.Name, StringComparison.InvariantCultureIgnoreCase) == true)
                 {
-                    if (feAtt.Choice == ChoiceType.DatatypeChoice || feAtt.Choice == ChoiceType.ResourceChoice)
+                    if (feAtt.Choice is ChoiceType.DatatypeChoice or ChoiceType.ResourceChoice)
                     {
                         var atAtt = member.GetCustomAttribute<AllowedTypesAttribute>();
                         if (atAtt != null)

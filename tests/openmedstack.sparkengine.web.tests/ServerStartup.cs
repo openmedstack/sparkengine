@@ -1,4 +1,7 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Tests;
+﻿using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
+
+namespace OpenMedStack.SparkEngine.Web.Tests;
 
 using System;
 using Hl7.Fhir.Serialization;
@@ -10,15 +13,13 @@ using SparkEngine.Service.FhirServiceExtensions;
 
 public class ServerStartup
 {
-    public void ConfigureServices(IServiceCollection services)
+    public void ConfigureServices(IServiceCollection services, ITestOutputHelper outputHelper)
     {
-        services.AddLogging();//l => l.AddXunit(_outputHelper));
+        services.AddLogging(l => l.AddXunit(outputHelper));
         services.AddFhir<TestFhirController>(
             new SparkSettings
             {
-                UseAsynchronousIO = true,
                 Endpoint = new Uri("https://localhost:60001/fhir"),
-                FhirRelease = "R5",
                 ParserSettings = ParserSettings.CreateDefault(),
                 SerializerSettings = SerializerSettings.CreateDefault()
             });

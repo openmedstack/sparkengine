@@ -16,11 +16,11 @@ using Support;
 
 public class ActualModifier
 {
-    public const string MISSINGTRUE = "true";
-    public const string MISSINGFALSE = "false";
-    public const string MISSING_SEPARATOR = "=";
+    private const string MISSINGTRUE = "true";
+    private const string MISSINGFALSE = "false";
+    private const string MISSING_SEPARATOR = "=";
 
-    private static readonly Dictionary<string, Modifier> _mapping = new()
+    private static readonly Dictionary<string, Modifier> Mapping = new()
     {
         { "exact", Modifier.EXACT },
         { "partial", Modifier.PARTIAL },
@@ -45,7 +45,7 @@ public class ActualModifier
             return;
         }
 
-        Modifier = _mapping
+        Modifier = Mapping
             .FirstOrDefault(m => m.Key.Equals(rawModifier, StringComparison.InvariantCultureIgnoreCase))
             .Value;
 
@@ -74,7 +74,7 @@ public class ActualModifier
     /// <returns></returns>
     private bool? TryParseMissing(string rawModifier)
     {
-        var missing = _mapping.FirstOrDefault(m => m.Value == Modifier.MISSING).Key;
+        var missing = Mapping.FirstOrDefault(m => m.Value == Modifier.MISSING).Key;
         var parts = rawModifier.Split(new[] { MISSING_SEPARATOR }, StringSplitOptions.None);
         if (parts[0].Equals(missing, StringComparison.InvariantCultureIgnoreCase))
         {
@@ -104,7 +104,7 @@ public class ActualModifier
 
     public override string ToString()
     {
-        var modifierText = _mapping.FirstOrDefault(m => m.Value == Modifier).Key;
+        var modifierText = Mapping.FirstOrDefault(m => m.Value == Modifier).Key;
         return Modifier switch
         {
             Modifier.MISSING => modifierText + MISSING_SEPARATOR + (Missing!.Value ? MISSINGTRUE : MISSINGFALSE),

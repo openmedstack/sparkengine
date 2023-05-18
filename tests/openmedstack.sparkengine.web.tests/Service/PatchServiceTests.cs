@@ -44,7 +44,7 @@ public class PatchServiceTests
             {
                 Coding = new List<Coding>
                 {
-                    new Coding
+                    new()
                     {
                         System = "abc",
                         Code = "123",
@@ -58,7 +58,7 @@ public class PatchServiceTests
         {
             Coding = new List<Coding>
             {
-                new Coding
+                new()
                 {
                     System = "abcd",
                     Code = "1234",
@@ -255,12 +255,12 @@ public class PatchServiceTests
             Id = "test",
             Processing = new List<Specimen.ProcessingComponent>()
             {
-                new Specimen.ProcessingComponent()
+                new()
                 {
                     Description = "initial processing",
                     Extension = new List<Extension>()
                     {
-                        new Extension("http://extensions.org/initialExtension",
+                        new("http://extensions.org/initialExtension",
                             new FhirString("initialExtension"))
                     }
                 }
@@ -279,11 +279,11 @@ public class PatchServiceTests
         var parameters = new Parameters();
         var extensions = new List<Extension>()
         {
-            new Extension("http://extensions.org/extensionResourceReference", new ResourceReference("Device/1")),
-            new Extension("http://extensions.org/extensionCode", new Code("someCode")),
-            new Extension("http://extensions.org/extensionUrl", new FhirUri("someUrl")),
-            new Extension("http://extensions.org/extensionString", new FhirString("someString")),
-            new Extension("http://extensions.org/extensionDateTime", new FhirDateTime(DateTimeOffset.Now))
+            new("http://extensions.org/extensionResourceReference", new ResourceReference("Device/1")),
+            new("http://extensions.org/extensionCode", new Code("someCode")),
+            new("http://extensions.org/extensionUrl", new FhirUri("someUrl")),
+            new("http://extensions.org/extensionString", new FhirString("someString")),
+            new("http://extensions.org/extensionDateTime", new FhirDateTime(DateTimeOffset.Now))
         };
         var valuePart = applyOperationAndGetValuePart(parameters);
         foreach (var extension in extensions)
@@ -293,11 +293,11 @@ public class PatchServiceTests
                 Name = "extension",
                 Part = new List<Parameters.ParameterComponent>()
                 {
-                    new Parameters.ParameterComponent()
+                    new()
                     {
                         Name = "url", Value = new FhirUri(extension.Url)
                     },
-                    new Parameters.ParameterComponent()
+                    new()
                     {
                         Name = "value", Value = extension.Value
                     }
@@ -427,7 +427,7 @@ public class PatchServiceTests
             {
                 Extension = new List<Extension>()
                 {
-                    new Extension("http://helsenorge.no/fhir/StructureDefinition/hn-task-deadline",
+                    new("http://helsenorge.no/fhir/StructureDefinition/hn-task-deadline",
                         new Date("2021-12-10"))
                 },
                 Period = new Period

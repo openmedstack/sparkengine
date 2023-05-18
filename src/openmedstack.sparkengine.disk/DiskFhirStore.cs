@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OpenMedStack.SparkEngine.Extensions;
 using System.IO.Compression;
-using Task = System.Threading.Tasks.Task;
 
 public class DiskFhirStore : AbstractDiskFhirStore
 {
@@ -112,6 +111,6 @@ public class DiskFhirStore : AbstractDiskFhirStore
     public override Task<bool> Exists(IKey key, CancellationToken cancellationToken = default)
     {
         var exists = File.Exists(Path.Combine(EntryPath, $"{key.ToFileName()}.json"));
-        return Task.FromResult(exists);
+        return System.Threading.Tasks.Task.FromResult(exists);
     }
 }

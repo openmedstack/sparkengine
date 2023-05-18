@@ -50,16 +50,16 @@ internal class TestUmaPermissionsClient : IUmaPermissionClient
 {
     public async Task<Option<TicketResponse>> RequestPermission(
         string token,
-        CancellationToken cancellationToken = new CancellationToken(),
+        CancellationToken cancellationToken = new(),
         params PermissionRequest[] requests)
     {
         await Task.Yield();
         return new TicketResponse { TicketId = "ticket" };
     }
 
-    public Task<UmaConfiguration> GetUmaDocument(CancellationToken cancellationToken = new CancellationToken())
+    public Task<UmaConfiguration> GetUmaDocument(CancellationToken cancellationToken = new())
     {
-        throw new NotImplementedException();
+        return Task.FromResult(new UmaConfiguration());
     }
 
     public Uri Authority { get; } = new ("https://localhost");
@@ -67,12 +67,13 @@ internal class TestUmaPermissionsClient : IUmaPermissionClient
 
 internal class TestUmaResourceSetClient : IUmaResourceSetClient
 {
-    public Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
+    public async Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
         ResourceSet request,
         string token,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await Task.Yield();
+        return new UpdateResourceSetResponse();
     }
 
     public Task<Option<AddResourceSetResponse>> AddResourceSet(
@@ -111,7 +112,7 @@ internal class TestUmaResourceSetClient : IUmaResourceSetClient
     public Task<Option<PagedResult<ResourceSetDescription>>> SearchResources(
         SearchResourceSet parameter,
         string? token = null,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         throw new NotImplementedException();
     }

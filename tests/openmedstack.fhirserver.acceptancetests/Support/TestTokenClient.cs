@@ -40,10 +40,10 @@ internal class TestTokenClient : ITokenClient
             new JwtHeader(new SigningCredentials(jwk, SecurityAlgorithms.RsaSha256)),
             new JwtPayload(new List<Claim>
             {
-                new Claim(StandardClaimNames.Issuer, _configuration.TokenService),
-                new Claim(StandardClaimNames.Audiences, _configuration.Name),
-                new Claim("sub", "123", ClaimValueTypes.String),
-                new Claim("scope", "dcr uma_protection", ClaimValueTypes.String)
+                new(StandardClaimNames.Issuer, _configuration.TokenService),
+                new(StandardClaimNames.Audiences, _configuration.Name),
+                new("sub", "123", ClaimValueTypes.String),
+                new("scope", "dcr uma_protection", ClaimValueTypes.String)
             }));
         if (tokenRequest.Any(x => x is { Key: "grant_type", Value: GrantTypes.UmaTicket }))
         {
@@ -78,7 +78,7 @@ internal class TestTokenClient : ITokenClient
 
     public async Task<Option<Uri>> GetAuthorization(
         AuthorizationRequest request,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         await Task.Yield();
         return new Uri("https://localhost");
@@ -86,7 +86,7 @@ internal class TestTokenClient : ITokenClient
 
     public async Task<Option<DeviceAuthorizationResponse>> GetAuthorization(
         DeviceAuthorizationRequest request,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         await Task.Yield();
         return new DeviceAuthorizationResponse();
@@ -94,7 +94,7 @@ internal class TestTokenClient : ITokenClient
 
     public async Task<Option> RequestSms(
         ConfirmationCodeRequest request,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         await Task.Yield();
         return new Option.Success();
@@ -102,7 +102,7 @@ internal class TestTokenClient : ITokenClient
 
     public async Task<Option> RevokeToken(
         RevokeTokenRequest revokeTokenRequest,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         await Task.Yield();
         return new Option.Success();
@@ -111,13 +111,13 @@ internal class TestTokenClient : ITokenClient
     public async Task<Option<JwtPayload>> GetUserInfo(
         string accessToken,
         bool inBody = false,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         await Task.Yield();
         return new JwtPayload();
     }
 
-    public async Task<JsonWebKeySet> GetJwks(CancellationToken cancellationToken = new CancellationToken())
+    public async Task<JsonWebKeySet> GetJwks(CancellationToken cancellationToken = new())
     {
         await Task.Yield();
         return new JsonWebKeySet();

@@ -78,20 +78,18 @@ internal class SnapshotPaginationService : ISnapshotPagination
         }
 
         var resources =
-            await System.Threading.Tasks.Task.WhenAll(infos.Select(i => _fhirStore.Load(i.GetKey(), cancellationToken))).ConfigureAwait(false);
+            await System.Threading.Tasks.Task.WhenAll(infos.Select(i => _fhirStore.Load(i.GetKey(), cancellationToken)))
+                .ConfigureAwait(false);
         var entries = infos.Select(
-                i => Entry.Create(i.Method, i.GetKey(), resources.FirstOrDefault(r => r!.ExtractKey().WithoutBase().Equals(i.GetKey()))))
+                i => Entry.Create(i.Method, i.GetKey(),
+                    resources.FirstOrDefault(r => r!.ExtractKey().WithoutBase().Equals(i.GetKey()))))
             .ToArray();
 
-        foreach (var entry in entries)
-        {
-            bundle.Append(_transfer.Externalize(entry));
-        }
+        bundle = entries.Aggregate(bundle, (current, entry) => current.Append(_transfer.Externalize(entry)));
+
         var included = GetIncludesRecursiveFor(entries, _snapshot.Includes, cancellationToken);
-        foreach (var entry in await included.ConfigureAwait(false))
-        {
-            bundle.Append(_transfer.Externalize(entry));
-        }
+        bundle = (await included.ConfigureAwait(false)).Aggregate(bundle,
+            (current, entry) => current.Append(_transfer.Externalize(entry)));
 
         BuildLinks(bundle, start);
 
@@ -116,13 +114,15 @@ internal class SnapshotPaginationService : ISnapshotPagination
             latest = await GetIncludesFor(latest, includes, cancellationToken)
                 .ToListAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
-        }
-        while (included.Count > previousCount);
+        } while (included.Count > previousCount);
 
         return included;
     }
 
-    private IAsyncEnumerable<Entry> GetIncludesFor(IEnumerable<Entry> entries, IEnumerable<string> includes, CancellationToken cancellationToken)
+    private IAsyncEnumerable<Entry> GetIncludesFor(
+        IEnumerable<Entry> entries,
+        IEnumerable<string> includes,
+        CancellationToken cancellationToken)
     {
         var paths = includes.SelectMany(IncludeToPath);
         IList<IKey> identifiers = entries.GetResources()

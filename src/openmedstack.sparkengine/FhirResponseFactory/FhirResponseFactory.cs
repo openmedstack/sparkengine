@@ -28,7 +28,10 @@ public class FhirResponseFactory : IFhirResponseFactory
         _fhirStore = fhirStore;
     }
 
-    public async Task<FhirResponse> GetFhirResponse(ResourceInfo? entry, IKey? key = null, IEnumerable<object>? parameters = null)
+    public async Task<FhirResponse> GetFhirResponse(
+        ResourceInfo? entry,
+        IKey? key = null,
+        IEnumerable<object>? parameters = null)
     {
         if (entry == null)
         {
@@ -82,7 +85,7 @@ public class FhirResponseFactory : IFhirResponseFactory
         var bundle = new Bundle { Type = bundleType };
         await foreach (var response in responses.ConfigureAwait(false))
         {
-            bundle.Append(response.Item1, response.Item2);
+            bundle = bundle.Append(response.Item1, response.Item2);
         }
 
         return Respond.WithBundle(bundle);

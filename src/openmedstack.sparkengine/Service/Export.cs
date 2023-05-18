@@ -21,13 +21,11 @@ using Interfaces;
 /// </summary>
 internal class Export
 {
-    private readonly ExportSettings _exportSettings;
     private readonly ILocalhost _localhost;
 
-    public Export(ILocalhost localhost, ExportSettings exportSettings)
+    public Export(ILocalhost localhost)
     {
         _localhost = localhost;
-        _exportSettings = exportSettings;
     }
 
     public Entry Externalize(Entry entry)
@@ -37,6 +35,7 @@ internal class Export
         {
             ExternalizeReferences(entry.Resource);
         }
+
         ExternalizeState(entry);
         return entry;
     }
@@ -64,14 +63,14 @@ internal class Export
                     if (reference.Url != null)
                     {
                         reference.Url = new Uri(
-                            ExternalizeReference(reference.Url.ToString()),
+                            reference.Url.ToString(),
                             UriKind.RelativeOrAbsolute);
                     }
 
                     break;
                 }
                 case FhirUri uri:
-                    uri.Value = ExternalizeReference(uri.Value);
+                    uri.Value = uri.Value;
                     //((FhirUri)element).Value = LocalizeReference(new Uri(((FhirUri)element).Value, UriKind.RelativeOrAbsolute)).ToString();
                     break;
                 case Narrative n:
@@ -85,34 +84,13 @@ internal class Export
         Auxiliary.ResourceVisitor.VisitByType(resource, Action, types);
     }
 
-    private string ExternalizeReference(string uristring)
-    {
-        if (string.IsNullOrWhiteSpace(uristring))
-        {
-            return uristring;
-        }
-
-        var uri = new Uri(uristring, UriKind.RelativeOrAbsolute);
-
-        switch (uri.IsAbsoluteUri)
-        {
-            case false when _exportSettings.ExternalizeFhirUri:
-            {
-                var absoluteUri = _localhost.Absolute(uri);
-                return absoluteUri.Fragment == uri.ToString() ? uristring : absoluteUri.ToString();
-            }
-            default:
-                return uristring;
-        }
-    }
-
     private string FixXhtmlDiv(string div)
     {
         try
         {
             var xdoc = XDocument.Parse(div);
-            xdoc.VisitAttributes("img", "src", n => n.Value = ExternalizeReference(n.Value));
-            xdoc.VisitAttributes("a", "href", n => n.Value = ExternalizeReference(n.Value));
+            xdoc.VisitAttributes("img", "src", n => n.Value = n.Value);
+            xdoc.VisitAttributes("a", "href", n => n.Value = n.Value);
             return xdoc.ToString();
         }
         catch
@@ -122,17 +100,4 @@ internal class Export
             return div;
         }
     }
-
-    /*
-    public void RemoveBodyFromEntries(List<Entry> entries)
-    {
-        foreach (Entry entry in entries)
-        {
-            if (entry.IsResource())
-            {
-                entry.Resource = null;
-            }
-        }
-    }
-    */
 }

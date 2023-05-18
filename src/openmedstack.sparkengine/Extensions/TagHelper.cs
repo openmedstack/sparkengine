@@ -26,12 +26,9 @@ public static class TagHelper
         // Union works with equality [http://www.healthintersections.com.au/?p=1941]
         // the source should overwrite the existing target tags
 
-        foreach (var s in source)
+        foreach (var s in source.Where(target.HasTag))
         {
-            if (!target.HasTag(s))
-            {
-                yield return s;
-            }
+            yield return s;
         }
 
         foreach (var t in target)

@@ -23,7 +23,6 @@ using Hl7.FhirPath;
 ///     Cause of this: it doesn't support Hl7.Fhir.ElementModel.Types.Date type (only Hl7.Fhir.ElementModel.Types.DateTime
 ///     is originally supported).
 ///     Test failing: X012_Goal.
-///     TODO: create PR in the original repo and fix it.
 /// </summary>
 internal static class ElementNavFhirExtensionsNew
 {
@@ -39,11 +38,6 @@ internal static class ElementNavFhirExtensionsNew
         return results.Select(
             r =>
             {
-                if (r == null)
-                {
-                    return null;
-                }
-
                 var fhirValueProvider = r.Annotation<IFhirValueProvider>();
                 if (fhirValueProvider != null)
                 {

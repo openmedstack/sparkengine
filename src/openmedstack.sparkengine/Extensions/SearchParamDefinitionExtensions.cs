@@ -34,8 +34,6 @@ internal static class SearchParamDefinitionExtensions
         var searchParamDefinition = searchParamDefinitions.Find(
             p => (p.Resource == resourceType || p.Resource == nameof(Resource)) && p.Name == name);
         return searchParamDefinition != null
-               && (searchParamDefinition.Type == SearchParamType.Number
-                   || searchParamDefinition.Type == SearchParamType.Date
-                   || searchParamDefinition.Type == SearchParamType.Quantity);
+               && searchParamDefinition.Type is SearchParamType.Number or SearchParamType.Date or SearchParamType.Quantity;
     }
 }

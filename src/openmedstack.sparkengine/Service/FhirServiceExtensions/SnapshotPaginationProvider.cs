@@ -68,7 +68,8 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
         var bundle = new Bundle { Type = _snapshot!.Type, Total = _snapshot.Count, Id = Guid.NewGuid().ToString() };
 
         var keys = _snapshotPaginationCalculator.GetKeysForPage(_snapshot, start).ToList();
-        var infos = await _fhirStore.Get(keys, cancellationToken).ToListAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        var infos = await _fhirStore.Get(keys, cancellationToken).ToListAsync(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         if (_snapshot.SortBy != null)
         {
             infos = infos.Select(e => new { Entry = e, Index = keys.IndexOf(e.GetKey()) })
@@ -77,7 +78,8 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
                 .ToList();
         }
 
-        var resources = await System.Threading.Tasks.Task.WhenAll(infos.Select(x => _fhirStore.Load(x.GetKey(), cancellationToken)))
+        var resources = await System.Threading.Tasks.Task
+            .WhenAll(infos.Select(x => _fhirStore.Load(x.GetKey(), cancellationToken)))
             .ConfigureAwait(false);
         var entries = infos.Select(
                 x =>
@@ -95,10 +97,8 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
             .ToListAsync(cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
-        foreach (var entry in _transfer.Externalize(entries).Concat(_transfer.Externalize(included)))
-        {
-            bundle.Append(entry);
-        }
+        bundle = _transfer.Externalize(entries).Concat(_transfer.Externalize(included))
+            .Aggregate(bundle, (current, entry) => current.Append(entry));
 
         BuildLinks(bundle, start);
 
@@ -124,8 +124,7 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
             latest = await GetIncludesFor(latest, includes, cancellationToken)
                 .ToListAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
-        }
-        while (included.Count > previousCount);
+        } while (included.Count > previousCount);
 
         foreach (var entry in entries)
         {
@@ -133,7 +132,10 @@ public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshot
         }
     }
 
-    private IAsyncEnumerable<Entry> GetIncludesFor(IEnumerable<Entry> entries, IEnumerable<string>? includes, CancellationToken cancellationToken)
+    private IAsyncEnumerable<Entry> GetIncludesFor(
+        IEnumerable<Entry> entries,
+        IEnumerable<string>? includes,
+        CancellationToken cancellationToken)
     {
         if (includes == null)
         {

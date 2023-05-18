@@ -23,7 +23,7 @@ public static class Respond
     public static FhirResponse WithError(HttpStatusCode code, string message, params object?[] args)
     {
         var outcome = new OperationOutcome();
-        outcome.AddError(string.Format(message, args));
+        outcome = outcome.AddError(string.Format(message, args));
         return new FhirResponse(code, null, outcome);
     }
 

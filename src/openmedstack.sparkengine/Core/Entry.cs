@@ -31,7 +31,7 @@ public class Entry
 
     public Resource? Resource { get; set; }
 
-    public Bundle.HTTPVerb Method { get; private set; }
+    public Bundle.HTTPVerb Method { get; }
 
     // API: HttpVerb should not be in Bundle.
     public DateTimeOffset? When
@@ -74,7 +74,7 @@ public class Entry
         State = EntryState.Undefined;
     }
 
-    protected Entry(IKey key, Resource resource)
+    private Entry(IKey key, Resource resource)
     {
         _key = key;
         Key = key;

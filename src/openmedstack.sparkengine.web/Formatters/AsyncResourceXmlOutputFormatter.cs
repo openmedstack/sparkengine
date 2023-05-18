@@ -70,7 +70,7 @@ public class AsyncResourceXmlOutputFormatter : TextOutputFormatter
             throw new ArgumentNullException(nameof(selectedEncoding));
         }
 
-        if (selectedEncoding != Encoding.UTF8)
+        if (!Encoding.UTF8.Equals(selectedEncoding))
         {
             throw Error.BadRequest($"FHIR supports UTF-8 encoding exclusively, not {selectedEncoding.WebName}");
         }

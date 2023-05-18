@@ -11,9 +11,9 @@ namespace OpenMedStack.SparkEngine.Search.Model;
 using System;
 using System.Text.RegularExpressions;
 
-public class ReverseInclude
+public partial class ReverseInclude
 {
-    private static readonly Regex Pattern = new(@"(?<resourcetype>[^\.]+)\.(?<searchpath>.*)");
+    private static readonly Regex Pattern = ResourceSearchPathRegex();
 
     public string ResourceType { get; private set; } = null!;
     public string? SearchPath { get; private set; }
@@ -48,4 +48,7 @@ public class ReverseInclude
 
         return result;
     }
+
+    [GeneratedRegex("(?<resourcetype>[^\\.]+)\\.(?<searchpath>.*)")]
+    private static partial Regex ResourceSearchPathRegex();
 }

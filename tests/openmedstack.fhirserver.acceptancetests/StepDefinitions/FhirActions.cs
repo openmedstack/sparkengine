@@ -79,18 +79,19 @@ public partial class FeatureSteps
     {
         try
         {
-            _fhirClient.RequestHeaders.Authorization = new("Bearer", "invalid");
+            _fhirClient.RequestHeaders!.Authorization = new("Bearer", "invalid");
             _ = await _fhirClient.ReadAsync<Patient>($"Patient/blah").ConfigureAwait(false);
         }
         catch
         {
+            // Intentionally left blank
         }
     }
 
     [Then(@"the response should contain an error message indicating authentication failure")]
     public void ThenTheResponseShouldContainAnErrorMessageIndicatingAuthenticationFailure()
     {
-        var extension = _fhirClient.LastResult.Extension[0].Value.ToString();
+        var extension = _fhirClient.LastResult?.Extension[0].Value.ToString();
         Assert.EndsWith("error=\"invalid_token\"", extension);
     }
 
@@ -99,7 +100,7 @@ public partial class FeatureSteps
     {
         try
         {
-            var response = await _fhirClient.ReadAsync<Patient>("Patient/blah").ConfigureAwait(false);
+            _ = await _fhirClient.ReadAsync<Patient>("Patient/blah").ConfigureAwait(false);
         }
         catch (FhirOperationException e)
         {
@@ -119,7 +120,7 @@ public partial class FeatureSteps
         try
         {
             var p = SearchParams.FromUriParamList(new[] { Tuple.Create("blah", "blah") });
-            var bundle = await _fhirClient.SearchAsync<Patient>(p).ConfigureAwait(false);
+            _ = await _fhirClient.SearchAsync<Patient>(p).ConfigureAwait(false);
         }
         catch (FhirOperationException e)
         {
@@ -149,6 +150,7 @@ public partial class FeatureSteps
     [Then(@"the response should contain an error message indicating missing or invalid request parameters")]
     public void ThenTheResponseShouldContainAnErrorMessageIndicatingMissingOrInvalidRequestParameters()
     {
-        Assert.Equal("Must be a FHIR REST url containing the resource type in its path (Parameter 'location')",_errorMessage);
+        Assert.Equal("Must be a FHIR REST url containing the resource type in its path (Parameter 'location')",
+            _errorMessage);
     }
 }

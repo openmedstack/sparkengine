@@ -136,10 +136,10 @@ public class IndexServiceTests
     {
         var g =new CarePlan
         {
-            Addresses = new List<CodeableReference>{new CodeableReference{ Reference = new ResourceReference("Condition/f204","Roel\u0027s renal insufficiency")}},
+            Addresses = new List<CodeableReference>{new() { Reference = new ResourceReference("Condition/f204","Roel\u0027s renal insufficiency")}},
             Activity = new List<CarePlan.ActivityComponent>
             {
-                new CarePlan.ActivityComponent
+                new()
                 {
                 }
             }

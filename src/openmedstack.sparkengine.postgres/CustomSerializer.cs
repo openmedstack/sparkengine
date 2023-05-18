@@ -83,7 +83,7 @@ internal class CustomSerializer : ISerializer
     }
 
     /// <inheritdoc />
-    public async ValueTask<object> FromJsonAsync(Type type, Stream stream, CancellationToken cancellationToken = new CancellationToken())
+    public async ValueTask<object> FromJsonAsync(Type type, Stream stream, CancellationToken cancellationToken = new())
     {
         using var streamReader = new StreamReader(stream);
         await using var jsonTextReader = new JsonTextReader(streamReader);
@@ -95,7 +95,7 @@ internal class CustomSerializer : ISerializer
         Type type,
         DbDataReader reader,
         int index,
-        CancellationToken cancellationToken = new CancellationToken())
+        CancellationToken cancellationToken = new())
     {
         using var textReader = reader.GetTextReader(index);
         await using var jsonTextReader = new JsonTextReader(textReader);

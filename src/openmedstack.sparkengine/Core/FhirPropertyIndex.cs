@@ -172,8 +172,7 @@ public class FhirPropertyIndex
         {
             target.PropertyName = attFhirElement.Name;
             target.IsFhirElement = true;
-            if (attFhirElement.Choice == ChoiceType.DatatypeChoice
-                || attFhirElement.Choice == ChoiceType.ResourceChoice)
+            if (attFhirElement.Choice is ChoiceType.DatatypeChoice or ChoiceType.ResourceChoice)
             {
                 var attChoiceAttribute = prop.GetCustomAttribute<AllowedTypesAttribute>(false);
                 //CK: Nasty workaround because Element.Value is specified wit AllowedTypes(Element) instead of the list of exact types.

@@ -20,8 +20,8 @@ using Quantity = Fhir.Metrics.Quantity;
 
 public static class QuantityExtensions
 {
-    public static readonly string UcumUriString = "http://unitsofmeasure.org";
-    public static readonly SystemOfUnits System = UCUM.Load();
+    private static readonly string UcumUriString = "http://unitsofmeasure.org";
+    private static readonly SystemOfUnits System = UCUM.Load();
 
     public static Quantity ToUnitsOfMeasureQuantity(this FM.Quantity input)
     {
@@ -29,7 +29,7 @@ public static class QuantityExtensions
         Exponential value = input.Value ?? 1; //todo: is this assumption correct?
         return new Quantity(value, metric);
     }
-        
+
     public static Expression ToExpression(this Quantity quantity)
     {
         quantity = quantity.Canonical();

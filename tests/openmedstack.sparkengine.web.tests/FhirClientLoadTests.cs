@@ -24,7 +24,7 @@ public class FhirClientLoadTests : IDisposable
     {
         IdentityModelEventSource.ShowPII = true;
         _outputHelper = outputHelper;
-        _server = new TestFhirServer("https://localhost:7266");
+        _server = new TestFhirServer(outputHelper, "https://localhost:7266");
     }
 
     [Theory]

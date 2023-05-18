@@ -35,9 +35,7 @@ internal class TestServerStartup : IConfigureWebApplication
         services.AddFhir<UmaFhirController>(
                 new SparkSettings
                 {
-                    UseAsynchronousIO = true,
                     Endpoint = new Uri(_configuration.FhirRoot),
-                    FhirRelease = FhirRelease.R5.ToString(),
                     ParserSettings = ParserSettings.CreateDefault(),
                     SerializerSettings = SerializerSettings.CreateDefault()
                 })

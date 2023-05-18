@@ -1,3 +1,5 @@
+using Xunit.Abstractions;
+
 namespace OpenMedStack.SparkEngine.Web.Tests;
 
 using Hl7.Fhir.Model;
@@ -12,11 +14,11 @@ public class PatientLifeCycleStepDefinitions
     private TestFhirServer _server;
     private FhirClient _client;
     private Patient _patient = null!;
-    
+
     [Given(@"a running server")]
-    public void GivenARunningServer()
+    public void GivenARunningServer(ITestOutputHelper outputHelper)
     {
-        _server = new TestFhirServer("https://localhost:60001");
+        _server = new TestFhirServer(outputHelper, "https://localhost:60001");
     }
 
     [Given(@"a FHIR client")]
@@ -65,13 +67,13 @@ public class PatientLifeCycleStepDefinitions
         _patient.BirthDateElement = new Date(1970, 1, 1);
         _patient = await _client.UpdateAsync(_patient).ConfigureAwait(false);
 
-        Assert.NotNull(_patient.BirthDate);
+        Assert.NotNull(_patient?.BirthDate);
     }
 
     [Then(@"can be found when searched")]
     public async System.Threading.Tasks.Task ThenCanBeFoundWhenSearched()
     {
         var p = await _client.SearchByIdAsync<Patient>(_patient.Id).ConfigureAwait(false);
-        Assert.NotEmpty(p.Children);
+        Assert.NotEmpty(p!.Children);
     }
 }

@@ -28,7 +28,7 @@ public class Transfer : ITransfer
 
     public Transfer(IGenerator generator, ILocalhost localhost, SparkSettings? sparkSettings = null)
     {
-        _export = new(localhost, sparkSettings?.ExportSettings ?? new ExportSettings());
+        _export = new(localhost);
         _import = new(localhost, generator);
     }
 

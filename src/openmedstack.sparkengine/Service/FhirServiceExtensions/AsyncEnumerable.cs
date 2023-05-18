@@ -15,7 +15,7 @@ internal static class AsyncEnumerable
     private class EmptyAsyncEnumerable<T> : IAsyncEnumerable<T>
     {
         /// <inheritdoc />
-        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = new CancellationToken())
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = new())
         {
             return new EmptyAsyncEnumerator<T>();
         }

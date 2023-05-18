@@ -17,13 +17,9 @@ using Search;
 public class SparkSettings
 {
     public Uri Endpoint { get; init; } = null!;
-    public bool UseAsynchronousIO { get; set; }
-    public ParserSettings? ParserSettings { get; set; }
-    public SerializerSettings? SerializerSettings { get; set; }
-    public ExportSettings? ExportSettings { get; set; }
+    public ParserSettings? ParserSettings { get; init; }
+    public SerializerSettings? SerializerSettings { get; init; }
     public IndexSettings? IndexSettings { get; set; }
-    public SearchSettings? Search { get; set; }
-    public string FhirRelease { get; set; } = "R4";
 
     public static string Version
     {
