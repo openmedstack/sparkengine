@@ -1,4 +1,7 @@
-﻿namespace OpenMedStack.FhirServer;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+
+namespace OpenMedStack.FhirServer;
 
 using System;
 using System.Net.Http;
@@ -20,9 +23,22 @@ internal class FhirModule : Module
     /// <inheritdoc />
     protected override void Load(ContainerBuilder builder)
     {
-        builder.RegisterType<HostTenantProvider>().As<IProvideTenant>().InstancePerRequest();
-        builder.RegisterInstance(_configuration).AsSelf().As<DeploymentConfiguration>()
+        builder.RegisterInstance(new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+            NullValueHandling = NullValueHandling.Include,
+            DefaultValueHandling = DefaultValueHandling.Include,
+            TypeNameHandling = TypeNameHandling.Auto,
+            Formatting = Formatting.None,
+            DateParseHandling = DateParseHandling.DateTimeOffset
+        }).AsSelf().SingleInstance();
+        builder.RegisterInstance(_configuration)
+            .AsSelf()
+            .As<DeploymentConfiguration>()
             .IfNotRegistered(typeof(DeploymentConfiguration));
+        builder.RegisterType<ConfigurationTenantProvider>().As<IProvideTenant>().InstancePerRequest();
         builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
         builder.RegisterType<GuidGenerator>().As<IGenerator>().SingleInstance();
         builder.RegisterType<PatchService>().As<IPatchService>().SingleInstance();
@@ -40,7 +56,8 @@ internal class FhirModule : Module
                     ctx.Resolve<Func<HttpClient>>(),
                     new Uri(_configuration.TokenService)))
             .AsSelf()
-            .AsImplementedInterfaces().InstancePerLifetimeScope();
+            .AsImplementedInterfaces()
+            .InstancePerLifetimeScope();
         builder.Register(
                 sp => new TokenClient(
                     TokenCredentials.FromClientCredentials(_configuration.ClientId, _configuration.Secret),
@@ -50,7 +67,8 @@ internal class FhirModule : Module
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
         builder.RegisterType<TokenCache>().AsSelf().AsImplementedInterfaces().SingleInstance();
-        builder.RegisterInstance(new ApplicationNameProvider(_configuration)).AsImplementedInterfaces()
+        builder.RegisterInstance(new ApplicationNameProvider(_configuration))
+            .AsImplementedInterfaces()
             .SingleInstance();
     }
 }

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="../../shared.projinfo" />
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,7 +11,7 @@
   <ItemGroup>
     <PackageReference Include="openmedstack" Version="1.7.0" />
     <ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

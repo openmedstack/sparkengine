@@ -30,8 +30,6 @@ public static class ServiceCollectionExtensions
                     o.Policies.AllDocumentsAreMultiTenanted();
                     /*
 
-    DROP INDEX IF EXISTS public.mt_doc_indexentry_idx_data_values;
-
     CREATE INDEX IF NOT EXISTS mt_doc_indexentry_idx_data_values
         ON public.mt_doc_indexentry USING gin
         ((data -> 'values'::text) jsonb_ops)

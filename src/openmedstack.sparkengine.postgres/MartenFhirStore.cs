@@ -52,7 +52,7 @@ public class MartenFhirStore : IFhirStore
             await session.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        var persisted = await _persistence.Store(entry.Resource, cancellationToken).ConfigureAwait(false);
+        await _persistence.Store(entry.Resource, cancellationToken).ConfigureAwait(false);
         var entryEnvelope = new ResourceInfo
         {
             Id = entry.Key.ToStorageKey(),
@@ -82,9 +82,9 @@ public class MartenFhirStore : IFhirStore
             : await session.Query<ResourceInfo>()
                 .Where(
                     x => x.ResourceType == key.TypeName
-                         && x.IsDeleted == false
-                         && x.IsPresent
-                         && x.ResourceId == key.ResourceId)
+                     && x.IsDeleted == false
+                     && x.IsPresent
+                     && x.ResourceId == key.ResourceId)
                 .OrderByDescending(x => x.When)
                 .FirstOrDefaultAsync(token: cancellationToken)
                 .ConfigureAwait(false);
@@ -122,8 +122,8 @@ public class MartenFhirStore : IFhirStore
         var count = await session.Query<ResourceInfo>()
             .CountAsync(
                 x => x.ResourceType == key.TypeName
-                     && x.Id == key.ResourceId
-                     && x.VersionId == key.VersionId,
+                 && x.Id == key.ResourceId
+                 && x.VersionId == key.VersionId,
                 token: cancellationToken)
             .ConfigureAwait(false);
         return count > 0;

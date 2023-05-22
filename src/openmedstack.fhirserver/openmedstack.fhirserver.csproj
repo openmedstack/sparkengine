@@ -18,6 +18,7 @@
         <PackageReference Include="openmedstack.linq2fhir.R5" Version="0.1.1" />
         <PackageReference Include="openmedstack.web.autofac" Version="1.7.0" />
         <PackageReference Include="OpenMedStack.Autofac.MassTransit.RabbitMq" Version="1.7.0" />
+        <PackageReference Include="AspNetCore.HealthChecks.Npgsql" Version="6.0.2" />
     </ItemGroup>
 
     <ItemGroup>

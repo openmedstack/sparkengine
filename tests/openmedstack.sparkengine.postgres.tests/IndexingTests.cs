@@ -5,7 +5,6 @@ using Hl7.Fhir.Serialization;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
-using OpenMedStack.SparkEngine.Postgres;
 using OpenMedStack.SparkEngine.Search;
 using OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 using Task = System.Threading.Tasks.Task;
