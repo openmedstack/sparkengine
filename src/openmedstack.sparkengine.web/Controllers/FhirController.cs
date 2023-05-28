@@ -76,7 +76,7 @@ public abstract class FhirController : ControllerBase
     [HttpPut("{type}/{id?}")]
     public virtual async Task<FhirResponse?> Update(
         string type,
-        Resource resource,
+        [FromBody] Resource resource,
         string? id = null,
         CancellationToken cancellationToken = default)
     {

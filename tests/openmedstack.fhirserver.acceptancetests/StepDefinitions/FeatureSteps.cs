@@ -98,6 +98,8 @@ public partial class FeatureSteps
     }
 
     [Given(@"a FHIR client")]
+    // ReSharper disable once InconsistentNaming
+    // ReSharper disable once IdentifierTypo
     public async System.Threading.Tasks.Task GivenAFHIRClient()
     {
         var option =
@@ -116,6 +118,7 @@ public partial class FeatureSteps
     }
 
     [Given(@"a UMA FHIR client")]
+    // ReSharper disable once IdentifierTypo
     public void GivenAumafhirClient()
     {
         var client = _chassis.CreateClient();

@@ -1,13 +1,11 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
+
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
-
-namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
-
 using System;
 using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Specification;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,7 +89,9 @@ internal class TestSecurityTokenValidator : ISecurityTokenValidator
         return _handler.CanReadToken(securityToken);
     }
 
-    public ClaimsPrincipal ValidateToken(string securityToken, TokenValidationParameters validationParameters,
+    public ClaimsPrincipal ValidateToken(
+        string securityToken,
+        TokenValidationParameters validationParameters,
         out SecurityToken validatedToken)
     {
         var jwt = _handler.ReadJwtToken(securityToken);

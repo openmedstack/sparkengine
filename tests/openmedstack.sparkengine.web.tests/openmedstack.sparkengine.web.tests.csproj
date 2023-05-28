@@ -36,4 +36,9 @@
 		</None>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Features\" />
+	  <Folder Include="StepDefinitions\" />
+	</ItemGroup>
+
 </Project>
