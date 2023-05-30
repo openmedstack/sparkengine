@@ -7,7 +7,7 @@
 		<Description>FHIR Server Engine S3 Storage</Description>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="3.7.104.14" />
+		<PackageReference Include="AWSSDK.S3" Version="3.7.104.23" />
 		<PackageReference Include="openmedstack" Version="1.7.0" />
 	</ItemGroup>
 	<ItemGroup>
