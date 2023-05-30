@@ -152,7 +152,7 @@ public abstract class FhirController : ControllerBase
     public virtual Task<FhirResponse> Validate(
         string type,
         string id,
-        Resource resource,
+        [FromBody] Resource resource,
         CancellationToken cancellationToken)
     {
         var key = Key.Create(type, id);
@@ -160,7 +160,10 @@ public abstract class FhirController : ControllerBase
     }
 
     [HttpPost("{type}/$validate")]
-    public virtual Task<FhirResponse> Validate(string type, Resource resource, CancellationToken cancellationToken)
+    public virtual Task<FhirResponse> Validate(
+        string type,
+        [FromBody] Resource resource,
+        CancellationToken cancellationToken)
     {
         var key = Key.Create(type);
         return FhirService.ValidateOperation(key, resource, cancellationToken);
@@ -232,7 +235,7 @@ public abstract class FhirController : ControllerBase
 
     [HttpPost]
     [Route("")]
-    public virtual Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken) =>
+    public virtual Task<FhirResponse> Transaction([FromBody] Bundle bundle, CancellationToken cancellationToken) =>
         FhirService.Transaction(bundle, cancellationToken);
 
     //[HttpPost, Route("Mailbox")]
