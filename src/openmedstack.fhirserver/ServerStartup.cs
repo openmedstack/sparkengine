@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenMedStack.SparkEngine.Postgres;
 using OpenMedStack.SparkEngine.S3;
+using OpenMedStack.Web;
 
 namespace OpenMedStack.FhirServer;
 
@@ -19,7 +20,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using SparkEngine;
 using SparkEngine.Web;
-using Web.Autofac;
 
 internal class ServerStartup : IConfigureWebApplication
 {

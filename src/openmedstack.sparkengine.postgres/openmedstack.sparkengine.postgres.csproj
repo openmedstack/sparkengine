@@ -8,9 +8,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Marten" Version="6.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-		<PackageReference Include="openmedstack" Version="1.7.0" />
+		<PackageReference Include="Marten" Version="6.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+		<PackageReference Include="openmedstack" Version="1.7.3" />
 	</ItemGroup>
 
 	<ItemGroup>

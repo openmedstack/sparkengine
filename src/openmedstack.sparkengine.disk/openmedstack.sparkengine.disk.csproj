@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="openmedstack" Version="1.7.0" />
+    <PackageReference Include="openmedstack" Version="1.7.3" />
     <ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

@@ -1,3 +1,5 @@
+using OpenMedStack.Web.Autofac;
+
 namespace OpenMedStack.FhirServer;
 
 using System;
@@ -8,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenMedStack.Autofac;
 using OpenMedStack.Autofac.MassTransit.RabbitMq;
-using OpenMedStack.Web.Autofac;
 
 internal class Program
 {
@@ -95,8 +96,8 @@ internal class Program
         var chassis = Chassis.From(configuration)
             .AddAutofacModules((c, _) => new FhirModule(c))
             .UsingMassTransitOverRabbitMq()
-            //.UsingInMemoryMassTransit()
-            .BindToUrls(configuration.Urls)
+//            .UsingInMemoryMassTransit()
+//            .BindToUrls(configuration.Urls)
             .UsingWebServer(c => new ServerStartup(c));
         Console.CancelKeyPress += OnCancelKey;
 

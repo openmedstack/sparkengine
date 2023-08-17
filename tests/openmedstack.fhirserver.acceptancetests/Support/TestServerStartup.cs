@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
+﻿using OpenMedStack.Web;
+
+namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,7 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using OpenMedStack.SparkEngine;
 using OpenMedStack.SparkEngine.Web;
-using OpenMedStack.Web.Autofac;
 
 internal class TestServerStartup : IConfigureWebApplication
 {
