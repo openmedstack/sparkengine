@@ -6,6 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
+using NSubstitute;
+
 namespace OpenMedStack.SparkEngine.Tests.Service;
 
 using System.Collections.Generic;
@@ -17,7 +19,6 @@ using Hl7.Fhir.Serialization;
 using Interfaces;
 using Microsoft.Extensions.Logging;
 using Model;
-using Moq;
 using Newtonsoft.Json;
 using SparkEngine.Core;
 using SparkEngine.Search;
@@ -38,7 +39,7 @@ public class IndexServiceTests
 
     public IndexServiceTests()
     {
-        var indexStoreMock = new Mock<IIndexStore>();
+        var indexStoreMock = Substitute.For<IIndexStore>();
         _examplePatientJson = File.ReadAllText(
             $".{Path.DirectorySeparatorChar}Examples{Path.DirectorySeparatorChar}patient-example.json");
         _exampleAppointmentJson = File.ReadAllText(
@@ -72,13 +73,13 @@ public class IndexServiceTests
 
         // For this test setup we want a limited available types and search parameters.
         IFhirModel limitedFhirModel = new FhirModel(searchParameters);
-        var limitedElementIndexer = new ElementIndexer(limitedFhirModel, new Mock<ILogger<ElementIndexer>>().Object);
-        _limitedIndexService = new IndexService(limitedFhirModel, indexStoreMock.Object, limitedElementIndexer);
+        var limitedElementIndexer = new ElementIndexer(limitedFhirModel, Substitute.For<ILogger<ElementIndexer>>());
+        _limitedIndexService = new IndexService(limitedFhirModel, indexStoreMock, limitedElementIndexer);
 
         // For this test setup we want all available types and search parameters.
         IFhirModel fullFhirModel = new FhirModel();
-        var fullElementIndexer = new ElementIndexer(fullFhirModel, new Mock<ILogger<ElementIndexer>>().Object);
-        _fullIndexService = new IndexService(fullFhirModel, indexStoreMock.Object, fullElementIndexer);
+        var fullElementIndexer = new ElementIndexer(fullFhirModel, Substitute.For<ILogger<ElementIndexer>>());
+        _fullIndexService = new IndexService(fullFhirModel, indexStoreMock, fullElementIndexer);
     }
 
     [Fact]
@@ -134,9 +135,10 @@ public class IndexServiceTests
     [Fact]
     public async Task SerializeGoal()
     {
-        var g =new CarePlan
+        var g = new CarePlan
         {
-            Addresses = new List<CodeableReference>{new() { Reference = new ResourceReference("Condition/f204","Roel\u0027s renal insufficiency")}},
+            Addresses = new List<CodeableReference>
+                { new() { Reference = new ResourceReference("Condition/f204", "Roel\u0027s renal insufficiency") } },
             Activity = new List<CarePlan.ActivityComponent>
             {
                 new()

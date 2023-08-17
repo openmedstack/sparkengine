@@ -6,6 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
+using NSubstitute;
+
 namespace OpenMedStack.SparkEngine.Tests.Search;
 
 using System.Collections.Generic;
@@ -13,7 +15,6 @@ using System.Linq;
 using Hl7.Fhir.Model;
 using Microsoft.Extensions.Logging;
 using Model;
-using Moq;
 using SparkEngine.Core;
 using SparkEngine.Search;
 using SparkEngine.Search.ValueExpressionTypes;
@@ -54,7 +55,7 @@ public class ElementIndexerTests
         //eventListener.EnableEvents(SparkEngineEventSource.Log, EventLevel.LogAlways,
         //      Keywords.All);
         //eventListener.Subscribe(new LogObserver(result => lastLogEntry = result));
-        _sut = new ElementIndexer(fhirModel, new Mock<ILogger<ElementIndexer>>().Object);
+        _sut = new ElementIndexer(fhirModel, Substitute.For<ILogger<ElementIndexer>>());
     }
 
     [Fact]
@@ -67,7 +68,7 @@ public class ElementIndexerTests
     [Fact]
     public void ElementMapTest()
     {
-        var input = new Annotation {Text = new Markdown("Text of the annotation")};
+        var input = new Annotation { Text = new Markdown("Text of the annotation") };
         _ = _sut.Map(input);
 
         //    Assert.Equal(2, lastLogEntry.EventId); //EventId 2 is related to Unsupported  features.
@@ -80,7 +81,7 @@ public class ElementIndexerTests
         var result = _sut.Map(input);
         Assert.Single(result);
         Assert.IsType<NumberValue>(result[0]);
-        Assert.Equal(1081.54M, ((NumberValue) result[0]).Value);
+        Assert.Equal(1081.54M, ((NumberValue)result[0]).Value);
     }
 
     private static void CheckPeriod(IReadOnlyCollection<Expression> result, string start, string end)
@@ -148,7 +149,7 @@ public class ElementIndexerTests
     [Fact]
     public void PeriodWithJustStartMapTest()
     {
-        var input = new Period {StartElement = new FhirDateTime("2015-02")};
+        var input = new Period { StartElement = new FhirDateTime("2015-02") };
         var result = _sut.Map(input);
         CheckPeriod(result, "2015-02-01T00:00:00+00:00", null);
     }
@@ -156,7 +157,7 @@ public class ElementIndexerTests
     [Fact]
     public void PeriodWithJustEndMapTest()
     {
-        var input = new Period {EndElement = new FhirDateTime("2015-03")};
+        var input = new Period { EndElement = new FhirDateTime("2015-03") };
         var result = _sut.Map(input);
         CheckPeriod(result, null, "2015-04-01T00:00:00+00:00");
     }
@@ -183,7 +184,7 @@ public class ElementIndexerTests
     {
         CheckCodingFlexible(
             comp,
-            new Dictionary<string, string> {{"code", code}, {"system", system}, {"text", text}});
+            new Dictionary<string, string> { { "code", code }, { "system", system }, { "text", text } });
     }
 
     private static void CheckCodingFlexible(CompositeValue comp, Dictionary<string, string> elements)
@@ -198,14 +199,14 @@ public class ElementIndexerTests
 
         foreach (var element in elementsToCheck)
         {
-            var elementIv = (IndexValue) comp.Components.Where(c => (c as IndexValue).Name == element.Key)
+            var elementIv = (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == element.Key)
                 .FirstOrDefault();
             Assert.NotNull(elementIv); //, $"Expected a component '{element.Key}'");
             Assert.Single(elementIv.Values); //, $"Expected exactly one component '{element.Key}'");
             Assert.IsType<StringValue>(
                 elementIv.Values[
                     0]); //, $"Expected component '{element.Key}' to be of type {nameof(StringValue)}");
-            var codeSv = (StringValue) elementIv.Values[0];
+            var codeSv = (StringValue)elementIv.Values[0];
             Assert.Equal(
                 element.Value,
                 codeSv.Value); //, $"Expected component '{element.Key}' to have the value '{element.Value}'");
@@ -215,7 +216,7 @@ public class ElementIndexerTests
     [Fact]
     public void CodeableConceptMapTest()
     {
-        var input = new CodeableConcept {Text = "bla text", Coding = new List<Coding>()};
+        var input = new CodeableConcept { Text = "bla text", Coding = new List<Coding>() };
 
         var coding1 = new Coding
         {
@@ -242,7 +243,7 @@ public class ElementIndexerTests
         var textIVs = result.Where(c => c.GetType() == typeof(IndexValue) && (c as IndexValue).Name == "text")
             .ToList();
         Assert.Single(textIVs);
-        var textIv = (IndexValue) textIVs.FirstOrDefault();
+        var textIv = (IndexValue)textIVs.FirstOrDefault();
         Assert.NotNull(textIv);
         Assert.Single(textIv.Values);
         Assert.IsType<StringValue>(textIv.Values[0]);
@@ -252,8 +253,8 @@ public class ElementIndexerTests
         var codeIVs = result.Where(c => c.GetType() == typeof(CompositeValue)).ToList();
         Assert.Equal(2, codeIVs.Count);
 
-        var codeIv1 = (CompositeValue) codeIVs[0];
-        var codeIv2 = (CompositeValue) codeIVs[1];
+        var codeIv1 = (CompositeValue)codeIVs[0];
+        var codeIv2 = (CompositeValue)codeIVs[1];
         if (((codeIv1.Components[0] as IndexValue).Values[0] as StringValue).Value == "bla")
         {
             CheckCoding(codeIv1, "bla", "http://bla.com", "bla display");
@@ -278,7 +279,7 @@ public class ElementIndexerTests
 
         Assert.Single(result);
         Assert.IsType<CompositeValue>(result[0]);
-        var comp = (CompositeValue) result[0];
+        var comp = (CompositeValue)result[0];
 
         CheckCoding(comp, "id-value", "id-system", null);
     }
@@ -296,18 +297,18 @@ public class ElementIndexerTests
 
         Assert.Single(result);
         Assert.IsType<CompositeValue>(result[0]);
-        var comp = (CompositeValue) result[0];
+        var comp = (CompositeValue)result[0];
 
-        var codeIv = (IndexValue) comp.Components.OfType<IndexValue>().FirstOrDefault(c => c.Name == "code");
+        var codeIv = (IndexValue)comp.Components.OfType<IndexValue>().FirstOrDefault(c => c.Name == "code");
         Assert.NotNull(codeIv); //, "Expected a component 'code'");
         Assert.Single(codeIv.Values);
         Assert.IsType<StringValue>(codeIv.Values[0]);
-        var codeSv = (StringValue) codeIv.Values[0];
+        var codeSv = (StringValue)codeIv.Values[0];
         Assert.Equal("cp-value", codeSv.Value);
 
-        var useIv = (IndexValue) comp.Components.Where(c => (c as IndexValue).Name == "use").FirstOrDefault();
+        var useIv = (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "use").FirstOrDefault();
         Assert.NotNull(codeIv); //, "Expected a component 'use'");
-        var useCode = (CompositeValue) useIv.Values.Where(c => c is CompositeValue).FirstOrDefault();
+        var useCode = (CompositeValue)useIv.Values.Where(c => c is CompositeValue).FirstOrDefault();
         Assert.NotNull(useCode); //, $"Expected a value of type {nameof(CompositeValue)} in the 'use' component");
         CheckCoding(useCode, "mobile", null, null);
     }
@@ -321,7 +322,7 @@ public class ElementIndexerTests
 
         Assert.Single(result);
         Assert.IsType<CompositeValue>(result[0]);
-        var comp = (CompositeValue) result[0];
+        var comp = (CompositeValue)result[0];
 
         CheckCoding(comp, "false", null, null);
     }
@@ -329,13 +330,13 @@ public class ElementIndexerTests
     [Fact]
     public void ResourceReferenceMapTest()
     {
-        var input = new ResourceReference {ReferenceElement = new FhirString("OtherType/OtherId")};
+        var input = new ResourceReference { ReferenceElement = new FhirString("OtherType/OtherId") };
 
         var result = _sut.Map(input);
 
         Assert.Single(result);
         Assert.IsType<StringValue>(result[0]);
-        var sv = (StringValue) result[0];
+        var sv = (StringValue)result[0];
         Assert.Equal("OtherType/OtherId", sv.Value);
     }
 
@@ -346,7 +347,7 @@ public class ElementIndexerTests
         {
             City = "Amsterdam",
             Country = "Netherlands",
-            Line = new List<string> {"Bruggebouw", "Bos en lommerplein 280"},
+            Line = new List<string> { "Bruggebouw", "Bos en lommerplein 280" },
             PostalCode = "1055 RW"
         };
 
@@ -408,55 +409,55 @@ public class ElementIndexerTests
         string decimals)
     {
         var nrOfElements = (value.HasValue ? 1 : 0)
-                           + new List<string> {unit, system, decimals}.Count(s => s != null);
+          + new List<string> { unit, system, decimals }.Count(s => s != null);
 
         Assert.Single(result);
         Assert.IsType<CompositeValue>(result[0]);
-        var comp = (CompositeValue) result[0];
+        var comp = (CompositeValue)result[0];
 
         Assert.Equal(nrOfElements, comp.Components.Length);
         Assert.Equal(nrOfElements, comp.Components.Count(c => c.GetType() == typeof(IndexValue)));
 
         if (value.HasValue)
         {
-            var compValue = (IndexValue) comp.Components.FirstOrDefault(c => (c as IndexValue).Name == "value");
+            var compValue = (IndexValue)comp.Components.FirstOrDefault(c => (c as IndexValue).Name == "value");
             Assert.NotNull(compValue);
             Assert.Single(compValue.Values);
             Assert.IsType<NumberValue>(compValue.Values[0]);
-            var numberValue = (NumberValue) compValue.Values[0];
+            var numberValue = (NumberValue)compValue.Values[0];
             Assert.Equal(value.Value, numberValue.Value);
         }
 
         if (unit != null)
         {
             var compUnit =
-                (IndexValue) comp.Components.Where(c => (c as IndexValue).Name == "unit").FirstOrDefault();
+                (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "unit").FirstOrDefault();
             Assert.NotNull(compUnit);
             Assert.Single(compUnit.Values);
             Assert.IsType<StringValue>(compUnit.Values[0]);
-            var stringUnit = (StringValue) compUnit.Values[0];
+            var stringUnit = (StringValue)compUnit.Values[0];
             Assert.Equal(unit, stringUnit.Value);
         }
 
         if (system != null)
         {
             var compSystem =
-                (IndexValue) comp.Components.Where(c => (c as IndexValue).Name == "system").FirstOrDefault();
+                (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "system").FirstOrDefault();
             Assert.NotNull(compSystem);
             Assert.Single(compSystem.Values);
             Assert.IsType<StringValue>(compSystem.Values[0]);
-            var stringSystem = (StringValue) compSystem.Values[0];
+            var stringSystem = (StringValue)compSystem.Values[0];
             Assert.Equal(system, stringSystem.Value);
         }
 
         if (decimals != null)
         {
-            var compCode = (IndexValue) comp.Components.Where(c => (c as IndexValue).Name == "decimals")
+            var compCode = (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "decimals")
                 .FirstOrDefault();
             Assert.NotNull(compCode);
             Assert.Single(compCode.Values);
             Assert.IsType<StringValue>(compCode.Values[0]);
-            var stringCode = (StringValue) compCode.Values[0];
+            var stringCode = (StringValue)compCode.Values[0];
             Assert.Equal(decimals, stringCode.Value);
         }
     }
@@ -464,7 +465,7 @@ public class ElementIndexerTests
     [Fact]
     public void QuantityValueUnitMapTest()
     {
-        var input = new Quantity {Value = 10, Unit = "km"};
+        var input = new Quantity { Value = 10, Unit = "km" };
 
         var result = _sut.Map(input);
 
@@ -474,7 +475,7 @@ public class ElementIndexerTests
     [Fact]
     public void QuantityValueSystemCodeMapTest()
     {
-        var input = new Quantity {Value = 10, System = "http://unitsofmeasure.org", Code = "kg"};
+        var input = new Quantity { Value = 10, System = "http://unitsofmeasure.org", Code = "kg" };
 
         var result = _sut.Map(input);
 
