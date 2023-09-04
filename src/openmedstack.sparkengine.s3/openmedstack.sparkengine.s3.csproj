@@ -7,8 +7,8 @@
 		<Description>FHIR Server Engine S3 Storage</Description>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="3.7.201.16" />
-		<PackageReference Include="openmedstack" Version="1.7.3" />
+		<PackageReference Include="AWSSDK.S3" Version="3.7.203.7" />
+		<PackageReference Include="openmedstack" Version="2.0.2" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />

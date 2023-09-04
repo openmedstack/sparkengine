@@ -14,10 +14,10 @@
         <TrimmerRootAssembly Include="openmedstack.sparkengine.web" />
         <TrimmerRootAssembly Include="Hl7.Fhir.R5" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.10" />
-        <PackageReference Include="openmedstack.domain" Version="1.7.3" />
+        <PackageReference Include="openmedstack.domain" Version="2.0.2" />
         <PackageReference Include="openmedstack.linq2fhir.R5" Version="0.1.1" />
-        <PackageReference Include="openmedstack.web.autofac" Version="1.7.3" />
-        <PackageReference Include="OpenMedStack.Autofac.MassTransit.RabbitMq" Version="1.7.3" />
+        <PackageReference Include="openmedstack.web.autofac" Version="2.0.2" />
+        <PackageReference Include="OpenMedStack.Autofac.MassTransit.RabbitMq" Version="2.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.Npgsql" Version="7.0.0" />
     </ItemGroup>
 
