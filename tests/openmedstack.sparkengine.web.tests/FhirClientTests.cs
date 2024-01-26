@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Tests;
+﻿using JasperFx.Core;
+
+namespace OpenMedStack.SparkEngine.Web.Tests;
 
 using System;
 using System.Net.Http;
@@ -20,7 +22,7 @@ public class FhirClientTests : IDisposable
     {
         IdentityModelEventSource.ShowPII = true;
         _outputHelper = outputHelper;
-        _server = new TestFhirServer(outputHelper,"https://localhost:7266");
+        _server = new TestFhirServer(outputHelper, "https://localhost:7266");
     }
 
     [Theory]
@@ -49,21 +51,28 @@ public class FhirClientTests : IDisposable
                 UseFormatParameter = false,
                 VerifyFhirVersion = false
             });
-        client.Settings.ParserSettings!.ExceptionHandler = (_, args) => { _outputHelper.WriteLine($"{args.Severity}: {args.Message}"); };
+        client.Settings.ParserSettings!.ExceptionHandler = (_, args) =>
+        {
+            _outputHelper.WriteLine($"{args.Severity}: {args.Message}");
+        };
 
         var patient = new Patient
         {
+            Id = Guid.NewGuid().ToString("N"),
             Active = true,
-            Name = { new HumanName
+            Name =
             {
-                Family = "Tester",
-                Given = new[]{"John"},
-                Text = "John Tester",
-                Use = HumanName.NameUse.Usual
-            } }
+                new HumanName
+                {
+                    Family = "Tester",
+                    Given = new[] { "John" },
+                    Text = "John Tester",
+                    Use = HumanName.NameUse.Usual
+                }
+            }
         };
 
-        var result = await client.CreateAsync(patient).ConfigureAwait(false);
+        var result = await client.CreateAsync(patient);
 
         Assert.NotNull(result!.Id);
     }

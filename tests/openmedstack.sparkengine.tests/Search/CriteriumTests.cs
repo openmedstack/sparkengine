@@ -65,48 +65,48 @@ public class CriteriumTests
         var crit = Criterium.Parse("Person", "birthdate", "2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.EQ, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate", "eq2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.EQ, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate", "ne2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.NOT_EQUAL, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate", "gt2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.GT, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate", "ge2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.GTE, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate", "lt2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.LT, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate", "le2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
         Assert.Null(crit.Modifier);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal(Operator.LTE, crit.Operator);
 
         crit = Criterium.Parse("Person", "birthdate:modif1", "ap2018-01-01");
         Assert.Equal("birthdate", crit.ParamName);
-        Assert.Equal("2018-01-01", crit.Operand.ToString());
+        Assert.Equal("2018-01-01", crit.Operand?.ToString());
         Assert.Equal("modif1", crit.Modifier);
         Assert.Equal(Operator.APPROX, crit.Operator);
 
@@ -153,12 +153,12 @@ public class CriteriumTests
         Assert.True(crit.Operand is Criterium);
 
         crit = crit.Operand as Criterium;
-        Assert.True(crit.Operator == Operator.CHAIN);
+        Assert.True(crit?.Operator == Operator.CHAIN);
         Assert.Null(crit.Modifier);
         Assert.True(crit.Operand is Criterium);
 
         crit = crit.Operand as Criterium;
-        Assert.True(crit.Operator == Operator.EQ);
+        Assert.True(crit?.Operator == Operator.EQ);
         Assert.Equal("text", crit.Modifier);
         Assert.True(crit.Operand is UntypedValue);
     }
@@ -225,7 +225,7 @@ public class CriteriumTests
         Assert.Equal(18.00M, p3.Value);
 
         var crit = Criterium.Parse("Person", "paramX", "18.34");
-        var p4 = ((UntypedValue)crit.Operand).AsNumberValue();
+        var p4 = ((UntypedValue)crit.Operand!).AsNumberValue();
         Assert.Equal(18.34M, p4.Value);
     }
 
@@ -243,7 +243,7 @@ public class CriteriumTests
         Assert.Equal("1972-11-30", p2.ToString());
 
         var crit = Criterium.Parse("Person", "paramX", "1972-11-30");
-        var p3 = ((UntypedValue)crit.Operand).AsDateValue();
+        var p3 = ((UntypedValue)crit.Operand!).AsDateValue();
         Assert.Equal("1972-11-30", p3.Value);
 
         // Test with an invalid FHIR datetime (no timezone specified)
@@ -258,7 +258,7 @@ public class CriteriumTests
         Assert.Equal("1972-11-30T15:20:49+00:00", p1.Value);
 
         var crit = Criterium.Parse("Person", "paramX", "1972-11-30T18:45:36Z");
-        var p3 = ((UntypedValue)crit.Operand).AsDateValue();
+        var p3 = ((UntypedValue)crit.Operand!).AsDateValue();
         Assert.Equal("1972-11-30", p3.Value);
 
         var p4 = ((UntypedValue)crit.Operand).AsDateTimeValue();
@@ -278,7 +278,7 @@ public class CriteriumTests
         Assert.Equal("Pay $300|Pay $100|", p3.Value);
 
         var crit = Criterium.Parse("Person", "paramX", @"Hello\, world");
-        var p4 = ((UntypedValue)crit.Operand).AsStringValue();
+        var p4 = ((UntypedValue)crit.Operand!).AsStringValue();
         Assert.Equal("Hello, world", p4.Value);
     }
 
@@ -319,7 +319,7 @@ public class CriteriumTests
         Assert.True(p8.AnyNamespace);
 
         var crit = Criterium.Parse("Person", "paramX", "|NOK");
-        var p9 = ((UntypedValue)crit.Operand).AsTokenValue();
+        var p9 = ((UntypedValue)crit.Operand!).AsTokenValue();
         Assert.Equal("NOK", p9.Value);
         Assert.False(p9.AnyNamespace);
     }
@@ -353,7 +353,7 @@ public class CriteriumTests
         Assert.Equal("$/d", p6.Unit);
 
         var crit = Criterium.Parse("Person", "paramX", "3.14||mg");
-        var p7 = ((UntypedValue)crit.Operand).AsQuantityValue();
+        var p7 = ((UntypedValue)crit.Operand!).AsQuantityValue();
         Assert.Equal(3.14M, p7.Number);
         Assert.Null(p7.Namespace);
         Assert.Equal("mg", p7.Unit);
@@ -402,7 +402,7 @@ public class CriteriumTests
         Assert.Equal("http://server.org/fhir/Patient/1", p2.Value);
 
         var crit = Criterium.Parse("Person", "paramX", @"http://server.org/\$4/fhir/Patient/1");
-        var p3 = ((UntypedValue)crit.Operand).AsReferenceValue();
+        var p3 = ((UntypedValue)crit.Operand!).AsReferenceValue();
         Assert.Equal("http://server.org/$4/fhir/Patient/1", p3.Value);
     }
 
@@ -431,7 +431,7 @@ public class CriteriumTests
         Assert.Equal(2, crit1.Choices.Length);
         Assert.True(crit1.Choices[0] is CompositeValue);
         var comp1 = crit1.Choices[0] as CompositeValue;
-        Assert.Equal(2, comp1.Components.Length);
+        Assert.Equal(2, comp1!.Components.Length);
         Assert.Equal("hello, world", ((UntypedValue)comp1.Components[0]).AsStringValue().Value);
         Assert.Equal(14.8M, ((UntypedValue)comp1.Components[1]).AsNumberValue().Value);
         Assert.Equal("http://somesuch.org|NOK", ((UntypedValue)crit1.Choices[1]).AsTokenValue().ToString());

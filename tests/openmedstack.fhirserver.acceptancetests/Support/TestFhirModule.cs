@@ -62,11 +62,20 @@ internal class TestUmaPermissionsClient : IUmaPermissionClient
         return Task.FromResult(new UmaConfiguration());
     }
 
-    public Uri Authority { get; } = new ("https://localhost");
+    public Uri Authority { get; } = new("https://localhost");
 }
 
 internal class TestUmaResourceSetClient : IUmaResourceSetClient
 {
+    public async Task<Option<IReadOnlyList<Ticket>>> ApproveTicket(
+        string ticketId,
+        string accessToken,
+        CancellationToken cancellationToken = new CancellationToken())
+    {
+        await Task.Yield();
+        return new List<Ticket>();
+    }
+
     public async Task<Option<UpdateResourceSetResponse>> UpdateResourceSet(
         ResourceSet request,
         string token,

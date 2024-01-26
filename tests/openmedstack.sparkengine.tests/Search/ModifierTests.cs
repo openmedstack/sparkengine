@@ -21,14 +21,14 @@ public class ModifierTests
         Assert.Equal(Modifier.MISSING, am.Modifier);
         Assert.Equal("missing", am.RawModifier);
         Assert.Null(am.ModifierType);
-        Assert.True(am.Missing.Value);
+        Assert.True(am.Missing);
         Assert.Equal("missing=true", am.ToString());
 
         am = new ActualModifier("missing=false");
         Assert.Equal(Modifier.MISSING, am.Modifier);
         Assert.Equal("missing=false", am.RawModifier);
         Assert.Null(am.ModifierType);
-        Assert.False(am.Missing.Value);
+        Assert.False(am.Missing);
         Assert.Equal("missing=false", am.ToString());
     }
 

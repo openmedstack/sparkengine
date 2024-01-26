@@ -6,6 +6,8 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
+using Microsoft.Net.Http.Headers;
+
 namespace OpenMedStack.SparkEngine.Web.Handlers;
 
 using System.Threading.Tasks;
@@ -13,7 +15,6 @@ using Core;
 using Extensions;
 using Hl7.Fhir.Rest;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 
 public class FormatTypeHandler : IMiddleware
 {
@@ -30,11 +31,10 @@ public class FormatTypeHandler : IMiddleware
                     context.Request.Headers.Remove("Accept");
                 }
 
-                context.Request.Headers.Add(
-                    "Accept",
+                context.Request.GetTypedHeaders().Accept.Add(
                     accepted == ResourceFormat.Json
-                        ? new StringValues(ContentType.JSON_CONTENT_HEADER)
-                        : new StringValues(ContentType.XML_CONTENT_HEADER));
+                        ? new MediaTypeHeaderValue(ContentType.JSON_CONTENT_HEADER)
+                        : new MediaTypeHeaderValue(ContentType.XML_CONTENT_HEADER));
             }
         }
 
@@ -43,15 +43,10 @@ public class FormatTypeHandler : IMiddleware
             if (!context.Request.ContentType.IsContentTypeHeaderFhirMediaType())
             {
                 var contentType = context.Request.ContentType;
-                context.Request.Headers.Add("X-Content-Type", contentType);
+                context.Request.Headers["X-Content-Type"] = contentType;
                 context.Request.ContentType = FhirMediaType.OctetStreamMimeType;
             }
         }
-        //else if(context.Request.IsRawBinaryRequest())
-        //{
-        //    if (context.Request.Headers.ContainsKey("Accept")) context.Request.Headers.Remove("Accept");
-        //    context.Request.Headers.Add("Accept", new StringValues(FhirMediaType.OCTET_STREAM_CONTENT_HEADER));
-        //}
 
         await next(context).ConfigureAwait(false);
     }

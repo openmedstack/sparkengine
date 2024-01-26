@@ -41,12 +41,11 @@ public class ResourceXmlInputFormatterTests : FormatterTestBase
     [InlineData("", false)]
     [InlineData(null, false)]
     [InlineData("invalid", false)]
-    public void CanRead_ReturnsTrueForSupportedContent(string contentType, bool expectedCanRead)
+    public void CanRead_ReturnsTrueForSupportedContent(string? contentType, bool expectedCanRead)
     {
         var formatter = GetInputFormatter();
 
-        var contentBytes = Encoding.UTF8.GetBytes(
-            "{ \"resourceType\": \"Patient\", \"id\": \"example\", \"active\": true }");
+        var contentBytes = "{ \"resourceType\": \"Patient\", \"id\": \"example\", \"active\": true }"u8.ToArray();
         var httpContext = GetHttpContext(contentBytes, contentType);
 
         var formatterContext = CreateInputFormatterContext(typeof(FhirModel.Resource), httpContext);
@@ -79,7 +78,7 @@ public class ResourceXmlInputFormatterTests : FormatterTestBase
 
         var formatterContext = CreateInputFormatterContext(typeof(FhirModel.Resource), httpContext);
 
-        var result = await formatter.ReadAsync(formatterContext).ConfigureAwait(false);
+        var result = await formatter.ReadAsync(formatterContext);
 
         Assert.False(result.HasError);
 
@@ -92,7 +91,7 @@ public class ResourceXmlInputFormatterTests : FormatterTestBase
 
         // Try again
 
-        result = await formatter.ReadAsync(formatterContext).ConfigureAwait(false);
+        result = await formatter.ReadAsync(formatterContext);
 
         Assert.False(result.HasError);
 
@@ -101,7 +100,7 @@ public class ResourceXmlInputFormatterTests : FormatterTestBase
         Assert.Equal(true, patient.Active);
     }
 
-    protected static AsyncResourceXmlInputFormatter GetInputFormatter(ParserSettings parserSettings = null)
+    protected static AsyncResourceXmlInputFormatter GetInputFormatter(ParserSettings? parserSettings = null)
     {
         parserSettings ??= new ParserSettings { PermissiveParsing = false };
         return new AsyncResourceXmlInputFormatter(new FhirXmlParser(parserSettings));

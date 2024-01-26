@@ -17,8 +17,4 @@ internal class RequiredAttributeException : Exception
     public RequiredAttributeException(string message, Exception innerException) : base(message, innerException)
     {
     }
-
-    protected RequiredAttributeException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
 }

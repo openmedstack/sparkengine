@@ -66,7 +66,7 @@ internal class FhirModule : Module
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
-        builder.RegisterType<TokenCache>().AsSelf().AsImplementedInterfaces().SingleInstance();
+        //builder.RegisterType<TokenCache>().AsSelf().AsImplementedInterfaces().SingleInstance();
         builder.RegisterInstance(new ApplicationNameProvider(_configuration))
             .AsImplementedInterfaces()
             .SingleInstance();

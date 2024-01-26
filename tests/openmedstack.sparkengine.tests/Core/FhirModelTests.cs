@@ -14,7 +14,7 @@ using Xunit;
 
 public class FhirModelTests
 {
-    private static FhirModel _sut;
+    private FhirModel _sut;
 
     public FhirModelTests() => _sut = new FhirModel();
 

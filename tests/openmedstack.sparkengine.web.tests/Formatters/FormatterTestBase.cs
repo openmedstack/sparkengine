@@ -22,14 +22,19 @@ public class FormatterTestBase
         return reader.ReadToEnd();
     }
 
-    protected static HttpContext GetHttpContext(byte[] contentBytes, string contentType) =>
+    protected static HttpContext GetHttpContext(byte[] contentBytes, string? contentType) =>
         GetHttpContext(new MemoryStream(contentBytes), contentType);
 
-    protected static HttpContext GetHttpContext(Stream requestStream, string contentType)
+    protected static HttpContext GetHttpContext(Stream requestStream, string? contentType)
     {
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Body = requestStream;
-        httpContext.Request.ContentType = contentType;
+        var httpContext = new DefaultHttpContext
+        {
+            Request =
+            {
+                Body = requestStream,
+                ContentType = contentType
+            }
+        };
 
         return httpContext;
     }
@@ -37,7 +42,7 @@ public class FormatterTestBase
     protected static InputFormatterContext CreateInputFormatterContext(
         Type modelType,
         HttpContext httpContext,
-        string modelName = null,
+        string? modelName = null,
         bool treatEmptyInputAsDefaultValue = false)
     {
         var provider = new EmptyModelMetadataProvider();

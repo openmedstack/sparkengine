@@ -26,7 +26,7 @@ public partial class ReverseInclude
     ///     ReverseInclude instance with ResourceType is everything before the first dot, and SearchPath everything after
     ///     it.
     /// </returns>
-    public static ReverseInclude Parse(string reverseInclude)
+    public static ReverseInclude Parse(string? reverseInclude)
     {
         //_revinclude should have the following format: ResourceType.searchParameter[.searchParameter]*
         //so we simply split in on the first dot.

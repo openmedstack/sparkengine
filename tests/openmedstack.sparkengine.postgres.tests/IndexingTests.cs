@@ -23,7 +23,7 @@ public class IndexingTests
                 fhirModel,
                 NullLogger<ElementIndexer>.Instance,
                 new ReferenceNormalizationService(new Localhost(new Uri("https://localhost")))));
-        var indexValue = await indexService.IndexResource(resource, resource.ExtractKey()).ConfigureAwait(false);
+        var indexValue = await indexService.IndexResource(resource, resource.ExtractKey());
         var indexEntry = indexValue.BuildIndexEntry();
 
         Assert.NotNull(indexEntry);

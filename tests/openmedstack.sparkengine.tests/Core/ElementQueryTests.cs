@@ -22,7 +22,7 @@ public class ElementQueryTests
         var sut = new ElementQuery("Patient.name");
 
         var testPatient = new Patient();
-        var result = new List<object>();
+        var result = new List<object?>();
 
         sut.Visit(testPatient, fd => result.Add(fd));
 
@@ -38,7 +38,7 @@ public class ElementQueryTests
         var hn = new HumanName().WithGiven("Sjors").AndFamily("Jansen");
         testPatient.Name = new List<HumanName> {hn};
 
-        var result = new List<object>();
+        var result = new List<object?>();
 
         sut.Visit(testPatient, fd => result.Add(fd));
 
@@ -56,7 +56,7 @@ public class ElementQueryTests
         var hn2 = new HumanName().WithGiven("Y").AndFamily("Z");
         testPatient.Name = new List<HumanName> {hn1, hn2};
 
-        var result = new List<object>();
+        var result = new List<object?>();
 
         sut.Visit(testPatient, fd => result.Add(fd));
 

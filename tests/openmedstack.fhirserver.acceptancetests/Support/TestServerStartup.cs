@@ -3,7 +3,6 @@
 namespace OpenMedStack.FhirServer.AcceptanceTests.Support;
 
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 using System;
@@ -52,8 +51,8 @@ internal class TestServerStartup : IConfigureWebApplication
                     options.SaveToken = true;
                     options.Authority = _configuration.TokenService;
                     options.RequireHttpsMetadata = true;
-                    options.SecurityTokenValidators.Clear();
-                    options.SecurityTokenValidators.Add(new TestSecurityTokenValidator(new JwtSecurityTokenHandler()));
+                    options.TokenHandlers.Clear();
+                    options.TokenHandlers.Add(new TestSecurityTokenValidator(new JwtSecurityTokenHandler()));
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         IssuerSigningKeyValidator = (_, _, _) => true,
@@ -74,32 +73,4 @@ internal class TestServerStartup : IConfigureWebApplication
             .UseAuthorization()
             .UseEndpoints(e => { e.MapControllers(); });
     }
-}
-
-internal class TestSecurityTokenValidator : ISecurityTokenValidator
-{
-    private readonly JwtSecurityTokenHandler _handler;
-
-    public TestSecurityTokenValidator(JwtSecurityTokenHandler handler)
-    {
-        _handler = handler;
-    }
-
-    public bool CanReadToken(string securityToken)
-    {
-        return _handler.CanReadToken(securityToken);
-    }
-
-    public ClaimsPrincipal ValidateToken(
-        string securityToken,
-        TokenValidationParameters validationParameters,
-        out SecurityToken validatedToken)
-    {
-        var jwt = _handler.ReadJwtToken(securityToken);
-        validatedToken = jwt;
-        return new ClaimsPrincipal(new ClaimsIdentity(jwt.Claims, "Bearer"));
-    }
-
-    public bool CanValidateToken { get; } = true;
-    public int MaximumTokenSizeInBytes { get; set; } = int.MaxValue;
 }

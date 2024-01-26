@@ -84,7 +84,7 @@ public class ElementIndexerTests
         Assert.Equal(1081.54M, ((NumberValue)result[0]).Value);
     }
 
-    private static void CheckPeriod(IReadOnlyCollection<Expression> result, string start, string end)
+    private static void CheckPeriod(IReadOnlyCollection<Expression> result, string? start, string? end)
     {
         var nrOfComponents = 0;
         if (!string.IsNullOrWhiteSpace(start))
@@ -100,30 +100,30 @@ public class ElementIndexerTests
         Assert.Single(result);
         Assert.IsType<CompositeValue>(result.First());
         var comp = result.First() as CompositeValue;
-        Assert.Equal(nrOfComponents, comp.Components.Length);
+        Assert.Equal(nrOfComponents, comp?.Components.Length);
 
         var currentComponent = 0;
         if (!string.IsNullOrWhiteSpace(start))
         {
-            Assert.IsType<IndexValue>(comp.Components[currentComponent]);
+            Assert.IsType<IndexValue>(comp?.Components[currentComponent]);
             var ixValue = comp.Components[currentComponent] as IndexValue;
-            Assert.Equal("start", ixValue.Name);
+            Assert.Equal("start", ixValue!.Name);
             Assert.Single(ixValue.Values);
             Assert.IsType<DateTimeValue>(ixValue.Values[0]);
             var dtValue = ixValue.Values[0] as DateTimeValue;
-            Assert.Equal(new DateTimeValue(start).Value, dtValue.Value);
+            Assert.Equal(new DateTimeValue(start).Value, dtValue!.Value);
             currentComponent++;
         }
 
         if (!string.IsNullOrWhiteSpace(end))
         {
-            Assert.IsType<IndexValue>(comp.Components[currentComponent]);
+            Assert.IsType<IndexValue>(comp?.Components[currentComponent]);
             var ixValue = comp.Components[currentComponent] as IndexValue;
-            Assert.Equal("end", ixValue.Name);
+            Assert.Equal("end", ixValue!.Name);
             Assert.Single(ixValue.Values);
             Assert.IsType<DateTimeValue>(ixValue.Values[0]);
             var dtValue = ixValue.Values[0] as DateTimeValue;
-            Assert.Equal(new DateTimeValue(end).Value, dtValue.Value);
+            Assert.Equal(new DateTimeValue(end).Value, dtValue!.Value);
         }
     }
 
@@ -177,35 +177,34 @@ public class ElementIndexerTests
         Assert.IsType<CompositeValue>(result[0]);
         var comp = result[0] as CompositeValue;
 
-        CheckCoding(comp, "bla", "http://bla.com", "bla display");
+        CheckCoding(comp!, "bla", "http://bla.com", "bla display");
     }
 
-    private static void CheckCoding(CompositeValue comp, string code, string system, string text)
+    private static void CheckCoding(CompositeValue? comp, string code, string? system, string? text)
     {
         CheckCodingFlexible(
             comp,
-            new Dictionary<string, string> { { "code", code }, { "system", system }, { "text", text } });
+            new Dictionary<string, string?> { { "code", code }, { "system", system }, { "text", text } });
     }
 
-    private static void CheckCodingFlexible(CompositeValue comp, Dictionary<string, string> elements)
+    private static void CheckCodingFlexible(CompositeValue? comp, Dictionary<string, string?> elements)
     {
-        var elementsToCheck = elements.Where(e => e.Value != null);
-        var nrOfElements = elementsToCheck.Count();
-        Assert.Equal(nrOfElements, comp.Components.Length);
-        foreach (var c in comp.Components)
+        var elementsToCheck = elements.Where(e => e.Value != null).ToArray();
+        var nrOfElements = elementsToCheck.Length;
+        Assert.Equal(nrOfElements, comp?.Components.Length);
+        foreach (var c in comp!.Components)
         {
             Assert.IsType<IndexValue>(c);
         }
 
         foreach (var element in elementsToCheck)
         {
-            var elementIv = (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == element.Key)
-                .FirstOrDefault();
+            var elementIv = (IndexValue?)comp.Components
+                .FirstOrDefault(c => (c as IndexValue)!.Name == element.Key);
             Assert.NotNull(elementIv); //, $"Expected a component '{element.Key}'");
             Assert.Single(elementIv.Values); //, $"Expected exactly one component '{element.Key}'");
             Assert.IsType<StringValue>(
-                elementIv.Values[
-                    0]); //, $"Expected component '{element.Key}' to be of type {nameof(StringValue)}");
+                elementIv.Values[0]); //, $"Expected component '{element.Key}' to be of type {nameof(StringValue)}");
             var codeSv = (StringValue)elementIv.Values[0];
             Assert.Equal(
                 element.Value,
@@ -240,14 +239,14 @@ public class ElementIndexerTests
         Assert.Equal(3, result.Length); //1 with text and 2 with the codings it
 
         //Check wether CodeableConcept.Text is in the result.
-        var textIVs = result.Where(c => c.GetType() == typeof(IndexValue) && (c as IndexValue).Name == "text")
+        var textIVs = result.Where(c => c.GetType() == typeof(IndexValue) && (c as IndexValue)?.Name == "text")
             .ToList();
         Assert.Single(textIVs);
-        var textIv = (IndexValue)textIVs.FirstOrDefault();
+        var textIv = (IndexValue?)textIVs.FirstOrDefault();
         Assert.NotNull(textIv);
         Assert.Single(textIv.Values);
         Assert.IsType<StringValue>(textIv.Values[0]);
-        Assert.Equal("bla text", (textIv.Values[0] as StringValue).Value);
+        Assert.Equal("bla text", (textIv.Values[0] as StringValue)?.Value);
 
         //Check whether both codings are in the result.
         var codeIVs = result.Where(c => c.GetType() == typeof(CompositeValue)).ToList();
@@ -255,7 +254,7 @@ public class ElementIndexerTests
 
         var codeIv1 = (CompositeValue)codeIVs[0];
         var codeIv2 = (CompositeValue)codeIVs[1];
-        if (((codeIv1.Components[0] as IndexValue).Values[0] as StringValue).Value == "bla")
+        if (((codeIv1.Components[0] as IndexValue)?.Values[0] as StringValue)?.Value == "bla")
         {
             CheckCoding(codeIv1, "bla", "http://bla.com", "bla display");
             CheckCoding(codeIv2, "flit", "http://flit.com", "flit display");
@@ -299,16 +298,16 @@ public class ElementIndexerTests
         Assert.IsType<CompositeValue>(result[0]);
         var comp = (CompositeValue)result[0];
 
-        var codeIv = (IndexValue)comp.Components.OfType<IndexValue>().FirstOrDefault(c => c.Name == "code");
+        var codeIv = comp.Components.OfType<IndexValue>().FirstOrDefault(c => c.Name == "code");
         Assert.NotNull(codeIv); //, "Expected a component 'code'");
         Assert.Single(codeIv.Values);
         Assert.IsType<StringValue>(codeIv.Values[0]);
         var codeSv = (StringValue)codeIv.Values[0];
         Assert.Equal("cp-value", codeSv.Value);
 
-        var useIv = (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "use").FirstOrDefault();
+        var useIv = (IndexValue?)comp.Components.FirstOrDefault(c => (c as IndexValue)?.Name == "use");
         Assert.NotNull(codeIv); //, "Expected a component 'use'");
-        var useCode = (CompositeValue)useIv.Values.Where(c => c is CompositeValue).FirstOrDefault();
+        var useCode = (CompositeValue?)useIv?.Values?.FirstOrDefault(c => c is CompositeValue);
         Assert.NotNull(useCode); //, $"Expected a value of type {nameof(CompositeValue)} in the 'use' component");
         CheckCoding(useCode, "mobile", null, null);
     }
@@ -359,11 +358,11 @@ public class ElementIndexerTests
             Assert.IsType<StringValue>(res);
         }
 
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Bruggebouw"));
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Bos en lommerplein 280"));
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Netherlands"));
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Amsterdam"));
-        Assert.Single(result.Where(r => (r as StringValue).Value == "1055 RW"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Bruggebouw"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Bos en lommerplein 280"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Netherlands"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Amsterdam"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "1055 RW"));
     }
 
     [Fact]
@@ -380,8 +379,8 @@ public class ElementIndexerTests
             Assert.IsType<StringValue>(res);
         }
 
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Pietje"));
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Puk"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Pietje"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Puk"));
     }
 
     [Fact]
@@ -398,18 +397,18 @@ public class ElementIndexerTests
             Assert.IsType<StringValue>(res);
         }
 
-        Assert.Single(result.Where(r => (r as StringValue).Value == "Pietje"));
+        Assert.Single(result.Where(r => (r as StringValue)?.Value == "Pietje"));
     }
 
     private static void CheckQuantity(
         IReadOnlyList<Expression> result,
         decimal? value,
         string unit,
-        string system,
-        string decimals)
+        string? system,
+        string? decimals)
     {
         var nrOfElements = (value.HasValue ? 1 : 0)
-          + new List<string> { unit, system, decimals }.Count(s => s != null);
+          + new List<string?> { unit, system, decimals }.Count(s => s != null);
 
         Assert.Single(result);
         Assert.IsType<CompositeValue>(result[0]);
@@ -420,7 +419,7 @@ public class ElementIndexerTests
 
         if (value.HasValue)
         {
-            var compValue = (IndexValue)comp.Components.FirstOrDefault(c => (c as IndexValue).Name == "value");
+            var compValue = (IndexValue?)comp.Components.FirstOrDefault(c => (c as IndexValue)?.Name == "value");
             Assert.NotNull(compValue);
             Assert.Single(compValue.Values);
             Assert.IsType<NumberValue>(compValue.Values[0]);
@@ -431,7 +430,7 @@ public class ElementIndexerTests
         if (unit != null)
         {
             var compUnit =
-                (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "unit").FirstOrDefault();
+                (IndexValue?)comp.Components.FirstOrDefault(c => (c as IndexValue)?.Name == "unit");
             Assert.NotNull(compUnit);
             Assert.Single(compUnit.Values);
             Assert.IsType<StringValue>(compUnit.Values[0]);
@@ -442,7 +441,7 @@ public class ElementIndexerTests
         if (system != null)
         {
             var compSystem =
-                (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "system").FirstOrDefault();
+                (IndexValue?)comp.Components.FirstOrDefault(c => (c as IndexValue)?.Name == "system");
             Assert.NotNull(compSystem);
             Assert.Single(compSystem.Values);
             Assert.IsType<StringValue>(compSystem.Values[0]);
@@ -452,8 +451,8 @@ public class ElementIndexerTests
 
         if (decimals != null)
         {
-            var compCode = (IndexValue)comp.Components.Where(c => (c as IndexValue).Name == "decimals")
-                .FirstOrDefault();
+            var compCode = (IndexValue?)comp.Components
+                .FirstOrDefault(c => (c as IndexValue)?.Name == "decimals");
             Assert.NotNull(compCode);
             Assert.Single(compCode.Values);
             Assert.IsType<StringValue>(compCode.Values[0]);
@@ -492,7 +491,7 @@ public class ElementIndexerTests
         Assert.Single(result);
         Assert.IsType<StringValue>(result[0]);
 
-        Assert.Equal("bla", (result[0] as StringValue).Value);
+        Assert.Equal("bla", (result[0] as StringValue)?.Value);
     }
 
     [Fact]
@@ -518,6 +517,6 @@ public class ElementIndexerTests
         Assert.Single(result);
         Assert.IsType<StringValue>(result[0]);
 
-        Assert.Equal("bla", (result[0] as StringValue).Value);
+        Assert.Equal("bla", (result[0] as StringValue)?.Value);
     }
 }

@@ -16,6 +16,6 @@ public static class IndexValueTestExtensions
 {
     public static IEnumerable<IndexValue> NonInternalValues(this IndexValue root)
     {
-        return root.IndexValues().Where(v => !v.Name.StartsWith("internal_"));
+        return root.IndexValues().Where(v => v.Name?.StartsWith("internal_") != true);
     }
 }

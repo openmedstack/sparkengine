@@ -79,10 +79,10 @@ public class ResourceJsonInputFormatterTests : FormatterTestBase
             Path.Combine("TestData", fhirVersionMoniker.ToString(), "patient-example.json"));
         var contentBytes = Encoding.UTF8.GetBytes(content);
         var httpContext = new DefaultHttpContext { Request = { ContentType = DEFAULT_CONTENT_TYPE, Body = new MemoryStream(contentBytes) } };
-            
+
         var formatterContext = CreateInputFormatterContext(typeof(Hl7.Fhir.Model.Resource), httpContext);
 
-        var result = await formatter.ReadAsync(formatterContext).ConfigureAwait(false);
+        var result = await formatter.ReadAsync(formatterContext);
 
         Assert.False(result.HasError);
 
@@ -95,7 +95,7 @@ public class ResourceJsonInputFormatterTests : FormatterTestBase
 
         // Try again
 
-        result = await formatter.ReadAsync(formatterContext).ConfigureAwait(false);
+        result = await formatter.ReadAsync(formatterContext);
 
         Assert.False(result.HasError);
 
@@ -116,12 +116,11 @@ public class ResourceJsonInputFormatterTests : FormatterTestBase
 
         var formatterContext = CreateInputFormatterContext(typeof(Hl7.Fhir.Model.Resource), httpContext);
 
-        var exception = await Assert.ThrowsAsync<SparkException>(() => formatter.ReadAsync(formatterContext))
-            .ConfigureAwait(false);
+        var exception = await Assert.ThrowsAsync<SparkException>(() => formatter.ReadAsync(formatterContext));
         Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
     }
 
-    private static AsyncResourceJsonInputFormatter GetInputFormatter(ParserSettings parserSettings = null)
+    private static AsyncResourceJsonInputFormatter GetInputFormatter(ParserSettings? parserSettings = null)
     {
         parserSettings ??= new ParserSettings {PermissiveParsing = false};
         return new AsyncResourceJsonInputFormatter(new FhirJsonParser(parserSettings));

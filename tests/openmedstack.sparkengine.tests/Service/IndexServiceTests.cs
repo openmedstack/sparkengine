@@ -91,7 +91,7 @@ public class IndexServiceTests
         patient.Name.Add(name);
 
         IKey patientKey = new Key("http://localhost/", "Patient", "002", "1");
-        var result = await _limitedIndexService.IndexResource(patient, patientKey).ConfigureAwait(false);
+        var result = await _limitedIndexService.IndexResource(patient, patientKey);
 
         var middleName = result.NonInternalValues().Skip(1).First();
         Assert.Equal("middlename", middleName.Name);
@@ -108,7 +108,7 @@ public class IndexServiceTests
 
         IKey patientKey = new Key("http://localhost/", "Patient", "001", "v02");
 
-        var result = await _limitedIndexService.IndexResource(patient, patientKey).ConfigureAwait(false);
+        var result = await _limitedIndexService.IndexResource(patient, patientKey);
 
         Assert.Equal("root", result.Name);
         Assert.Single(result.NonInternalValues()); //, "Expected 1 non-internal result for searchparameter 'name'");
@@ -127,7 +127,7 @@ public class IndexServiceTests
 
         IKey patientKey = new Key("http://localhost/", "Patient", "001", null);
 
-        var result = await _fullIndexService.IndexResource(patientResource, patientKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(patientResource, patientKey);
 
         Assert.NotNull(result);
     }
@@ -150,9 +150,9 @@ public class IndexServiceTests
         var stringWriter = new StringWriter();
         await using var _ = stringWriter.ConfigureAwait(false);
         await using var jsonTextWriter = new JsonTextWriter(stringWriter);
-        await s.SerializeAsync(g, jsonTextWriter).ConfigureAwait(false);
-        await jsonTextWriter.FlushAsync().ConfigureAwait(false);
-        await stringWriter.FlushAsync().ConfigureAwait(false);
+        await s.SerializeAsync(g, jsonTextWriter);
+        await jsonTextWriter.FlushAsync();
+        await stringWriter.FlushAsync();
         var json = stringWriter.GetStringBuilder().ToString();
     }
 
@@ -164,7 +164,7 @@ public class IndexServiceTests
 
         IKey appKey = new Key("http://localhost/", "Appointment", "2docs", null);
 
-        var result = await _fullIndexService.IndexResource(appResource, appKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(appResource, appKey);
 
         Assert.NotNull(result);
     }
@@ -177,7 +177,7 @@ public class IndexServiceTests
 
         IKey cpKey = new Key("http://localhost/", "Careplan", "f002", null);
 
-        var result = await _fullIndexService.IndexResource(cpResource, cpKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(cpResource, cpKey);
 
         Assert.NotNull(result);
     }
@@ -191,7 +191,7 @@ public class IndexServiceTests
 
         IKey cpKey = new Key("http://localhost/", "Observation", "blood-pressure", null);
 
-        var result = await _fullIndexService.IndexResource(obsResource, cpKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(obsResource, cpKey);
 
         Assert.NotNull(result);
     }
@@ -203,10 +203,10 @@ public class IndexServiceTests
 
         IKey cdKey = new Key("http://localhost/", "Condition", "test", null);
 
-        var result = await _fullIndexService.IndexResource(cd, cdKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(cd, cdKey);
 
         Assert.NotNull(result);
-        var onsetIndex = result.Values.SingleOrDefault(iv => (iv as IndexValue).Name == "onset-date") as IndexValue;
+        var onsetIndex = result.Values.SingleOrDefault(iv => (iv as IndexValue)?.Name == "onset-date") as IndexValue;
         Assert.NotNull(onsetIndex);
     }
 
@@ -218,10 +218,10 @@ public class IndexServiceTests
 
         IKey cdKey = new Key("http://localhost/", "Condition", "test", null);
 
-        var result = await _fullIndexService.IndexResource(cd, cdKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(cd, cdKey);
 
         Assert.NotNull(result);
-        var onsetIndex = result.Values.SingleOrDefault(iv => (iv as IndexValue).Name == "onset-info") as IndexValue;
+        var onsetIndex = result.Values.SingleOrDefault(iv => (iv as IndexValue)?.Name == "onset-info") as IndexValue;
         Assert.NotNull(onsetIndex);
         Assert.True(onsetIndex.Values.Count == 1);
         Assert.True(onsetIndex.Values.First() is StringValue);
@@ -239,15 +239,15 @@ public class IndexServiceTests
 
         IKey cdKey = new Key("http://localhost/", "Condition", "test", null);
 
-        var result = await _fullIndexService.IndexResource(cd, cdKey).ConfigureAwait(false);
+        var result = await _fullIndexService.IndexResource(cd, cdKey);
 
         Assert.NotNull(result);
-        var onsetIndex = result.Values.Single(iv => (iv as IndexValue).Name == "onset-age") as IndexValue;
+        var onsetIndex = result.Values.Single(iv => (iv as IndexValue)?.Name == "onset-age") as IndexValue;
         Assert.NotNull(onsetIndex);
         Assert.True(onsetIndex.Values.First() is CompositeValue);
         var composite = onsetIndex.Values.First() as CompositeValue;
         Assert.True(
-            composite.Components.Cast<IndexValue>().First(c => c.Name == "value").Values.First() is NumberValue);
+            composite?.Components.Cast<IndexValue>().First(c => c.Name == "value").Values.First() is NumberValue);
         var value =
             composite.Components.Cast<IndexValue>().First(c => c.Name == "value").Values.First() as NumberValue;
 

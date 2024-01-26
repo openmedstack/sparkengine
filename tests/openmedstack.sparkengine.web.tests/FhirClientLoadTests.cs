@@ -63,11 +63,11 @@ public class FhirClientLoadTests : IDisposable
         {
             var patient = faker.Generate();
 
-            var inserted = await client.CreateAsync(patient).ConfigureAwait(false);
+            var inserted = await client.CreateAsync(patient);
 
             return inserted!.Id;
         });
-        var ids = await Task.WhenAll(tasks).ConfigureAwait(false);
+        var ids = await Task.WhenAll(tasks);
         stopwatch.Stop();
 
         _outputHelper.WriteLine(
@@ -75,7 +75,7 @@ public class FhirClientLoadTests : IDisposable
         var elapsed = stopwatch.Elapsed;
         stopwatch.Restart();
         var patientTasks = ids.Select(id => client.ReadAsync<Patient>($"Patient/{id}"));
-        _ = await Task.WhenAll(patientTasks).ConfigureAwait(false);
+        _ = await Task.WhenAll(patientTasks);
         stopwatch.Stop();
 
         elapsed += stopwatch.Elapsed;
@@ -156,8 +156,8 @@ public class FhirClientLoadTests : IDisposable
 
         var searchParams = new SearchParams("name", "Roxane") { Sort = { ("name", SortOrder.Descending) } };
 
-        var queryResult = await client.SearchAsync<Patient>(searchParams).ConfigureAwait(false);
-        Assert.True(queryResult.Total > 0);
+        var queryResult = await client.SearchAsync<Patient>(searchParams);
+        Assert.True(queryResult?.Total > 0);
 
         stopwatch.Stop();
 

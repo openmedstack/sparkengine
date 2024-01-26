@@ -7,6 +7,7 @@
  */
 
 using System.Runtime.CompilerServices;
+using Microsoft.Net.Http.Headers;
 
 [assembly: InternalsVisibleTo("Spark.Engine.Test")]
 
@@ -82,13 +83,13 @@ public static class HttpRequestFhirExtensions
 
         var accept = acceptHeader.MediaType.Value;
         return ContentType.XML_CONTENT_HEADERS.Contains(accept)
-               || ContentType.JSON_CONTENT_HEADERS.Contains(accept);
+         || ContentType.JSON_CONTENT_HEADERS.Contains(accept);
     }
 
     internal static bool IsRawBinaryRequest(this OutputFormatterCanWriteContext context, Type type)
     {
         if (type == typeof(Binary)
-            || (type == typeof(FhirResponse)) && ((FhirResponse)context.Object!).Resource is Binary)
+         || (type == typeof(FhirResponse)) && ((FhirResponse)context.Object!).Resource is Binary)
         {
             var request = context.HttpContext.Request;
             var isFhirMediaType = request.Method switch
@@ -115,17 +116,17 @@ public static class HttpRequestFhirExtensions
             return;
         }
 
-        response.Headers.Add(HttpHeaderName.ETAG, ETag.Create(fhirResponse.Key?.VersionId).ToString());
+        var etag = ETag.Create(fhirResponse.Key?.VersionId);
+        var responseHeaders = response.GetTypedHeaders();
+        responseHeaders.ETag = EntityTagHeaderValue.Parse(etag.ToString());
 
         var location = fhirResponse.Key!.ToUri();
-        response.Headers.Add(HttpHeaderName.LOCATION, location.OriginalString);
+        responseHeaders.Location = location;
 
-        response.Headers.Add(HttpHeaderName.CONTENT_LOCATION, location.OriginalString);
+        response.Headers[HttpHeaderName.CONTENT_LOCATION] = location.OriginalString;
         if (fhirResponse.Resource is { Meta.LastUpdated: { } })
         {
-            response.Headers.Add(
-                HttpHeaderName.LAST_MODIFIED,
-                fhirResponse.Resource.Meta.LastUpdated.Value.ToString("R"));
+            responseHeaders.LastModified = fhirResponse.Resource.Meta.LastUpdated.Value;
         }
     }
 
@@ -207,9 +208,9 @@ public static class HttpRequestFhirExtensions
         var ub = new UriBuilder(request.GetRequestUri());
         // TODO: KM: Path matching is not optimal should be replaced by a more solid solution.
         return ub.Path.Contains("Binary")
-               && !ub.Path.EndsWith("_search")
-               && !request.ContentType.IsContentTypeHeaderFhirMediaType()
-               && (request.Method == "POST" || request.Method == "PUT");
+         && !ub.Path.EndsWith("_search")
+         && !request.ContentType.IsContentTypeHeaderFhirMediaType()
+         && (request.Method == "POST" || request.Method == "PUT");
     }
 
     private static SummaryType GetSummary(string? summary)
@@ -226,7 +227,7 @@ public static class HttpRequestFhirExtensions
         if (!string.IsNullOrEmpty(contentType) && resource is Binary && resource.Id == null && id != null)
         {
             if (!ContentType.XML_CONTENT_HEADERS.Contains(contentType)
-                && !ContentType.JSON_CONTENT_HEADERS.Contains(contentType))
+             && !ContentType.JSON_CONTENT_HEADERS.Contains(contentType))
             {
                 resource.Id = id;
             }

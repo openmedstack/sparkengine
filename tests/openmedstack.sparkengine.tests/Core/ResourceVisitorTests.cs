@@ -142,7 +142,7 @@ public partial class ResourceVisitorTests : IDisposable
     public void TestVisitDataChoiceProperty()
     {
         _expectedActionCounter = 1;
-        var ci = new ClinicalImpression { StatusReason = new CodeableConcept("test.system", "test.code")};
+        var ci = new ClinicalImpression { StatusReason = new CodeableConcept("test.system", "test.code") };
         _sut.VisitByPath(
             ci,
             ob =>
@@ -161,7 +161,7 @@ public partial class ResourceVisitorTests : IDisposable
     {
         _expectedActionCounter =
             0; //We expect 0 actions: ResourceVisitor needs not recognize this, it should be solved in processing the searchparameter at indexing time.
-        var cd = new Condition {Onset = new FhirDateTime(2015, 6, 15)};
+        var cd = new Condition { Onset = new FhirDateTime(2015, 6, 15) };
         _sut.VisitByPath(
             cd,
             ob =>
@@ -220,12 +220,13 @@ public partial class ResourceVisitorTests : IDisposable
             ob =>
             {
                 _actualActionCounter++;
-                Assert.IsType<HumanName>(ob);
-                Assert.Equal("Sjimmie", (ob as HumanName).GivenElement.First().ToString());
+                var humanName = Assert.IsType<HumanName>(ob);
+                Assert.Equal("Sjimmie", humanName.GivenElement.First().ToString());
             },
             "name[given=Sjimmie]");
     }
 
-    [GeneratedRegex("(?([^\\.]*\\(.*\\))(?<head>[^\\(]*)\\((?<predicate>.*)\\)(\\.(?<tail>.*))?|(?<head>[^\\.]*)(\\.(?<tail>.*))?)")]
+    [GeneratedRegex(
+        @"(?([^\.]*\(.*\))(?<head>[^\(]*)\((?<predicate>.*)\)(\.(?<tail>.*))?|(?<head>[^\.]*)(\.(?<tail>.*))?)")]
     private static partial Regex HeadTailRegex();
 }
