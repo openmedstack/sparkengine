@@ -239,7 +239,7 @@ public class ElementIndexer
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Code))]
     private static Expression[] ToExpressions(Code code)
     {
-        return new Expression[] { new StringValue(code.Value) };
+        return [new StringValue(code.Value)];
     }
 
     /// <summary>

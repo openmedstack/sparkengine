@@ -46,20 +46,20 @@ public class RegisterController : ControllerBase
         const string fhirResource = "FHIR Resource";
         var resourceSet = new ResourceSet
         {
-            AuthorizationPolicies = new[]
-            {
+            AuthorizationPolicies =
+            [
                 new PolicyRule
                 {
-                    ClientIdsAllowed = new[] { _applicationNameProvider.ClientId },
+                    ClientIdsAllowed = [_applicationNameProvider.ClientId],
                     OpenIdProvider = _applicationNameProvider.Authority,
-                    Scopes = new[] { "read" },
+                    Scopes = ["read"],
                     IsResourceOwnerConsentNeeded = true
                 }
-            },
+            ],
             Description = fhirResource,
             Type = k.TypeName ?? fhirResource,
             Name = id,
-            Scopes = new[] { "read" }
+            Scopes = ["read"]
         };
         var option = await _resourceSetClient.AddResourceSet(resourceSet, token, cancellationToken).ConfigureAwait(false);
         switch (option)

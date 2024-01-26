@@ -16,7 +16,7 @@ public static class UriUtils
 {
     public static Tuple<string, string?> SplitParam(string s)
     {
-        var a = s.Split(new[] { '=' }, 2);
+        var a = s.Split(['='], 2);
         return Tuple.Create(a.First(), a.Skip(1).FirstOrDefault());
     }
 

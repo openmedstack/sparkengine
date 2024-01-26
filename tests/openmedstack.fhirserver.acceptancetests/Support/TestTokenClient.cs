@@ -55,7 +55,7 @@ internal class TestTokenClient : ITokenClient
                     new Permission
                     {
                         ResourceSetId = ticketId,
-                        Scopes = new[] { "read", "write" },
+                        Scopes = ["read", "write"],
                         Expiry = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
                         IssuedAt = DateTimeOffset.UtcNow.AddMinutes(-1).ToUnixTimeSeconds(),
                         NotBefore = 0

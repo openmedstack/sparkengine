@@ -37,7 +37,7 @@ public class FhirModel : IFhirModel
                 Name = "_id",
                 Type = SearchParamType.String,
                 Expression = "Resource.id",
-                Path = new[] { "Resource.id" }
+                Path = ["Resource.id"]
             },
             new()
             {
@@ -45,7 +45,7 @@ public class FhirModel : IFhirModel
                 Name = "_lastUpdated",
                 Type = SearchParamType.Date,
                 Expression = "Resource.meta.lastUpdated",
-                Path = new[] { "Resource.meta.lastUpdated" }
+                Path = ["Resource.meta.lastUpdated"]
             },
             new()
             {
@@ -53,7 +53,7 @@ public class FhirModel : IFhirModel
                 Name = "_profile",
                 Type = SearchParamType.Uri,
                 Expression = "Resource.meta.profile",
-                Path = new[] { "Resource.meta.profile" }
+                Path = ["Resource.meta.profile"]
             },
             new()
             {
@@ -61,7 +61,7 @@ public class FhirModel : IFhirModel
                 Name = "_security",
                 Type = SearchParamType.Token,
                 Expression = "Resource.meta.security",
-                Path = new[] { "Resource.meta.security" }
+                Path = ["Resource.meta.security"]
             },
             new()
             {
@@ -69,7 +69,7 @@ public class FhirModel : IFhirModel
                 Name = "_tag",
                 Type = SearchParamType.Token,
                 Expression = "Resource.meta.tag",
-                Path = new[] { "Resource.meta.tag" }
+                Path = ["Resource.meta.tag"]
             }
         };
         var genericSearchParameters =
@@ -250,7 +250,7 @@ public class FhirModel : IFhirModel
         return value.GetLiteral();
     }
 
-    private readonly List<CompartmentInfo> _compartments = new();
+    private readonly List<CompartmentInfo> _compartments = [];
 
     private void LoadCompartments()
     {

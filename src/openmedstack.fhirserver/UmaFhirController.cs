@@ -18,14 +18,14 @@ public class UmaFhirController : FhirController
     }
 
     /// <inheritdoc />
-    [UmaFilter("{0}/{1}", new[] { "type", "id" }, resourceSetAccessScope: "read")]
+    [UmaFilter("{0}/{1}", ["type", "id"], resourceSetAccessScope: "read")]
     public override Task<ActionResult<FhirResponse>> Read(string type, string id, CancellationToken cancellationToken)
     {
         return base.Read(type, id, cancellationToken);
     }
 
     /// <inheritdoc />
-    [UmaFilter("{0}/{1}/_history/{2}", new[] { "type", "id", "vid" }, resourceSetAccessScope: "read")]
+    [UmaFilter("{0}/{1}/_history/{2}", ["type", "id", "vid"], resourceSetAccessScope: "read")]
     public override Task<FhirResponse> VRead(string type, string id, string vid, CancellationToken cancellationToken)
     {
         return base.VRead(type, id, vid, cancellationToken);
@@ -38,20 +38,20 @@ public class UmaFhirController : FhirController
         return base.Create(type, resource, cancellationToken);
     }
 
-    [UmaFilter("{0}/{1}", new[] { "type", "id" }, resourceSetAccessScope: "delete")]
+    [UmaFilter("{0}/{1}", ["type", "id"], resourceSetAccessScope: "delete")]
     public override Task<FhirResponse> Delete(string type, string id, CancellationToken cancellationToken)
     {
         return base.Delete(type, id, cancellationToken);
     }
 
-    [UmaFilter("{0}/{1}/$everything", new[] { "type", "id" }, resourceSetAccessScope: "read")]
+    [UmaFilter("{0}/{1}/$everything", ["type", "id"], resourceSetAccessScope: "read")]
     public override Task<FhirResponse> Everything(string type, string id, CancellationToken cancellationToken)
     {
         return base.Everything(type, id, cancellationToken);
     }
 
     /// <inheritdoc />
-    [UmaFilter("{0}", new[] { "type" }, resourceSetAccessScope: "search")]
+    [UmaFilter("{0}", ["type"], resourceSetAccessScope: "search")]
     public override Task<FhirResponse> Search(
         string type,
         CancellationToken cancellationToken)

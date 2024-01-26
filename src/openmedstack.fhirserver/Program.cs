@@ -79,7 +79,7 @@ internal class Program
                 Secret = clientSecret!,
                 Timeout = TimeSpan.FromMinutes(5),
                 TokenService = authority!,
-                ValidIssuers = new[] { authority! },
+                ValidIssuers = [authority!],
                 AccessKey = accessKey!,
                 AccessSecret = accessSecret!,
                 StorageServiceUrl = new Uri(storageUrl!),

@@ -75,7 +75,7 @@ public class ActualModifier
     private bool? TryParseMissing(string rawModifier)
     {
         var missing = Mapping.FirstOrDefault(m => m.Value == Modifier.MISSING).Key;
-        var parts = rawModifier.Split(new[] { MISSING_SEPARATOR }, StringSplitOptions.None);
+        var parts = rawModifier.Split([MISSING_SEPARATOR], StringSplitOptions.None);
         if (parts[0].Equals(missing, StringComparison.InvariantCultureIgnoreCase))
         {
             if (parts.Length > 1)

@@ -42,28 +42,30 @@ public class PatchServiceTests
             Id = "test",
             PerformerType = new CodeableConcept
             {
-                Coding = new List<Coding>
-                {
+                Coding =
+                [
                     new()
                     {
                         System = "abc",
                         Code = "123",
-                    },
-                },
+                    }
+
+                ],
                 Text = "test1",
             }
         };
         var parameters = new Parameters();
         parameters.AddReplacePatchParameter("MedicationRequest.performerType", new CodeableConcept
         {
-            Coding = new List<Coding>
-            {
+            Coding =
+            [
                 new()
                 {
                     System = "abcd",
                     Code = "1234",
-                },
-            },
+                }
+
+            ],
             Text = "test2",
         });
         parameters.AddReplacePatchParameter("MedicationRequest.id", new Id("test2"));
@@ -253,18 +255,18 @@ public class PatchServiceTests
         var specimen = new Specimen()
         {
             Id = "test",
-            Processing = new List<Specimen.ProcessingComponent>()
-            {
+            Processing =
+            [
                 new()
                 {
                     Description = "initial processing",
-                    Extension = new List<Extension>()
-                    {
+                    Extension =
+                    [
                         new("http://extensions.org/initialExtension",
                             new FhirString("initialExtension"))
-                    }
+                    ]
                 }
-            }
+            ]
         };
         CanApplyCollectionOperationPatchForNonNamedDataTypesWithExtension((p) =>
         {
@@ -291,17 +293,18 @@ public class PatchServiceTests
             valuePart.Part.Add(new Parameters.ParameterComponent()
             {
                 Name = "extension",
-                Part = new List<Parameters.ParameterComponent>()
-                {
+                Part =
+                [
                     new()
                     {
                         Name = "url", Value = new FhirUri(extension.Url)
                     },
+
                     new()
                     {
                         Name = "value", Value = extension.Value
                     }
-                }
+                ]
             });
         }
         valuePart.Part.Add(new Parameters.ParameterComponent()
@@ -425,11 +428,11 @@ public class PatchServiceTests
             Id = "test",
             Restriction = new Task.RestrictionComponent
             {
-                Extension = new List<Extension>()
-                {
+                Extension =
+                [
                     new("http://helsenorge.no/fhir/StructureDefinition/hn-task-deadline",
                         new Date("2021-12-10"))
-                },
+                ],
                 Period = new Period
                 {
                     Start = "2021-12-12T16:00:00+02:00",

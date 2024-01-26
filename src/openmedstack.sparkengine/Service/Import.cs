@@ -160,7 +160,7 @@ internal class Import
             }
         }
 
-        Type[] types = { typeof(ResourceReference), typeof(FhirUri), typeof(Narrative) };
+        Type[] types = [typeof(ResourceReference), typeof(FhirUri), typeof(Narrative)];
 
         Auxiliary.ResourceVisitor.VisitByType(resource, Visitor, types);
     }

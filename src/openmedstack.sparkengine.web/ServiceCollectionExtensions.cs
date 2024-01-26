@@ -141,35 +141,35 @@ public static class ServiceCollectionExtensions
                     Resource = "Resource",
                     Name = "_id",
                     Type = SearchParamType.String,
-                    Path = new[] {"Resource.id"}
+                    Path = ["Resource.id"]
                 },
                 new ModelInfo.SearchParamDefinition
                 {
                     Resource = "Resource",
                     Name = "_lastUpdated",
                     Type = SearchParamType.Date,
-                    Path = new[] {"Resource.meta.lastUpdated"}
+                    Path = ["Resource.meta.lastUpdated"]
                 },
                 new ModelInfo.SearchParamDefinition
                 {
                     Resource = "Resource",
                     Name = "_tag",
                     Type = SearchParamType.Token,
-                    Path = new[] {"Resource.meta.tag"}
+                    Path = ["Resource.meta.tag"]
                 },
                 new ModelInfo.SearchParamDefinition
                 {
                     Resource = "Resource",
                     Name = "_profile",
                     Type = SearchParamType.Uri,
-                    Path = new[] {"Resource.meta.profile"}
+                    Path = ["Resource.meta.profile"]
                 },
                 new ModelInfo.SearchParamDefinition
                 {
                     Resource = "Resource",
                     Name = "_security",
                     Type = SearchParamType.Token,
-                    Path = new[] {"Resource.meta.security"}
+                    Path = ["Resource.meta.security"]
                 }
             });
     }

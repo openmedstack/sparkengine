@@ -94,8 +94,8 @@ public class FhirClientLoadTests : IDisposable
                 {
                     var lastName = f.Name.LastName();
                     var firstName = f.Name.FirstName();
-                    return new List<HumanName>
-                    {
+                    return
+                    [
                         new()
                         {
                             Family = lastName,
@@ -106,12 +106,12 @@ public class FhirClientLoadTests : IDisposable
                             Suffix = new[] { f.Name.Suffix() },
                             Period = new Period { StartElement = new FhirDateTime() }
                         }
-                    };
+                    ];
                 })
             .RuleFor(x => x.BirthDateElement, f => new Date(f.Date.PastDateOnly(75).Year))
             .RuleFor(x => x.Address,
-                f => new List<Address>
-                {
+                f =>
+                [
                     new()
                     {
                         City = f.Address.City(),
@@ -120,7 +120,7 @@ public class FhirClientLoadTests : IDisposable
                         PostalCode = f.Address.ZipCode(),
                         Use = Address.AddressUse.Home
                     }
-                });
+                ]);
     }
 
     [Theory]

@@ -71,7 +71,7 @@ public class S3SnapshotStore : ISnapshotStore
                         BucketName = _bucket,
                         ContentType = _compress ? "application/gzip" : "application/json",
                         InputStream = stream,
-                        DisableMD5Stream = true,
+                        DisableDefaultChecksumValidation = true,
                         UseChunkEncoding = false
                     },
                     cancellationToken)
@@ -80,7 +80,7 @@ public class S3SnapshotStore : ISnapshotStore
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{error}", ex.Message);
+            _logger.LogError(ex, "{Error}", ex.Message);
             return false;
         }
     }
@@ -92,7 +92,8 @@ public class S3SnapshotStore : ISnapshotStore
         {
             var serializer = JsonSerializer.Create(_serializerSettings);
             var response = await _client.GetObjectAsync(
-                    new GetObjectRequest { Key = $"{_tenantProvider.GetTenantName()}/{snapshotId}", BucketName = _bucket },
+                    new GetObjectRequest
+                        { Key = $"{_tenantProvider.GetTenantName()}/{snapshotId}", BucketName = _bucket },
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -105,7 +106,7 @@ public class S3SnapshotStore : ISnapshotStore
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{error}", ex.Message);
+            _logger.LogError(ex, "{Error}", ex.Message);
             return null;
         }
     }

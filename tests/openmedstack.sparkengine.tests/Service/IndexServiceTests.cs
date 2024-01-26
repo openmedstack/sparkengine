@@ -54,7 +54,7 @@ public class IndexServiceTests
             Name = "name",
             Description = new Markdown(@"A portion of either family or given name of the patient"),
             Type = SearchParamType.String,
-            Path = new[] { "Patient.name" },
+            Path = ["Patient.name"],
             Expression = "Patient.name"
         };
         var spMiddleName = new SearchParamDefinition
@@ -62,10 +62,10 @@ public class IndexServiceTests
             Resource = "Patient",
             Name = "middlename",
             Type = SearchParamType.String,
-            Path = new[]
-            {
+            Path =
+            [
                 "Patient.name.extension.where(url='http://hl7.no/fhir/StructureDefinition/no-basis-middlename')"
-            },
+            ],
             Expression =
                 "Patient.name.extension.where(url='http://hl7.no/fhir/StructureDefinition/no-basis-middlename')"
         };
@@ -137,14 +137,16 @@ public class IndexServiceTests
     {
         var g = new CarePlan
         {
-            Addresses = new List<CodeableReference>
-                { new() { Reference = new ResourceReference("Condition/f204", "Roel\u0027s renal insufficiency") } },
-            Activity = new List<CarePlan.ActivityComponent>
-            {
+            Addresses =
+            [
+                new() { Reference = new ResourceReference("Condition/f204", "Roel\u0027s renal insufficiency") }
+            ],
+            Activity =
+            [
                 new()
                 {
                 }
-            }
+            ]
         };
         var s = new FhirJsonSerializer();
         var stringWriter = new StringWriter();

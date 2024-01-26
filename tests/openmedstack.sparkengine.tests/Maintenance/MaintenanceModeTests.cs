@@ -16,10 +16,10 @@ using Xunit;
 public class MaintenanceModeTests
 {
     public static object[][] ReadHttpMethods =>
-        new[] {new object[] {"GET"}, new object[] {"HEAD"}, new object[] {"OPTIONS"}};
+        [["GET"], ["HEAD"], ["OPTIONS"]];
 
     public static object[][] WriteHttpMethods =>
-        new[] {new object[] {"POST"}, new object[] {"PUT"}, new object[] {"PATCH"}, new object[] {"DELETE"}};
+        [["POST"], ["PUT"], ["PATCH"], ["DELETE"]];
 
     public static object[][] AllHttpMethods => ReadHttpMethods.Concat(WriteHttpMethods).ToArray();
 

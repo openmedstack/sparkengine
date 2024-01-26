@@ -84,7 +84,7 @@ public class S3ResourcePersistence : IResourcePersistence
                         BucketName = _bucket,
                         ContentType = _compress ? "application/gzip" : "application/json",
                         InputStream = stream,
-                        DisableMD5Stream = true,
+                        DisableDefaultChecksumValidation = true,
                         UseChunkEncoding = false
                     },
                     cancellationToken)
@@ -93,7 +93,7 @@ public class S3ResourcePersistence : IResourcePersistence
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{error}", ex.Message);
+            _logger.LogError(ex, "{Error}", ex.Message);
             return false;
         }
     }
@@ -117,7 +117,7 @@ public class S3ResourcePersistence : IResourcePersistence
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{error}", ex.Message);
+            _logger.LogError(ex, "{Error}", ex.Message);
             return null;
         }
     }

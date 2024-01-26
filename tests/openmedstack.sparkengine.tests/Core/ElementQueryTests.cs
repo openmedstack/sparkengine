@@ -36,7 +36,7 @@ public class ElementQueryTests
 
         var testPatient = new Patient();
         var hn = new HumanName().WithGiven("Sjors").AndFamily("Jansen");
-        testPatient.Name = new List<HumanName> {hn};
+        testPatient.Name = [hn];
 
         var result = new List<object?>();
 
@@ -54,7 +54,7 @@ public class ElementQueryTests
         var testPatient = new Patient();
         var hn1 = new HumanName().WithGiven("A").AndFamily("B");
         var hn2 = new HumanName().WithGiven("Y").AndFamily("Z");
-        testPatient.Name = new List<HumanName> {hn1, hn2};
+        testPatient.Name = [hn1, hn2];
 
         var result = new List<object?>();
 

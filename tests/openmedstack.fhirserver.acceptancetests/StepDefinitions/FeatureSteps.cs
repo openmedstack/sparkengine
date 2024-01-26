@@ -67,7 +67,7 @@ public partial class FeatureSteps
             RetryCount = 5,
             QueueName = "test",
             ServiceBus = new Uri("loopback://localhost"),
-            Urls = new[] { "http://localhost" },
+            Urls = ["http://localhost"],
             TokenService = "https://identity.reimers.dk",
             AccessKey = "",
             AccessSecret = "",
@@ -81,7 +81,7 @@ public partial class FeatureSteps
             Secret = "",
             ServiceBusPassword = "",
             ServiceBusUsername = "", Services = new Dictionary<Regex, Uri>(), ClusterHosts = Array.Empty<string>(),
-            ValidIssuers = new[] { "https://identity.reimers.dk" }
+            ValidIssuers = ["https://identity.reimers.dk"]
         };
     }
 

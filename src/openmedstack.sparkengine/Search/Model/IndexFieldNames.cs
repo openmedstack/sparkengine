@@ -25,5 +25,5 @@ public static class IndexFieldNames
         TAGLABEL = "label",
         LASTUPDATED = "lastupdated";
 
-    public static string[] All = {ID, JUSTID, SELFLINK, CONTAINER, RESOURCE, LEVEL, TAG, LASTUPDATED};
+    public static string[] All = [ID, JUSTID, SELFLINK, CONTAINER, RESOURCE, LEVEL, TAG, LASTUPDATED];
 }

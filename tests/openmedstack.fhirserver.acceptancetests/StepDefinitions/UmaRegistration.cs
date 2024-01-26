@@ -13,7 +13,7 @@ public partial class FeatureSteps
         _patient = new Patient
         {
             Id = Guid.NewGuid().ToString("N"),
-            Name = new List<HumanName> { new() { Family = "Doe", Given = new List<string> { "John" } } },
+            Name = [new() { Family = "Doe", Given = new List<string> { "John" } }],
             Address =
             {
                 new()
@@ -25,7 +25,7 @@ public partial class FeatureSteps
             {
                 new Patient.ContactComponent
                 {
-                    Telecom = new() { new ContactPoint { System = ContactPoint.ContactPointSystem.Url, Value = "123" } }
+                    Telecom = [new ContactPoint { System = ContactPoint.ContactPointSystem.Url, Value = "123" }]
                 }
             }
         };

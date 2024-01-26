@@ -409,7 +409,7 @@ public class CriteriumTests
     [Fact]
     public void HandleMultiValueParam()
     {
-        var p1 = new ChoiceValue(new ValueExpression[] { new StringValue("hello, world!"), new NumberValue(18.4M) });
+        var p1 = new ChoiceValue([new StringValue("hello, world!"), new NumberValue(18.4M)]);
         Assert.Equal(@"hello\, world!,18.4", p1.ToString());
 
         var p2 = ChoiceValue.Parse(@"hello\, world!,18.4");
@@ -422,9 +422,9 @@ public class CriteriumTests
     public void HandleComposites()
     {
         var pX = new CompositeValue(
-            new ValueExpression[] { new StringValue("hello, world!"), new NumberValue(14.8M) });
+            [new StringValue("hello, world!"), new NumberValue(14.8M)]);
         var pY = new TokenValue("NOK", "http://somesuch.org");
-        var p1 = new ChoiceValue(new ValueExpression[] { pX, pY });
+        var p1 = new ChoiceValue([pX, pY]);
         Assert.Equal(@"hello\, world!$14.8,http://somesuch.org|NOK", p1.ToString());
 
         var crit1 = ChoiceValue.Parse(@"hello\, world$14.8,http://somesuch.org|NOK");
