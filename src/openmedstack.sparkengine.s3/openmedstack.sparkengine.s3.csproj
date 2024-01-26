@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<Import Project="../../shared.projinfo" />
+	<Import Project="../../shared.proj" />
 	<PropertyGroup>
 		<PackageId>openmedstack.sparkengine.s3</PackageId>
 		<RootNamespace>OpenMedStack.SparkEngine.S3</RootNamespace>
 		<Description>FHIR Server Engine S3 Storage</Description>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="3.7.203.7" />
-		<PackageReference Include="openmedstack" Version="2.0.2" />
+		<PackageReference Include="AWSSDK.S3" Version="3.7.305.17" />
+		<PackageReference Include="openmedstack" Version="2.1.1" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />

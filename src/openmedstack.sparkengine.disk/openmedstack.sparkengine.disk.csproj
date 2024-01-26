@@ -1,15 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="../../shared.projinfo" />
+  <Import Project="../../shared.proj" />
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <RootNamespace>OpenMedStack.SparkEngine.Disk</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="openmedstack" Version="2.0.2" />
+    <PackageReference Include="openmedstack" Version="2.1.1" />
     <ProjectReference Include="..\openmedstack.sparkengine\openmedstack.sparkengine.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

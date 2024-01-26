@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<Import Project="../../shared.projinfo" />
+	<Import Project="../../shared.proj" />
 	<PropertyGroup>
 		<PackageId>openmedstack.sparkengine.postgres</PackageId>
 		<RootNamespace>OpenMedStack.SparkEngine.Postgres</RootNamespace>
@@ -8,9 +8,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Marten" Version="6.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
-		<PackageReference Include="openmedstack" Version="2.0.2" />
+		<PackageReference Include="Marten" Version="6.4.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+		<PackageReference Include="openmedstack" Version="2.1.1" />
 	</ItemGroup>
 
 	<ItemGroup>
