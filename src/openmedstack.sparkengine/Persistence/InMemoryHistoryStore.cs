@@ -1,9 +1,7 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
+﻿using OpenMedStack.SparkEngine.Core;
+using OpenMedStack.SparkEngine.Interfaces;
 
-using System;
-using System.Threading.Tasks;
-using Interfaces;
-using OpenMedStack.SparkEngine.Core;
+namespace OpenMedStack.SparkEngine.Persistence;
 
 public class InMemoryHistoryStore : IHistoryStore
 {

@@ -13,21 +13,36 @@ using System.Linq;
 using Hl7.Fhir.Model;
 using Search.ValueExpressionTypes;
 
+/// <summary>
+/// Describes the result of a search operation.
+/// </summary>
 public class SearchResults : List<string>
 {
-    private readonly OperationOutcome _outcome = new() { Issue = new List<OperationOutcome.IssueComponent>() };
+    private readonly OperationOutcome _outcome = new() { Issue = [] };
 
     public required Criterium[] UsedCriteria { get; init; }
 
+    /// <summary>
+    /// Gets the total number of matches for the search operation, excluding any includes and reverse includes.
+    /// </summary>
     public required int MatchCount { get; init; }
 
+    /// <summary>
+    /// Gets the outcome of the search operation.
+    /// </summary>
     public OperationOutcome? Outcome => _outcome.Issue.Any() ? _outcome : null;
 
+    /// <summary>
+    /// Gets whether the search operation has any errors.
+    /// </summary>
     public bool HasErrors
     {
         get { return Outcome != null && Outcome.Issue.Any(i => i.Severity <= OperationOutcome.IssueSeverity.Error); }
     }
 
+    /// <summary>
+    /// Gets a description of the parameters used in the search.
+    /// </summary>
     public string UsedParameters
     {
         get
@@ -35,13 +50,5 @@ public class SearchResults : List<string>
             var used = UsedCriteria.Select(c => c.ToString()).ToArray();
             return string.Join("&", used);
         }
-    }
-
-    public void AddIssue(
-        string errorMessage,
-        OperationOutcome.IssueSeverity severity = OperationOutcome.IssueSeverity.Error)
-    {
-        var newIssue = new OperationOutcome.IssueComponent { Diagnostics = errorMessage, Severity = severity };
-        _outcome.Issue.Add(newIssue);
     }
 }

@@ -1,11 +1,12 @@
-/* 
+/*
  * Copyright (c) 2016, Furore (info@furore.com) and contributors
  * Copyright (c) 2021, Incendi (info@incendi.no) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
+
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
 using System;
@@ -40,7 +41,10 @@ public class SearchService : ISearchService, IServiceListener
         _fhirIndex = fhirIndex;
     }
 
-    public async Task<Snapshot> GetSnapshot(string type, SearchParams searchCommand, CancellationToken cancellationToken)
+    public async Task<Snapshot> GetSnapshot(
+        string type,
+        SearchParams searchCommand,
+        CancellationToken cancellationToken)
     {
         Validate.TypeName(type);
         var results = await _fhirIndex.Search(type, searchCommand, cancellationToken).ConfigureAwait(false);
@@ -77,7 +81,8 @@ public class SearchService : ISearchService, IServiceListener
     }
 
     public async Task<IKey> FindSingle(string type, SearchParams searchCommand, CancellationToken cancellationToken) =>
-        Key.ParseOperationPath((await GetSearchResults(type, searchCommand, cancellationToken).ConfigureAwait(false)).Single());
+        Key.ParseOperationPath((await GetSearchResults(type, searchCommand, cancellationToken).ConfigureAwait(false))
+            .Single());
 
     public async Task<IKey?> FindSingleOrDefault(
         string type,
@@ -85,7 +90,8 @@ public class SearchService : ISearchService, IServiceListener
         CancellationToken cancellationToken)
     {
         searchCommand.Count = 1;
-        var value = (await GetSearchResults(type, searchCommand, cancellationToken).ConfigureAwait(false)).SingleOrDefault();
+        var value = (await GetSearchResults(type, searchCommand, cancellationToken).ConfigureAwait(false))
+            .SingleOrDefault();
         return value != null ? Key.ParseOperationPath(value) : null;
     }
 
@@ -96,8 +102,21 @@ public class SearchService : ISearchService, IServiceListener
     {
         Validate.TypeName(type);
         var results = await _fhirIndex.Search(type, searchCommand, cancellationToken).ConfigureAwait(false);
+        if (results.HasErrors)
+        {
+            throw new SparkException(HttpStatusCode.BadRequest, results.Outcome!);
+        }
 
-        return results.HasErrors ? throw new SparkException(HttpStatusCode.BadRequest, results.Outcome!) : results;
+        if (searchCommand.RevInclude.Count > 0)
+        {
+            var reverseIncludes = await _fhirIndex.GetReverseIncludes(
+                results.Select(Key.ParseOperationPath).Cast<IKey>().ToList(),
+                searchCommand.RevInclude.Select(x => x.Item1).ToList(),
+                cancellationToken);
+            results.AddRange(reverseIncludes);
+        }
+
+        return results;
     }
 
     public Task Inform(Uri location, Entry interaction) => _indexService.Process(interaction);

@@ -1,14 +1,12 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
-
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Hl7.Fhir.Model;
-using Interfaces;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
+using OpenMedStack.SparkEngine.Interfaces;
+
+namespace OpenMedStack.SparkEngine.Persistence;
+
 using Task = System.Threading.Tasks.Task;
 
 public class InMemoryFhirStore : IFhirStore

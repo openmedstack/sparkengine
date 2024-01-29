@@ -80,7 +80,8 @@ public partial class FeatureSteps
             Scope = "read",
             Secret = "",
             ServiceBusPassword = "",
-            ServiceBusUsername = "", Services = new Dictionary<Regex, Uri>(), ClusterHosts = Array.Empty<string>(),
+            ServiceBusUsername = "", Services = new Dictionary<Regex, Uri>(),
+            ClusterHosts = Array.Empty<string>(),
             ValidIssuers = ["https://identity.reimers.dk"]
         };
     }

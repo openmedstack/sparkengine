@@ -1,17 +1,12 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Hl7.Fhir.Rest;
+﻿using Hl7.Fhir.Rest;
 using Microsoft.Extensions.Logging;
 using OpenMedStack.SparkEngine.Core;
 using OpenMedStack.SparkEngine.Extensions;
 using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Model;
 using OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
+
+namespace OpenMedStack.SparkEngine.Persistence;
 
 public class InMemoryFhirIndex : IFhirIndex, IIndexStore
 {
@@ -57,7 +52,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
                     .Any(
                         v => v.Name == "internal_id"
                          && v.Values.OfType<StringValue>()
-                                .All(sv => sv.Value == entry.Key?.WithoutVersion().ToStorageKey())));
+                                .All(sv => sv.Value == entry.Key.WithoutVersion().ToStorageKey())));
         }
 
         return Task.CompletedTask;
@@ -70,7 +65,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug(
-            "{resource} search requested with {searchCommand}",
+            "{Resource} search requested with {SearchCommand}",
             resource,
             searchCommand.ToUriParamList().ToQueryString());
 
@@ -101,7 +96,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         SearchParams searchCommand,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Find single {resource} key", resource);
+        _logger.LogDebug("Find single {Resource} key", resource);
         var indexValue = GetIndexValues(resource, searchCommand).FirstOrDefault();
 
         var key = indexValue == null ? null : Key.ParseOperationPath(indexValue);
@@ -114,7 +109,19 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         IList<string> revIncludes,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var array = keys.SelectMany(key => revIncludes
+                .SelectMany(x =>
+                {
+                    var indexOf = x.IndexOf('.');
+                    var property = x[(indexOf + 1)..];
+                    var resource = x[..indexOf];
+
+                    return GetIndexValues(resource, new SearchParams().Add(property, key.ToStorageKey()));
+                }))
+            .ToArray();
+        var results = new SearchResults { MatchCount = array.Length, UsedCriteria = [] };
+        results.AddRange(array);
+        return Task.FromResult(results);
     }
 
     /// <inheritdoc />
@@ -126,30 +133,34 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
 
     private IEnumerable<string> GetIndexValues(string resource, SearchParams searchCommand)
     {
-        bool Predicate(Expression exp, string value) =>
-            exp switch
+        bool Predicate(Expression exp, string value)
+        {
+            return exp switch
             {
                 StringValue stringValue => stringValue.Value == value,
                 CompositeValue compositeValue => compositeValue.Components.Any(c => Predicate(c, value)),
                 IndexValue indexValue => indexValue.Values.Any(v => Predicate(v, value)),
                 _ => false
             };
+        }
+
+        bool Evaluate(IndexValue x)
+        {
+            return searchCommand.Parameters.All(kv => x.Values.OfType<IndexValue>()
+                .Any(
+                    v => v.Name == kv.Item1 && v.Values.Any(exp => Predicate(exp, kv.Item2))));
+        }
 
         lock (_indexValues)
         {
-            return _indexValues
+            var resources = _indexValues
                 .Where(
                     x => x.Values.OfType<IndexValue>()
                         .Any(
                             v => v.Name == "internal_resource"
-                             && v.Values.OfType<StringValue>().First().Value == resource))
-                .Where(
-                    x => searchCommand.Parameters.All(
-                        kv => x.Values.OfType<IndexValue>()
-                            .Any(
-                                // TODO: Apply proper criteria evaluation
-                                v => v.Name == kv.Item1
-                                 && v.Values.Any(exp => Predicate(exp, kv.Item2)))))
+                             && v.Values.OfType<StringValue>().First().Value == resource)).ToList();
+
+            return resources.Where(Evaluate)
                 .SelectMany(
                     iv => iv.Values.OfType<IndexValue>()
                         .Where(v => v.Name is "internal_id" or "internal_selflink")

@@ -1,11 +1,8 @@
-﻿namespace OpenMedStack.SparkEngine.Web.Persistence;
-
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Interfaces;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using OpenMedStack.SparkEngine.Core;
+using OpenMedStack.SparkEngine.Interfaces;
+
+namespace OpenMedStack.SparkEngine.Persistence;
 
 public class InMemorySnapshotStore : ISnapshotStore
 {

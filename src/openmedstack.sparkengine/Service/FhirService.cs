@@ -94,7 +94,7 @@ public class FhirService : IFhirService, IInteractionHandler
             .CreateDelete(key, _searchService, SearchParams.FromUriParamList(parameters), cancellationToken)
             .ConfigureAwait(false);
         return await _transactionService.HandleTransaction(operation, this, cancellationToken).ConfigureAwait(false)
-               ?? Respond.WithCode(HttpStatusCode.NotFound);
+         ?? Respond.WithCode(HttpStatusCode.NotFound);
     }
 
     public async Task<FhirResponse?> ConditionalUpdate(
@@ -105,7 +105,8 @@ public class FhirService : IFhirService, IInteractionHandler
     {
         // FIXME: if update receives a key with no version how do we handle concurrency?
 
-        var operation = await resource.CreatePut(key, _searchService, parameters, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var operation = await resource.CreatePut(key, _searchService, parameters, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
         return await _transactionService.HandleTransaction(operation, this, cancellationToken).ConfigureAwait(false);
     }
 
@@ -157,7 +158,10 @@ public class FhirService : IFhirService, IInteractionHandler
         return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<FhirResponse> History(string type, HistoryParameters parameters, CancellationToken cancellationToken)
+    public async Task<FhirResponse> History(
+        string type,
+        HistoryParameters parameters,
+        CancellationToken cancellationToken)
     {
         var snapshot = await _historyService.History(type, parameters).ConfigureAwait(false);
         return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
@@ -231,13 +235,15 @@ public class FhirService : IFhirService, IInteractionHandler
     public async Task<FhirResponse> Transaction(IList<Entry> interactions, CancellationToken cancellationToken)
     {
         var responses = _transactionService.HandleTransaction(interactions, this, cancellationToken);
-        return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse).ConfigureAwait(false);
+        return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse)
+            .ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> Transaction(Bundle bundle, CancellationToken cancellationToken)
     {
         var responses = _transactionService.HandleTransaction(bundle, this, cancellationToken);
-        return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse).ConfigureAwait(false);
+        return await _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse)
+            .ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> Update(IKey key, Resource resource, CancellationToken cancellationToken)
@@ -259,7 +265,8 @@ public class FhirService : IFhirService, IInteractionHandler
         {
             var entry = await _storageService.Load(key, cancellationToken).ConfigureAwait(false);
             var resource = _patchService.Apply(entry!, parameters);
-            return await Patch(Entry.Patch(current.GetKey().WithoutVersion(), resource), cancellationToken).ConfigureAwait(false);
+            return await Patch(Entry.Patch(current.GetKey().WithoutVersion(), resource), cancellationToken)
+                .ConfigureAwait(false);
         }
         catch
         {
@@ -291,7 +298,9 @@ public class FhirService : IFhirService, IInteractionHandler
 
         var outcome = Validate.AgainstSchema(resource);
         return Task.FromResult(
-            outcome == null ? Respond.WithCode(HttpStatusCode.OK) : Respond.WithResource(422, outcome));
+            outcome.Issue.All(i => i.Code == OperationOutcome.IssueType.Success)
+                ? Respond.WithCode(HttpStatusCode.OK)
+                : Respond.WithResource(422, outcome));
     }
 
     public async Task<FhirResponse> VersionRead(IKey key, CancellationToken cancellationToken)
@@ -331,10 +340,10 @@ public class FhirService : IFhirService, IInteractionHandler
             "Composition:subject",
             "Composition:author",
             "Composition:attester" //Composition.attester.party
-            ,
+           ,
             "Composition:custodian",
             "Composition:eventdetail" //Composition.event.detail
-            ,
+           ,
             "Composition:encounter",
             "Composition:entry" //Composition.section.entry
         };
@@ -343,7 +352,8 @@ public class FhirService : IFhirService, IInteractionHandler
             searchCommand.Include.Add((inc, IncludeModifier.None));
         }
 
-        return await Search(key.TypeName ?? "", searchCommand, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await Search(key.TypeName ?? "", searchCommand, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken)
@@ -395,7 +405,11 @@ public class FhirService : IFhirService, IInteractionHandler
 
         return result;
     }
-    private async Task<FhirResponse> CreateSnapshotResponse(Snapshot snapshot, int pageIndex, CancellationToken cancellationToken)
+
+    private async Task<FhirResponse> CreateSnapshotResponse(
+        Snapshot snapshot,
+        int pageIndex,
+        CancellationToken cancellationToken)
     {
         var pagination = await _pagingService.StartPagination(snapshot, cancellationToken).ConfigureAwait(false);
         var bundle = await pagination.GetPage(cancellationToken, pageIndex).ConfigureAwait(false);

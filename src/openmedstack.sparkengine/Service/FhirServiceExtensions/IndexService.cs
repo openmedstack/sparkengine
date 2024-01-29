@@ -1,7 +1,7 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2021, Incendi (info@incendi.no) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
@@ -20,7 +20,7 @@ using Model;
 using Search;
 using Search.Model;
 using Search.ValueExpressionTypes;
-using Task = System.Threading.Tasks.Task;
+using Task = Task;
 
 public class IndexService : IIndexService
 {
@@ -81,7 +81,7 @@ public class IndexService : IIndexService
                 // TODO: Do we need to index composite search parameters, some
                 // of them are already indexed by ordinary search parameters so
                 // need to make sure that we don't do overlapping indexing.
-                if (searchParameter.Type == Hl7.Fhir.Model.SearchParamType.Composite)
+                if (searchParameter.Type == SearchParamType.Composite)
                 {
                     continue;
                 }
@@ -152,7 +152,7 @@ public class IndexService : IIndexService
                     var oldRef = "#" + containedResource.Id;
                     var newId = Guid.NewGuid().ToString();
                     containedResource.Id = newId;
-                    var newRef = containedResource.TypeName + "/" + newId;
+                    var newRef = $"{containedResource.TypeName}/{newId}";
                     referenceMap.Add(oldRef, newRef);
                 }
 
@@ -197,7 +197,7 @@ public class IndexService : IIndexService
         {
             entry.Values.Add(new IndexValue(IndexFieldNames.RESOURCE, new StringValue(resource.TypeName)));
             entry.Values.Add(
-                new IndexValue(IndexFieldNames.ID, new StringValue(resource.TypeName + "/" + key?.ResourceId)));
+                new IndexValue(IndexFieldNames.ID, new StringValue($"{resource.TypeName}/{key?.ResourceId}")));
             entry.Values.Add(new IndexValue(IndexFieldNames.JUSTID, new StringValue(resource.Id)));
         }
 

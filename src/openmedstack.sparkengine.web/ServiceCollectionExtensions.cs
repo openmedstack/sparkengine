@@ -1,4 +1,6 @@
-﻿namespace OpenMedStack.SparkEngine.Web;
+﻿using OpenMedStack.SparkEngine.Persistence;
+
+namespace OpenMedStack.SparkEngine.Web;
 
 using System;
 using System.Collections.Generic;
@@ -14,7 +16,6 @@ using Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Persistence;
 using Search;
 using Service;
 using Service.FhirServiceExtensions;
