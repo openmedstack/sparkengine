@@ -107,6 +107,15 @@ public class SearchService : ISearchService, IServiceListener
             throw new SparkException(HttpStatusCode.BadRequest, results.Outcome!);
         }
 
+        if (searchCommand.Include.Count > 0)
+        {
+            var includes = await _fhirIndex.GetIncludes(
+                results.Select(Key.ParseOperationPath).Cast<IKey>().ToList(),
+                searchCommand.Include.Select(x => x.Item1).ToList(),
+                cancellationToken);
+            results.AddRange(includes);
+        }
+
         if (searchCommand.RevInclude.Count > 0)
         {
             var reverseIncludes = await _fhirIndex.GetReverseIncludes(

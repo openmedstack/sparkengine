@@ -47,7 +47,8 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         SearchParams searchCommand,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("{resource} search requested with {searchCommand}", resource, searchCommand.ToUriParamList().ToQueryString());
+        _logger.LogDebug("{Resource} search requested with {SearchCommand}", resource,
+            searchCommand.ToUriParamList().ToQueryString());
 
         var session = _sessionFunc();
         await using var _ = session.ConfigureAwait(false);
@@ -63,6 +64,7 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         {
             resourceQuery = resourceQuery.Take(searchCommand.Count.Value);
         }
+
         var resources = await resourceQuery.Select(x => new { x.Id, x.CanonicalId })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
 
@@ -74,7 +76,7 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
             UsedCriteria = searchCommand.Parameters.Select(t => Criterium.Parse(resource, t.Item1, t.Item2)).ToArray()
         };
 
-        results.AddRange(resources.SelectMany(x => new[] { x.Id, x.CanonicalId }).Where(x => x != null).Distinct());
+        results.AddRange(resources.SelectMany(x => new[] { x.Id, x.CanonicalId }).Distinct());
 
         return results;
     }
@@ -86,20 +88,98 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
         CancellationToken cancellationToken = default)
     {
         await Task.Yield();
-        _logger.LogDebug("Find single {resource} key", resource);
+        _logger.LogDebug("Find single {Resource} key", resource);
 
         // TODO: Fix
-        var entries = Array.Empty<string>();// await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
+        var entries = Array.Empty<string>(); // await GetIndexValues(resource, searchCommand).ConfigureAwait(false);
 
         return entries.Length > 0 ? Key.ParseOperationPath(entries[0]) : null;
     }
 
     /// <inheritdoc />
-    public Task<SearchResults> GetReverseIncludes(
-        IList<IKey> keys,
-        IList<string> revIncludes,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
+    public async Task<SearchResults> GetReverseIncludes(
+        IReadOnlyList<IKey> keys,
+        IReadOnlyList<string> revIncludes,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Reverse includes search requested for {Keys} with {ReverseIncludes}", keys, revIncludes);
+
+        var k = string.Join(',', keys.Select(x => x.ToStorageKey()));
+
+        var resources = new HashSet<string>();
+        var session = _sessionFunc();
+        await using var _ = session.ConfigureAwait(false);
+        foreach (var reverseInclude in revIncludes)
+        {
+            var indexOf = reverseInclude.IndexOf('.');
+            var resource = reverseInclude[..indexOf];
+            var property = reverseInclude[(indexOf + 1)..];
+
+            //$"(data -> 'values') @? '$.{criterium.ParamName} ? ({GetComparison(criterium)})'"
+            var list = await session.Query<IndexEntry>()
+                .Where(x => x.ResourceType == resource)
+                .Where(x => x.MatchesSql($"(data -> 'values') @? '$.{property} ? (@ ? {k})'"))
+                .Select(x => new { x.Id, x.CanonicalId })
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            foreach (var s in list)
+            {
+                resources.Add(s.CanonicalId);
+                resources.Add(s.Id);
+            }
+        }
+
+        var results = new SearchResults
+        {
+            MatchCount = resources.Count,
+            UsedCriteria = []
+        };
+
+        results.AddRange(resources);
+
+        return results;
+    }
+
+    public async Task<SearchResults> GetIncludes(
+        IReadOnlyList<IKey> keys,
+        IReadOnlyList<string> includes,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Includes search requested for {Keys} with {ReverseIncludes}", keys, includes);
+
+        var k = string.Join(',', keys.Select(x => x.ToStorageKey()));
+
+        var resources = new HashSet<string>();
+        var session = _sessionFunc();
+        await using var _ = session.ConfigureAwait(false);
+        foreach (var reverseInclude in includes)
+        {
+            var indexOf = reverseInclude.IndexOf('.');
+            var property = reverseInclude[(indexOf + 1)..];
+
+            //$"(data -> 'values') @? '$.{criterium.ParamName} ? ({GetComparison(criterium)})'"
+            var list = await session.Query<IndexEntry>()
+                .Where(x => x.MatchesSql($"(data -> 'values') @? '$.{property} ? (@ ? {k})'"))
+                .Select(x => new { x.Id, x.CanonicalId })
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            foreach (var s in list)
+            {
+                resources.Add(s.CanonicalId);
+                resources.Add(s.Id);
+            }
+        }
+
+        var results = new SearchResults
+        {
+            MatchCount = resources.Count,
+            UsedCriteria = []
+        };
+
+        results.AddRange(resources);
+
+        return results;
+    }
 
     /// <inheritdoc />
     public async Task Save(IndexValue indexValue)
@@ -147,8 +227,7 @@ public class MartenFhirIndex : IFhirIndex, IIndexStore
             Operator.IN => $"@ ? {criterium.Operand!.GetValue()}",
             Operator.CHAIN => "@ is null",
             Operator.NOT_EQUAL => $"@ != \"{criterium.Operand!.GetValue()}\"",
-            Operator.STARTS_AFTER =>
-                $"@.start[0] > {criterium.Operand!.GetValue()}",
+            Operator.STARTS_AFTER => $"@.start[0] > {criterium.Operand!.GetValue()}",
             Operator.ENDS_BEFORE => $"@.end[0] < {criterium.Operand!.GetValue()}",
             _ => throw new ArgumentOutOfRangeException(nameof(criterium))
         };

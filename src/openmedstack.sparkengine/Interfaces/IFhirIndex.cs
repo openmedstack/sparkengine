@@ -23,5 +23,13 @@ public interface IFhirIndex
 
     Task<Key?> FindSingle(string resource, SearchParams searchCommand, CancellationToken cancellationToken);
 
-    Task<SearchResults> GetReverseIncludes(IList<IKey> keys, IList<string> revIncludes, CancellationToken cancellationToken = default);
+    Task<SearchResults> GetReverseIncludes(
+        IReadOnlyList<IKey> keys,
+        IReadOnlyList<string> revIncludes,
+        CancellationToken cancellationToken = default);
+
+    Task<SearchResults> GetIncludes(
+        IReadOnlyList<IKey> keys,
+        IReadOnlyList<string> includes,
+        CancellationToken cancellationToken);
 }

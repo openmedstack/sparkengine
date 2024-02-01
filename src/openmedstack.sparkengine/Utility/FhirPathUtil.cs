@@ -40,11 +40,10 @@ internal static class FhirPathUtil
 
     internal static string ResolveToFhirPathExpression([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type resourceType, string expression)
     {
-        var rootType = resourceType;
         var elements = expression.Split('.');
         var length = elements.Length;
         var fhirPathExpression = string.Empty;
-        var currentType = rootType;
+        var currentType = resourceType;
         for (var i = 0; length > i; i++)
         {
             var elementAndIndexer = GetElementSeparatedFromIndexer(elements[i]);
@@ -57,10 +56,10 @@ internal static class FhirPathUtil
 
         return fhirPathExpression.Length == 0
             ? fhirPathExpression
-            : $"{rootType.Name}.{fhirPathExpression.TrimEnd('.')}";
+            : $"{resourceType.Name}.{fhirPathExpression.TrimEnd('.')}";
     }
 
-    internal static (Type?, string) ResolveElement(
+    private static (Type?, string) ResolveElement(
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? root, string element)
     {
         var pi = root?.GetProperty(element);

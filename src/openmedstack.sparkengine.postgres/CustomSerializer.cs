@@ -51,7 +51,8 @@ internal class CustomSerializer : ISerializer
     public async ValueTask<T> FromJsonAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
         using var streamReader = new StreamReader(stream);
-        await using var jsonTextReader = new JsonTextReader(streamReader);
+        var jsonTextReader = new JsonTextReader(streamReader);
+        await using var _ = jsonTextReader.ConfigureAwait(false);
         return JsonConvert.DeserializeObject<T>(await streamReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), _settings)!;
     }
 
@@ -86,7 +87,8 @@ internal class CustomSerializer : ISerializer
     public async ValueTask<object> FromJsonAsync(Type type, Stream stream, CancellationToken cancellationToken = new())
     {
         using var streamReader = new StreamReader(stream);
-        await using var jsonTextReader = new JsonTextReader(streamReader);
+        var jsonTextReader = new JsonTextReader(streamReader);
+        await using var _ = jsonTextReader.ConfigureAwait(false);
         return JsonConvert.DeserializeObject(await streamReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), type, _settings)!;
     }
 
@@ -98,7 +100,8 @@ internal class CustomSerializer : ISerializer
         CancellationToken cancellationToken = new())
     {
         using var textReader = reader.GetTextReader(index);
-        await using var jsonTextReader = new JsonTextReader(textReader);
+        var jsonTextReader = new JsonTextReader(textReader);
+        await using var _ = jsonTextReader.ConfigureAwait(false);
         return JsonConvert.DeserializeObject(await textReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false), type, _settings)!;
     }
 

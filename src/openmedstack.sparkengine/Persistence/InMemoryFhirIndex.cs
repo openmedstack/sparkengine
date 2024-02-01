@@ -8,20 +8,13 @@ using OpenMedStack.SparkEngine.Search.ValueExpressionTypes;
 
 namespace OpenMedStack.SparkEngine.Persistence;
 
-public class InMemoryFhirIndex : IFhirIndex, IIndexStore
+public class InMemoryFhirIndex(ILogger<InMemoryFhirIndex> logger) : IFhirIndex, IIndexStore
 {
-    // private static readonly Regex IdentifierRegex = new Regex(@"[person|patient]\.Identifier", RegexOptions.Compiled);
-    private readonly ILogger<InMemoryFhirIndex> _logger;
     private readonly List<IndexValue> _indexValues = new();
-
-    public InMemoryFhirIndex(ILogger<InMemoryFhirIndex> logger)
-    {
-        _logger = logger;
-    }
 
     private void Clean()
     {
-        _logger.LogDebug("Clean requested");
+        logger.LogDebug("Clean requested");
     }
 
     /// <inheritdoc />
@@ -64,7 +57,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         SearchParams searchCommand,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug(
+        logger.LogDebug(
             "{Resource} search requested with {SearchCommand}",
             resource,
             searchCommand.ToUriParamList().ToQueryString());
@@ -96,7 +89,7 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         SearchParams searchCommand,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Find single {Resource} key", resource);
+        logger.LogDebug("Find single {Resource} key", resource);
         var indexValue = GetIndexValues(resource, searchCommand).FirstOrDefault();
 
         var key = indexValue == null ? null : Key.ParseOperationPath(indexValue);
@@ -105,8 +98,8 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
 
     /// <inheritdoc />
     public Task<SearchResults> GetReverseIncludes(
-        IList<IKey> keys,
-        IList<string> revIncludes,
+        IReadOnlyList<IKey> keys,
+        IReadOnlyList<string> revIncludes,
         CancellationToken cancellationToken = default)
     {
         var array = keys.SelectMany(key => revIncludes
@@ -124,6 +117,25 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
         return Task.FromResult(results);
     }
 
+    public Task<SearchResults> GetIncludes(
+        IReadOnlyList<IKey> keys,
+        IReadOnlyList<string> includes,
+        CancellationToken cancellationToken)
+    {
+        var array = keys.SelectMany(key => includes
+                .SelectMany(x =>
+                {
+                    var indexOf = x.IndexOf('.');
+                    var property = x[(indexOf + 1)..];
+
+                    return GetIndexValues("", new SearchParams().Add(property, key.ToStorageKey()));
+                }))
+            .ToArray();
+        var results = new SearchResults { MatchCount = array.Length, UsedCriteria = [] };
+        results.AddRange(array);
+        return Task.FromResult(results);
+    }
+
     /// <inheritdoc />
     Task IFhirIndex.Clean()
     {
@@ -133,6 +145,17 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
 
     private IEnumerable<string> GetIndexValues(string resource, SearchParams searchCommand)
     {
+        lock (_indexValues)
+        {
+            return _indexValues
+                .Where(ResourceSelection)
+                .Where(Evaluate).SelectMany(Selector).Distinct();
+        }
+
+        bool ResourceSelection(IndexValue x) => resource == ""
+          || x.Values.OfType<IndexValue>()
+                .Any(v => v.Name == "internal_resource" && v.Values.OfType<StringValue>().First().Value == resource);
+
         bool Predicate(Expression exp, string value)
         {
             return exp switch
@@ -151,21 +174,9 @@ public class InMemoryFhirIndex : IFhirIndex, IIndexStore
                     v => v.Name == kv.Item1 && v.Values.Any(exp => Predicate(exp, kv.Item2))));
         }
 
-        lock (_indexValues)
-        {
-            var resources = _indexValues
-                .Where(
-                    x => x.Values.OfType<IndexValue>()
-                        .Any(
-                            v => v.Name == "internal_resource"
-                             && v.Values.OfType<StringValue>().First().Value == resource)).ToList();
-
-            return resources.Where(Evaluate)
-                .SelectMany(
-                    iv => iv.Values.OfType<IndexValue>()
-                        .Where(v => v.Name is "internal_id" or "internal_selflink")
-                        .Select(v => v.Values.OfType<StringValue>().First().Value))
-                .Distinct();
-        }
+        IEnumerable<string> Selector(IndexValue iv) =>
+            iv.Values.OfType<IndexValue>()
+                .Where(v => v.Name is "internal_id" or "internal_selflink")
+                .Select(v => v.Values.OfType<StringValue>().First().Value);
     }
 }

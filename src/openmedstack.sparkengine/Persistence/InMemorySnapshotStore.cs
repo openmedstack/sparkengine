@@ -4,15 +4,10 @@ using OpenMedStack.SparkEngine.Interfaces;
 
 namespace OpenMedStack.SparkEngine.Persistence;
 
-public class InMemorySnapshotStore : ISnapshotStore
+public class InMemorySnapshotStore(ILogger<InMemorySnapshotStore> logger) : ISnapshotStore
 {
     private readonly List<Snapshot> _snapshots = new();
-    private readonly ILogger<ISnapshotStore> _logger;
-
-    public InMemorySnapshotStore(ILogger<ISnapshotStore> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<ISnapshotStore> _logger = logger;
 
     /// <inheritdoc />
     public Task<bool> AddSnapshot(Snapshot snapshot, CancellationToken cancellationToken)
@@ -25,7 +20,7 @@ public class InMemorySnapshotStore : ISnapshotStore
     /// <inheritdoc />
     public Task<Snapshot?> GetSnapshot(string snapshotId, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Returned snapshot {snapshotId}", snapshotId);
+        _logger.LogDebug("Returned snapshot {SnapshotId}", snapshotId);
         return Task.FromResult(_snapshots.Find(x => x.Id == snapshotId));
     }
 }

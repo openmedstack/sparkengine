@@ -12,7 +12,7 @@ using FhirServiceExtensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
 using Interfaces;
-using Task = System.Threading.Tasks.Task;
+using SysTask = System.Threading.Tasks.Task;
 
 public class FhirService : IFhirService, IInteractionHandler
 {
@@ -113,7 +113,7 @@ public class FhirService : IFhirService, IInteractionHandler
     public Task<FhirResponse> CapabilityStatement(string sparkVersion)
     {
         var response = Respond.WithResource(_capabilityStatementService.GetSparkCapabilityStatement(sparkVersion));
-        return Task.FromResult(response);
+        return SysTask.FromResult(response);
     }
 
     public async Task<FhirResponse> Create(IKey key, Resource resource, CancellationToken cancellationToken)
@@ -297,7 +297,7 @@ public class FhirService : IFhirService, IInteractionHandler
         Validate.ResourceType(key, resource);
 
         var outcome = Validate.AgainstSchema(resource);
-        return Task.FromResult(
+        return SysTask.FromResult(
             outcome.Issue.All(i => i.Code == OperationOutcome.IssueType.Success)
                 ? Respond.WithCode(HttpStatusCode.OK)
                 : Respond.WithResource(422, outcome));

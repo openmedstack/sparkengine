@@ -41,6 +41,25 @@ public class SearchServiceTests
     }
 
     [Fact]
+    public async Task CanFindIncludesForRequestedResource()
+    {
+        await _indexService.IndexResource(new Patient { Id = "Patient/1" }, Key.Create("Patient", "1"));
+        await _indexService.IndexResource(
+            new Observation { Id = "Observation/1", Subject = new ResourceReference("Patient/1") },
+            Key.Create("Observation", "1"));
+        var searchParams = SearchParams.FromUriParamList([
+            Tuple.Create("_id", "Patient/1"),
+            Tuple.Create("_include", "Patient.subject")
+        ]);
+        var results = await _searchService.GetSearchResults("Patient",
+            searchParams,
+            CancellationToken.None);
+
+        Assert.Equal(1, results.MatchCount);
+        Assert.Equal(2, results.Count);
+    }
+
+    [Fact]
     public async Task CanFindReverseIncludesForRequestedResource()
     {
         await _indexService.IndexResource(new Patient { Id = "Patient/1" }, Key.Create("Patient", "1"));
@@ -50,6 +69,28 @@ public class SearchServiceTests
         var searchParams = SearchParams.FromUriParamList([
             Tuple.Create("_id", "Patient/1"),
             Tuple.Create("_revinclude:iterate", "Observation.subject")
+        ]);
+        var results = await _searchService.GetSearchResults("Patient",
+            searchParams,
+            CancellationToken.None);
+
+        Assert.Equal(1, results.MatchCount);
+        Assert.Equal(2, results.Count);
+    }
+
+    [Fact]
+    public async Task FindsOnlyIncludesForRequestedResource()
+    {
+        await _indexService.IndexResource(new Patient { Id = "Patient/1" }, Key.Create("Patient", "1"));
+        await _indexService.IndexResource(
+            new Observation { Id = "Observation/1", Subject = new ResourceReference("Patient/1") },
+            Key.Create("Observation", "1"));
+        await _indexService.IndexResource(
+            new Condition { Id = "Condition/1", Subject = new ResourceReference("Patient/2") },
+            Key.Create("Condition", "1"));
+        var searchParams = SearchParams.FromUriParamList([
+            Tuple.Create("_id", "Patient/1"),
+            Tuple.Create("_include", "Patient.subject")
         ]);
         var results = await _searchService.GetSearchResults("Patient",
             searchParams,
