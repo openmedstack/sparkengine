@@ -22,7 +22,8 @@ public class IndexingTests
             new ElementIndexer(
                 fhirModel,
                 NullLogger<ElementIndexer>.Instance,
-                new ReferenceNormalizationService(new Localhost(new Uri("https://localhost")))));
+                new ReferenceNormalizationService(new Localhost(new Uri("https://localhost")))),
+            NullLogger<IndexService>.Instance);
         var indexValue = await indexService.IndexResource(resource, resource.ExtractKey());
         var indexEntry = indexValue.BuildIndexEntry();
 
@@ -34,18 +35,18 @@ public class IndexingTests
     {
         var deserializer = new FhirJsonPocoDeserializer();
         foreach (var resource in Directory.EnumerateFiles(Path.Combine(".", "Examples"))
-                     .Select(file =>
-                     {
-                         try
-                         {
-                             return deserializer.DeserializeResource(File.ReadAllText(file));
-                         }
-                         catch
-                         {
-                             return null;
-                         }
-                     })
-                     .Where(x => x != null))
+            .Select(file =>
+            {
+                try
+                {
+                    return deserializer.DeserializeResource(File.ReadAllText(file));
+                }
+                catch
+                {
+                    return null;
+                }
+            })
+            .Where(x => x != null))
         {
             yield return [resource!];
         }

@@ -75,21 +75,21 @@ public class PatchService : IPatchService
         return resource;
     }
 
-    private static Expression CreateValueExpression(
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] private  static Expression CreateValueExpression(
         Parameters.ParameterComponent? part,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type resultType)
     {
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type GetResultTypeGenericTypeArgument()
-        {
-            return resultType.GenericTypeArguments[0];
-        }
-
         resultType = part?.Value == null && resultType.IsGenericType ? GetResultTypeGenericTypeArgument() : resultType;
         return part?.Value == null
             ? Expression.MemberInit(
                 Expression.New(resultType.GetConstructor(Array.Empty<Type>())!),
                 GetPartsBindings(part!.Part, resultType))
             : GetConstantExpression(part.Value, resultType);
+
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type GetResultTypeGenericTypeArgument()
+        {
+            return resultType.GenericTypeArguments[0];
+        }
     }
 
     private static Expression GetConstantExpression(

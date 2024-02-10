@@ -1,13 +1,14 @@
-﻿using System.IO.Compression;
+﻿using DotAuth.Uma;
+
+namespace OpenMedStack.FhirServer;
+
+using System.IO.Compression;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenMedStack.SparkEngine.Postgres;
 using OpenMedStack.SparkEngine.S3;
 using OpenMedStack.Web;
-
-namespace OpenMedStack.FhirServer;
-
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -21,15 +22,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SparkEngine;
 using SparkEngine.Web;
 
-internal class ServerStartup : IConfigureWebApplication
+internal class ServerStartup(FhirServerConfiguration configuration) : IConfigureWebApplication
 {
-    private readonly FhirServerConfiguration _configuration;
-
-    public ServerStartup(FhirServerConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpClient()
@@ -58,20 +52,20 @@ internal class ServerStartup : IConfigureWebApplication
             .AddFhir<UmaFhirController>(
                 new SparkSettings
                 {
-                    Endpoint = new Uri(_configuration.FhirRoot),
+                    Endpoint = new Uri(configuration.FhirRoot),
                     ParserSettings = ParserSettings.CreateDefault(),
                     SerializerSettings = SerializerSettings.CreateDefault()
                 })
 //        services.AddInMemoryFhirStores()
-            .AddPostgresFhirStore(new StoreSettings(_configuration.ConnectionString))
+            .AddPostgresFhirStore(new StoreSettings(configuration.ConnectionString))
             .AddS3Persistence(new S3PersistenceConfiguration(
-                _configuration.AccessKey,
-                _configuration.AccessSecret,
-                _configuration.Bucket,
-                _configuration.StorageServiceUrl,
+                configuration.AccessKey,
+                configuration.AccessSecret,
+                configuration.Bucket,
+                configuration.StorageServiceUrl,
                 true,
                 true,
-                _configuration.CompressStorage))
+                configuration.CompressStorage))
             .AddAuthentication(o =>
             {
                 o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -87,7 +81,7 @@ internal class ServerStartup : IConfigureWebApplication
                 options =>
                 {
                     options.SaveToken = true;
-                    options.Authority = _configuration.TokenService;
+                    options.Authority = configuration.TokenService;
                     options.RequireHttpsMetadata = false;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -98,13 +92,13 @@ internal class ServerStartup : IConfigureWebApplication
                         ValidateAudience = false,
                         ValidateIssuer = false,
                         ValidateIssuerSigningKey = false,
-                        ValidIssuers = new[] { _configuration.TokenService }
+                        ValidIssuers = new[] { configuration.TokenService }
                     };
                 })
             .AddOpenIdConnect(options =>
             {
                 options.DisableTelemetry = true;
-                options.Scope.Add("uma_protection");
+                options.Scope.Add(UmaConstants.UmaProtectionScope);
                 options.DataProtectionProvider = new EphemeralDataProtectionProvider();
                 options.SaveTokens = true;
                 options.Authority = "https://identity.reimers.dk";
@@ -116,13 +110,13 @@ internal class ServerStartup : IConfigureWebApplication
                 options.ResponseMode = OpenIdConnectResponseMode.Query;
                 options.ProtocolValidator.RequireNonce = true;
                 options.ProtocolValidator.RequireState = false;
-                options.ClientId = _configuration.ClientId;
-                options.ClientSecret = _configuration.Secret;
+                options.ClientId = configuration.ClientId;
+                options.ClientSecret = configuration.Secret;
             });
         services.ConfigureOptions<ConfigureMvcNewtonsoftJsonOptions>()
             .ConfigureOptions<ConfigureOpenIdConnectOptions>()
             .AddHealthChecks()
-            .AddNpgSql(_configuration.ConnectionString, failureStatus: HealthStatus.Unhealthy);
+            .AddNpgSql(configuration.ConnectionString, failureStatus: HealthStatus.Unhealthy);
     }
 
     /// <inheritdoc />

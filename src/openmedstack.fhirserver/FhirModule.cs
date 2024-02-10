@@ -37,8 +37,9 @@ internal class FhirModule : Module
         builder.RegisterInstance(_configuration)
             .AsSelf()
             .As<DeploymentConfiguration>()
+            .SingleInstance()
             .IfNotRegistered(typeof(DeploymentConfiguration));
-        builder.RegisterType<ConfigurationTenantProvider>().As<IProvideTenant>().InstancePerRequest();
+        //builder.RegisterType<ConfigurationTenantProvider>().As<IProvideTenant>().InstancePerRequest();
         builder.RegisterType<FhirEventListener>().AsImplementedInterfaces();
         builder.RegisterType<GuidGenerator>().As<IGenerator>().SingleInstance();
         builder.RegisterType<PatchService>().As<IPatchService>().SingleInstance();
@@ -66,7 +67,6 @@ internal class FhirModule : Module
             .AsSelf()
             .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
-        //builder.RegisterType<TokenCache>().AsSelf().AsImplementedInterfaces().SingleInstance();
         builder.RegisterInstance(new ApplicationNameProvider(_configuration))
             .AsImplementedInterfaces()
             .SingleInstance();

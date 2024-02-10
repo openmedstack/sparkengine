@@ -5,6 +5,9 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/spark/stu3/master/LICENSE
  */
+
+using Microsoft.Extensions.Logging;
+
 namespace OpenMedStack.SparkEngine.Service.FhirServiceExtensions;
 
 using System;
@@ -25,14 +28,20 @@ using Task = Task;
 public class IndexService : IIndexService
 {
     private readonly ElementIndexer _elementIndexer;
+    private readonly ILogger<IndexService> _logger;
     private readonly IFhirModel _fhirModel;
     private readonly IIndexStore _indexStore;
 
-    public IndexService(IFhirModel fhirModel, IIndexStore indexStore, ElementIndexer elementIndexer)
+    public IndexService(
+        IFhirModel fhirModel,
+        IIndexStore indexStore,
+        ElementIndexer elementIndexer,
+        ILogger<IndexService> logger)
     {
         _fhirModel = fhirModel;
         _indexStore = indexStore;
         _elementIndexer = elementIndexer;
+        _logger = logger;
     }
 
     public async Task Process(Entry entry)
@@ -93,10 +102,10 @@ public class IndexService : IIndexService
                 {
                     resolvedValues = resource.SelectNew(searchParameter.Expression);
                 }
-                catch // (Exception e)
+                catch (Exception e)
                 {
-                    // TODO: log error!
-                    resolvedValues = new List<Base>();
+                    _logger.LogError(e, "{Error}", e.Message);
+                    resolvedValues = Enumerable.Empty<Base?>();
                 }
 
                 foreach (var value in resolvedValues)
@@ -109,7 +118,7 @@ public class IndexService : IIndexService
                     indexValue.Values.AddRange(_elementIndexer.Map(element));
                 }
 
-                if (indexValue.Values.Any())
+                if (indexValue.Values.Count != 0)
                 {
                     rootIndexValue.Values.Add(indexValue);
                 }
@@ -138,41 +147,37 @@ public class IndexService : IIndexService
     private static Resource MakeContainedReferencesUnique(Resource resource)
     {
         //We may change id's of contained resources, and don't want that to influence other code. So we make a copy for our own needs.
-        Resource result = (dynamic)resource.DeepCopy();
-        if (resource is DomainResource)
+        Resource result = (Resource)resource.DeepCopy();
+        if (result is DomainResource { Contained.Count: > 0 } domainResource)
         {
-            var domainResource = (DomainResource)result;
-            if (domainResource.Contained != null && domainResource.Contained.Any())
+            var referenceMap = new Dictionary<string, string>();
+
+            // Create a unique id for each contained resource.
+            foreach (var containedResource in domainResource.Contained)
             {
-                var referenceMap = new Dictionary<string, string>();
-
-                // Create a unique id for each contained resource.
-                foreach (var containedResource in domainResource.Contained)
-                {
-                    var oldRef = "#" + containedResource.Id;
-                    var newId = Guid.NewGuid().ToString();
-                    containedResource.Id = newId;
-                    var newRef = $"{containedResource.TypeName}/{newId}";
-                    referenceMap.Add(oldRef, newRef);
-                }
-
-                // Replace references to these contained resources with the newly created id's.
-                Auxiliary.ResourceVisitor.VisitByType(
-                    domainResource,
-                    (el, _) =>
-                    {
-                        var currentRefence = el as ResourceReference;
-                        if (!string.IsNullOrEmpty(currentRefence!.Reference))
-                        {
-                            referenceMap.TryGetValue(currentRefence.Reference, out var replacementId);
-                            if (replacementId != null)
-                            {
-                                currentRefence.Reference = replacementId;
-                            }
-                        }
-                    },
-                    typeof(ResourceReference));
+                var oldRef = "#" + containedResource.Id;
+                var newId = Guid.NewGuid().ToString();
+                containedResource.Id = newId;
+                var newRef = $"{containedResource.TypeName}/{newId}";
+                referenceMap.Add(oldRef, newRef);
             }
+
+            // Replace references to these contained resources with the newly created id's.
+            Auxiliary.ResourceVisitor.VisitByType(
+                domainResource,
+                (el, _) =>
+                {
+                    var currentRefence = el as ResourceReference;
+                    if (!string.IsNullOrEmpty(currentRefence!.Reference))
+                    {
+                        referenceMap.TryGetValue(currentRefence.Reference, out var replacementId);
+                        if (replacementId != null)
+                        {
+                            currentRefence.Reference = replacementId;
+                        }
+                    }
+                },
+                typeof(ResourceReference));
         }
 
         return result;

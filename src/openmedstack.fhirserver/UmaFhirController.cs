@@ -10,13 +10,8 @@ using OpenMedStack.SparkEngine.Interfaces;
 using OpenMedStack.SparkEngine.Web.Controllers;
 
 [Route("uma")]
-public class UmaFhirController : FhirController
+public class UmaFhirController(IFhirService fhirService, IFhirModel model) : FhirController(fhirService, model)
 {
-    public UmaFhirController(IFhirService fhirService, IFhirModel model)
-        : base(fhirService, model)
-    {
-    }
-
     /// <inheritdoc />
     [UmaFilter("{0}/{1}", ["type", "id"], resourceSetAccessScope: "read")]
     public override Task<ActionResult<FhirResponse>> Read(string type, string id, CancellationToken cancellationToken)

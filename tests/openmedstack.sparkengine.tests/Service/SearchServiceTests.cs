@@ -21,7 +21,7 @@ public class SearchServiceTests
         var fhirIndex = new InMemoryFhirIndex(NullLogger<InMemoryFhirIndex>.Instance);
         var indexer = new ElementIndexer(fhirModel, NullLogger<ElementIndexer>.Instance);
         var localhost = new Localhost(new Uri("http://localhost"));
-        _indexService = new IndexService(fhirModel, fhirIndex, indexer);
+        _indexService = new IndexService(fhirModel, fhirIndex, indexer, NullLogger<IndexService>.Instance);
         _searchService = new SearchService(localhost, fhirModel, fhirIndex, _indexService);
     }
 

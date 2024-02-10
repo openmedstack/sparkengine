@@ -12,7 +12,7 @@ using FhirServiceExtensions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Rest;
 using Interfaces;
-using SysTask = System.Threading.Tasks.Task;
+using SysTask = Task;
 
 public class FhirService : IFhirService, IInteractionHandler
 {
@@ -103,7 +103,7 @@ public class FhirService : IFhirService, IInteractionHandler
         SearchParams parameters,
         CancellationToken cancellationToken)
     {
-        // FIXME: if update receives a key with no version how do we handle concurrency?
+        // TODO: if update receives a key with no version how do we handle concurrency?
 
         var operation = await resource.CreatePut(key, _searchService, parameters, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
@@ -329,25 +329,26 @@ public class FhirService : IFhirService, IInteractionHandler
         return await CreateSnapshotResponse(snapshot, 0, cancellationToken).ConfigureAwait(false);
     }
 
+    private static readonly string[] DocumentIncludes = [
+        "Composition:subject",
+        "Composition:author",
+        "Composition:attester" //Composition.attester.party
+       ,
+        "Composition:custodian",
+        "Composition:eventdetail" //Composition.event.detail
+       ,
+        "Composition:encounter",
+        "Composition:entry" //Composition.section.entry
+    ];
+
     public async Task<FhirResponse> Document(IKey key, CancellationToken cancellationToken)
     {
         Validate.HasResourceType(key, ResourceType.Composition);
 
         var searchCommand = new SearchParams();
         searchCommand.Add("_id", key.ResourceId);
-        var includes = new List<string>
-        {
-            "Composition:subject",
-            "Composition:author",
-            "Composition:attester" //Composition.attester.party
-           ,
-            "Composition:custodian",
-            "Composition:eventdetail" //Composition.event.detail
-           ,
-            "Composition:encounter",
-            "Composition:entry" //Composition.section.entry
-        };
-        foreach (var inc in includes)
+
+        foreach (var inc in DocumentIncludes)
         {
             searchCommand.Include.Add((inc, IncludeModifier.None));
         }
@@ -358,15 +359,15 @@ public class FhirService : IFhirService, IInteractionHandler
 
     public async Task<FhirResponse> HandleInteraction(Entry interaction, CancellationToken cancellationToken)
     {
-        return (interaction.Method) switch
+        return interaction.Method switch
         {
             Bundle.HTTPVerb.PUT => await Put(interaction, cancellationToken).ConfigureAwait(false),
             Bundle.HTTPVerb.POST => await Create(interaction, cancellationToken).ConfigureAwait(false),
-            Bundle.HTTPVerb.DELETE => (await _storageService.Get(interaction.Key.WithoutVersion(), cancellationToken)
-                .ConfigureAwait(false)) is { IsPresent: true }
+            Bundle.HTTPVerb.DELETE => await _storageService.Get(interaction.Key.WithoutVersion(), cancellationToken)
+                .ConfigureAwait(false) is { IsPresent: true }
                 ? await Delete(interaction, cancellationToken).ConfigureAwait(false)
                 : Respond.WithCode(HttpStatusCode.NotFound),
-            Bundle.HTTPVerb.GET when (interaction.Key.HasVersionId()) => await VersionRead(
+            Bundle.HTTPVerb.GET when interaction.Key.HasVersionId() => await VersionRead(
                     interaction.Key,
                     cancellationToken)
                 .ConfigureAwait(false),

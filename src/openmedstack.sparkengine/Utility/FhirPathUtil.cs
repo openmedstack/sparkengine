@@ -38,7 +38,10 @@ internal static class FhirPathUtil
         return xPathExpression;
     }
 
-    internal static string ResolveToFhirPathExpression([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type resourceType, string expression)
+    internal static string ResolveToFhirPathExpression(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+        Type resourceType,
+        string expression)
     {
         var elements = expression.Split('.');
         var length = elements.Length;
@@ -46,10 +49,10 @@ internal static class FhirPathUtil
         var currentType = resourceType;
         for (var i = 0; length > i; i++)
         {
-            var elementAndIndexer = GetElementSeparatedFromIndexer(elements[i]);
-            var resolvedElement = ResolveElement(currentType, elementAndIndexer.Item1);
+            var (element, indexer) = GetElementSeparatedFromIndexer(elements[i]);
+            var resolvedElement = ResolveElement(currentType, element);
 
-            fhirPathExpression += $"{resolvedElement.Item2}{elementAndIndexer.Item2}.";
+            fhirPathExpression += $"{resolvedElement.Item2}{indexer}.";
 
             currentType = resolvedElement.Item1;
         }
@@ -60,7 +63,9 @@ internal static class FhirPathUtil
     }
 
     private static (Type?, string) ResolveElement(
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? root, string element)
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
+        Type? root,
+        string element)
     {
         var pi = root?.GetProperty(element);
         if (pi == null)
@@ -82,7 +87,7 @@ internal static class FhirPathUtil
         return (elementType, fhirElementName);
     }
 
-    private static (string, string) GetElementSeparatedFromIndexer(string element)
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] private static (string, string) GetElementSeparatedFromIndexer(string element)
     {
         var index = element.LastIndexOf("[", StringComparison.OrdinalIgnoreCase);
         return index > -1 ? (element[..index], element[index..]) : (element, string.Empty);

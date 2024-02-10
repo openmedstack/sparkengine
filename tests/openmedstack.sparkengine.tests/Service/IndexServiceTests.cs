@@ -6,6 +6,7 @@
 //  * available at https://raw.github.com/furore-fhir/spark/master/LICENSE
 //  */
 
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace OpenMedStack.SparkEngine.Tests.Service;
@@ -74,12 +75,14 @@ public class IndexServiceTests
         // For this test setup we want a limited available types and search parameters.
         IFhirModel limitedFhirModel = new FhirModel(searchParameters);
         var limitedElementIndexer = new ElementIndexer(limitedFhirModel, Substitute.For<ILogger<ElementIndexer>>());
-        _limitedIndexService = new IndexService(limitedFhirModel, indexStoreMock, limitedElementIndexer);
+        _limitedIndexService = new IndexService(limitedFhirModel, indexStoreMock, limitedElementIndexer,
+            NullLogger<IndexService>.Instance);
 
         // For this test setup we want all available types and search parameters.
         IFhirModel fullFhirModel = new FhirModel();
         var fullElementIndexer = new ElementIndexer(fullFhirModel, Substitute.For<ILogger<ElementIndexer>>());
-        _fullIndexService = new IndexService(fullFhirModel, indexStoreMock, fullElementIndexer);
+        _fullIndexService = new IndexService(fullFhirModel, indexStoreMock, fullElementIndexer,
+            NullLogger<IndexService>.Instance);
     }
 
     [Fact]
